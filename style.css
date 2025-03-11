@@ -1,0 +1,37 @@
+.container {
+    width: 100%;
+    max-width: 100%;
+    padding-right: 0;
+    padding-left: 0;
+    margin-right: 0;
+    margin-left: 0;
+}
+
+#svaia-logo {
+  width: 40px;
+  height: auto;
+}
+
+#svaia-brand {
+    color: black;
+    font-weight: bold;
+    font-size: 30px;
+}
+
+#envelope-icon {
+    width: 20px;
+    height: auto;
+    color: white;
+    margin-right: 20px;
+}
+
+#user-icon {
+    width: 20px;
+    height: auto;
+    color: white;
+    margin-right: 10px;
+}
+
+#describe-form {
+    margin-left: 10px;
+}
