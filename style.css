@@ -39,16 +39,6 @@
 }
 
 /* footer */
-#container-footer {
-    width: 100%;
-    max-width: 100%;
-    padding-right: 0;
-    padding-left: 50px;
-    margin-right: 0;
-    margin-left: 0;
-    background-color: #2c3e50;
-}
-
 #footer1{
     background-color: #2c3e50;
     padding-top: 45px;
@@ -128,7 +118,17 @@
     margin-top: 2rem; /* Margen superior para el primer paso */
 }
 
-/* Estilos para la sección de precios */
+/* descripcion y precios */
+#chat-image {
+    width: 100%;
+    height: auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Sombra moderada */
+    border-radius: 5px; /* Bordes redondeados, opcional */
+    transition: box-shadow 0.3s ease; /* Transición suave para efectos hover */
+
+    margin-top: 30px;
+}
+
 .pricing-section {
     background-color: #98a4a4;
     padding: 2rem 0;
