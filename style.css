@@ -214,3 +214,74 @@
     border-bottom-left-radius: 100% 40px; /* Curva suave en esquina superior izquierda */
     border-bottom-right-radius: 100% 40px; /* Curva suave en esquina superior derecha */
 }
+
+/* chat */
+#sidebar {
+    border: grey 1px solid;
+    border-radius: 5px;
+    background-color: white;
+}
+
+#create-button {
+    background-color: #18bc9c;
+    border: none;
+    margin: 10px;
+    width: 50px;
+    height: 50px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.project-item {
+    position: relative;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 5px;
+    transition: background-color 0.2s ease;
+}
+
+#delete-button {
+    background-color: #e74c3c;
+    border: none;
+    color: white;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 3px 8px;
+    border-radius: 4px;
+    display: none;
+}
+
+.project-item:hover #delete-button {
+    display: inline-block;
+}
+
+.delete-button {
+    background-color: #e74c3c;
+    border: none;
+    color: white;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 3px 8px;
+    border-radius: 4px;
+    display: none;
+}
+
+.project-item:hover .delete-button {
+    display: inline-block;
+}
+
+#chat {
+    border: grey 1px solid;
+    border-radius: 5px;
+    background-color: white;
+}
+
+main {
+    background-image: linear-gradient(0deg, grey 0%, #f5f7fa 100%);
+}
