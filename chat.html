@@ -52,6 +52,9 @@
         </nav>
     </header>
     <main>
+        <div class="container" id="container-path">
+
+        </div>
         <div class="container" id="container-alert">
             <div class="alert alert-dismissible alert-warning mt-3">
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -59,99 +62,13 @@
                 <p class="mb-0">Mensaje de alerta para indicar que se ha podido producir un error (<a href="#" class="alert-link">ver detalles</a>).</p>
             </div>
         </div>
-        <div class="container">
+        <div class="container" id="container-chat">
+            <div class="row">
+                <div class="col-12 col-md-4">
 
-        </div>
-
-        <!-- Segundo contenedor con la guía de cómo usar VulnAI -->
-        <div class="section-with-curve">
-            <div class="container-fluid"> <!--Crea un contenedor con un margen superior de 5-->
-                <div class="row justify-content-center mt-5"> <!--Crea una fila dentro del contenedor, que divide el espacio en 12 columnas-->
-                    <div class="col-12 col-md-10 col-lg-8 col-xl-6">
-                        <div class="row">
-                            <!-- Columna izquierda: Chat -->
-                            <div class="col-md-7"> <!--Ocupa 6 columnas de las 12 posibles en pantallas medianas-->
-                                <img src="./img/chat_imagen.png" alt="Imagen de chat" class="img-fluid chat-image" id="chat-image"> <!--Imagen de chat-->
-                            </div>
-
-                            <!-- Columna derecha: Pasos -->
-                            <div class="col-md-5"> <!--Ocupa 6 columnas de las 12 posibles en pantallas medianas-->
-                                <div class="text-left"> <!--Alinea el texto a la izquierda en lugar de centrarlo (para que aparezca al lado de los números)-->
-                                    <!-- Paso 1 -->
-                                    <div class="step-header"> <!--Contiene el número y el título del paso correspondiente alineados horizontalmente-->
-                                        <div class="step-number">1</div>
-                                        <h6 class="step-title">Describe tu proyecto</h6>
-                                    </div>
-                                    <p class="step-text">Describe tu proyecto usando nuestro chat.</p>
-
-                                    <!-- Paso 2 -->
-                                    <div class="step-header">
-                                        <div class="step-number">2</div>
-                                        <h6 class="step-title">Recibe sugerencias</h6>
-                                    </div>
-                                    <p class="step-text">Nuestra IA buscará vulnerabilidades que puedan ser de tu interés.</p>
-
-                                    <!-- Paso 3 -->
-                                    <div class="step-header">
-                                        <div class="step-number">3</div>
-                                        <h6 class="step-title">Más detalles</h6>
-                                    </div>
-                                    <p class="step-text">Sigue hablando con la IA para obtener más información.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
-            </div>
-        </div>
+                <div class="col-12 col-md-8">
 
-        <!-- Sección de precios -->
-        <div class="pricing-section">
-            <div class="container">
-                <h2>Tabla de precios</h2>
-                <p>Elige la modalidad que mejor se adapte a tus necesidades.</p>
-                <div class="row justify-content-center">
-                    <!-- Tarjeta Básico -->
-                    <div class="col-12 col-md-4 mb-4">
-                        <div class="card border-primary mb-3" style="max-width: 20rem;">
-                            <div class="card-header">Básico</div>
-                            <div class="card-body">
-                                <h4 class="card-title">0€/mes</h4>
-                                <p class="card-text">1 proyecto<br>10 sugerencias<br>Sin soporte</p>
-                            </div>
-                            <div class="card-footer text-center">
-                                <button type="button" class="btn btn-outline-primary">Comenzar</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tarjeta Profesional -->
-                    <div class="col-12 col-md-4 mb-4">
-                        <div class="card border-primary mb-3" style="max-width: 20rem;">
-                            <div class="card-header">Profesional</div>
-                            <div class="card-body">
-                                <h4 class="card-title">19.99€/mes</h4>
-                                <p class="card-text">10 proyectos<br>100 sugerencias<br>Soporte por chat<br>Acceso a la API</p>
-                            </div>
-                            <div class="card-footer text-center">
-                                <button type="button" class="btn btn-outline-primary">Comenzar</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tarjeta Empresarial -->
-                    <div class="col-12 col-md-4 mb-4">
-                        <div class="card border-primary mb-3" style="max-width: 20rem;">
-                            <div class="card-header">Empresarial</div>
-                            <div class="card-body">
-                                <h4 class="card-title">49.99€/mes</h4>
-                                <p class="card-text">100 proyectos<br>Sugerencias ilimitadas<br>Soporte por chat<br>Soporte por teléfono<br>Acceso a la API</p>
-                            </div>
-                            <div class="card-footer text-center">
-                                <button type="button" class="btn btn-outline-primary">Comenzar</button>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>

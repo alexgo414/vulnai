@@ -81,7 +81,7 @@
 }
 
 
-/* Estilos personalizados para ajustar el diseño */
+/* descripcion y precios */
 .step-header {
     display: flex;
     align-items: center;
@@ -118,7 +118,6 @@
     margin-top: 2rem; /* Margen superior para el primer paso */
 }
 
-/* descripcion y precios */
 #chat-image {
     width: 100%;
     height: auto;
