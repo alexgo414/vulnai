@@ -1,7 +1,3 @@
-A continuación te proporciono un ejemplo claro y detallado de un archivo `README.md` que explica el flujo de trabajo colaborativo en GitHub utilizando ramas y buenas prácticas para evitar conflictos en el código. Este contenido está escrito en Markdown, como es típico para los README en GitHub.
-
----
-
 # Flujo de Trabajo Colaborativo en GitHub
 
 Este documento describe el flujo de trabajo recomendado para colaborar en este proyecto utilizando GitHub. Seguir estas prácticas ayudará a evitar conflictos en el código y mantener un historial limpio y organizado.
