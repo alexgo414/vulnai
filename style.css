@@ -54,6 +54,10 @@
     text-align: center;
 }
 
+#footer2 {
+    background-color: white;
+}
+
 #footer1 h3{
     color: #fff;
     font-weight: 400;
