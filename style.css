@@ -9,15 +9,13 @@
     margin-left: 0;
 }
 
+#logo-container {
+    margin-right: 10px;
+}
+
 #svaia-logo {
   width: 40px;
   height: auto;
-}
-
-#svaia-brand {
-    color: black;
-    font-weight: bold;
-    font-size: 30px;
 }
 
 #envelope-icon {
@@ -36,6 +34,72 @@
 
 #describe-form {
     margin-left: 10px;
+}
+
+/* inicio */
+.fondo-difuminado {
+    min-width: 100vw;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to right bottom, #dee2e6 20%, #526678 90%);
+    clip-path: ellipse(130% 80% at 50% 20%); /* Elipse centrada */
+    
+    padding-top: 5px;
+    padding-bottom: 4rem;
+}
+
+.alert-custom {
+    background-color: #ffa200; /* Amarillo */
+    color: white; /* Texto en blanco */
+    max-width: 94%;
+    margin: 1rem auto;
+}
+
+.btn-close-white {
+    color: white;
+    
+}
+
+.texto_bajo_logo {
+    font-size: 18px; 
+    color: #5c676c;
+    text-align: center;
+    max-width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: auto;
+    width: auto; /* Para que no altere los cuadros */
+    margin: 0 auto;
+    padding-right: 71px;
+    padding-left: 71px;
+}
+
+.cuadro-svaia {
+    background-color: #8da399; /* Amarillo */
+    color: white; /* Texto en blanco */
+    border: 2px solid #809197;
+    border-radius: 0.5rem; /* Esquinas redondeadas */
+    max-width: 18rem; /* Mismo ancho */
+    padding: 12px 5px; /* 12px se aplica al relleno superior e inferior (arriba y abajo) y 5px se aplica al relleno izquierdo y derecho (a la izquierda y a la derecha) */
+    text-align: center;
+    transition: all 0.3s ease-in-out; /* Esto añade una animación en caso de que se minimice la pantalla */
+    margin-top: 2rem !important;
+}
+.contenedor-cuadros {
+    display: flex; /* Activa Flexbox en el contenedor, para que puedan alinearse los elementos */
+    flex-wrap: wrap; /* Se envuelven si no caben en una sola línea */
+    justify-content: center; /* Se distribuyen en el centro del contenedor, con espacios iguales a ambos lados */
+    gap: 1rem;
+}
+
+@media (max-width: 767px) { /* Esto sólo se aplica cuando el ancho de la ventana es menor o igual a 600px */
+    .cuadro-svaia {
+        max-width: 68%;
+        width: 80%;
+        margin-top: 0.5rem !important;
+    }
 }
 
 
@@ -75,6 +139,17 @@
 
 .step-header:first-child {
     margin-top: 2rem; /* Margen superior para el primer paso */
+}
+
+.step-header,
+.step-text {
+    opacity: 0;
+    transform: translateX(20px);  /* Desplazados desde la derecha */
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.step-visible {
+    opacity: 1;
+    transform: translateX(0);  /* Regresan a su posición original */
 }
 
 #chat-image {
@@ -209,47 +284,36 @@
 }
 
 /* chat */
+#main-chat {
+    background: linear-gradient(to right bottom, #dee2e6 20%, #526678 90%);
+}
+
 #sidebar {
-    border: grey 1px solid;
+    border: #c5c5c5 1px solid;
     border-radius: 5px;
     background-color: white;
+    height: 200px;
 }
 
 #create-button {
     background-color: #18bc9c;
     border: none;
-    margin: 10px;
-    width: 50px;
-    height: 50px;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    width: 30px;
+    height: 30px;
     border-radius: 5px;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 0px;
 }
 
 .project-item {
     position: relative;
     padding: 10px;
-    margin: 5px 0;
     border-radius: 5px;
     transition: background-color 0.2s ease;
-}
-
-#delete-button {
-    background-color: #e74c3c;
-    border: none;
-    color: white;
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    padding: 3px 8px;
-    border-radius: 4px;
-    display: none;
-}
-
-.project-item:hover #delete-button {
-    display: inline-block;
 }
 
 .delete-button {
@@ -265,12 +329,20 @@
     display: none;
 }
 
+.project-item:hover {
+    padding: 12px;
+}
+
 .project-item:hover .delete-button {
-    display: inline-block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
 }
 
 #chat {
-    border: grey 1px solid;
+    border: #c5c5c5 1px solid;
     border-radius: 5px;
     background-color: white;
+    min-height: 300px;  /* Añadido para que no se colapse el chat al estar vacío */
 }
