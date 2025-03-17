@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <link href="bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
     <title>SVAIA</title>
 </head>
 <body>
@@ -110,7 +112,62 @@
                 </div>
                 <!-- Chat con orden 2 en pantallas pequeñas -->
                 <div class="col-12 col-lg-8 order-2" id="chat">
+                    <div class="row" id="row-superior">
+                        <div class="chat-mensajes">
+                            <div class="campo-bot">
+                                <div class="icono-bot">
+                                    <i class="fas fa-robot icono-bot"></i>
+                                </div>
 
+                                <div class="mensaje-bot">
+                                    <p>Hola! Soy un bot, ¿en qué puedo ayudarte?</p>
+                                </div>
+                            </div>
+                            <div class="campo-usuario">
+                                <div class="mensaje-usuario">
+                                    <p>Estoy realizando una aplicación web para recoger las vulnerabilidades de mis proyectos.</p>
+                                </div>
+
+                                <div class="icono-usuario">
+                                    <i class="fas fa-user icono-usuario"></i>
+                                </div>
+                            </div>
+                            <div class="campo-bot">
+                                <div class="icono-bot">
+                                    <i class="fas fa-robot icono-bot"></i>
+                                </div>
+
+                                <div class="mensaje-bot">
+                                    <p>Antes de continuar, permíteme que te cuente que los cangrejos tienen el cerebro en la garganta.</p>
+                                </div>
+                            </div>
+                            <div class="campo-usuario">
+                                <div class="mensaje-usuario">
+                                    <p>La aplicación web está hecha en Flask 3.1 y usa Bootstrap 5.3</p>
+                                </div>
+                                
+                                <div class="icono-usuario">
+                                    <i class="fas fa-user icono-usuario"></i>
+                                </div>
+                            </div>
+                            <div class="campo-bot">
+                                <div class="icono-bot">
+                                    <i class="fas fa-robot icono-bot"></i>
+                                </div>
+
+                                <div class="mensaje-bot">
+                                    <p>Qué pereza, pero te diré que los ratones no pueden vomitar.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div class="row" id="row-inferior">
+                        <div class="col-12 d-flex align-items-center" id="escribir-mensaje">
+                            <input type="text" class="form-control flex-grow-1" placeholder="Escribe tu mensaje...">
+                            <button class="btn btn-primary ms-0">Enviar</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
