@@ -114,51 +114,7 @@
                 <div class="col-12 col-lg-8 order-2" id="chat">
                     <div class="row" id="row-superior">
                         <div class="chat-mensajes">
-                            <div class="campo-bot">
-                                <div class="icono-bot">
-                                    <i class="fas fa-robot icono-bot"></i>
-                                </div>
-
-                                <div class="mensaje-bot">
-                                    <p class="my-2">Hola! Soy un bot, ¿en qué puedo ayudarte?</p>
-                                </div>
-                            </div>
-                            <div class="campo-usuario">
-                                <div class="mensaje-usuario align-items-center">
-                                    <p class="my-2">Estoy realizando una aplicación web para recoger las vulnerabilidades de mis proyectos.</p>
-                                </div>
-
-                                <div class="icono-usuario">
-                                    <i class="fas fa-user icono-usuario"></i>
-                                </div>
-                            </div>
-                            <div class="campo-bot">
-                                <div class="icono-bot">
-                                    <i class="fas fa-robot icono-bot"></i>
-                                </div>
-
-                                <div class="mensaje-bot">
-                                    <p class="my-2">Antes de continuar, permíteme que te cuente que los cangrejos tienen el cerebro en la garganta.</p>
-                                </div>
-                            </div>
-                            <div class="campo-usuario">
-                                <div class="mensaje-usuario">
-                                    <p class="my-2">La aplicación web está hecha en Flask 3.1 y usa Bootstrap 5.3</p>
-                                </div>
-                                
-                                <div class="icono-usuario">
-                                    <i class="fas fa-user icono-usuario"></i>
-                                </div>
-                            </div>
-                            <div class="campo-bot">
-                                <div class="icono-bot">
-                                    <i class="fas fa-robot icono-bot"></i>
-                                </div>
-
-                                <div class="mensaje-bot">
-                                    <p class="my-2">Qué pereza, pero te diré que los ratones no pueden vomitar.</p>
-                                </div>
-                            </div>
+                            
                         </div>
                     </div>
                 
@@ -247,5 +203,29 @@
     </main>
     <script src="bootstrap.bundle.min.js"></script>
     <script src="script.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Seleccionar el contenedor de mensajes
+            const chatMensajes = document.querySelector(".chat-mensajes");
+        
+            // Crear el elemento del mensaje de bienvenida
+            const mensajeBienvenida = document.createElement("div");
+            mensajeBienvenida.classList.add("campo-bot");
+        
+            mensajeBienvenida.innerHTML = `
+                <div class="icono-bot">
+                    <i class="fas fa-robot icono-bot"></i>
+                </div>
+                <div class="mensaje-bot">
+                    <p class="my-2">¡Hola! Bienvenido, ¿en qué puedo ayudarte?</p>
+                </div>
+            `;
+        
+            // Insertar el mensaje al inicio del contenedor
+            chatMensajes.prepend(mensajeBienvenida);
+        });
+    </script>
+
 </body>
 </html>
