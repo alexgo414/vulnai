@@ -8,56 +8,59 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }, { threshold: 0.5 });
-    document.querySelectorAll('.step-header, .step-text').forEach(el => {
-        observer.observe(el);
-    });
 
-    // Seleccionar elementos del chat
-    const chatMensajes = document.querySelector('.chat-mensajes');
-    const messageInput = document.getElementById('messageInput');
-    const sendButton = document.getElementById('sendButton');
 
-    // Mostrar mensaje de bienvenida (Ejercicio 1)
-    const mensajeBienvenida = document.createElement('div');
-    mensajeBienvenida.classList.add('campo-bot');
-    mensajeBienvenida.innerHTML = `
-        <div class="icono-bot">
-            <i class="fas fa-robot icono-bot"></i>
-        </div>
-        <div class="mensaje-bot">
-            <p class="my-2">¡Hola! Bienvenido, ¿en qué puedo ayudarte?</p>
-        </div>
-    `;
-    chatMensajes.prepend(mensajeBienvenida);
-    chatMensajes.scrollTop = chatMensajes.scrollHeight;
+document.querySelectorAll('.step-header, .step-text').forEach(el => {
+    observer.observe(el);
+});
 
-    // Funcionalidad del chat (Ejercicio 2 y 3)
-    sendButton.addEventListener('click', () => {
-        const messageText = messageInput.value.trim();
-        if (messageText !== '') {
-            // Añadir mensaje del usuario (Ejercicio 2)
-            const userMessage = document.createElement('div');
-            userMessage.classList.add('campo-usuario');
-            userMessage.innerHTML = `
-                <div class="mensaje-usuario">
-                    <p class="my-2">${messageText}</p>
-                </div>
-                <div class="icono-usuario">
-                    <i class="fas fa-user icono-user"></i>
-                </div>
-            `;
-            chatMensajes.appendChild(userMessage);
 
-            // Limpiar el input
-            messageInput.value = '';
+// Seleccionar elementos del chat
+const chatMensajes = document.querySelector('.chat-mensajes');
+const messageInput = document.getElementById('messageInput');
+const sendButton = document.getElementById('sendButton');
 
-            // Hacer scroll al final
-            chatMensajes.scrollTop = chatMensajes.scrollHeight;
+// Mostrar mensaje de bienvenida (Ejercicio 1)
+const mensajeBienvenida = document.createElement('div');
+mensajeBienvenida.classList.add('campo-bot');
+mensajeBienvenida.innerHTML = `
+    <div class="icono-bot">
+        <i class="fas fa-robot icono-bot"></i>
+    </div>
+    <div class="mensaje-bot">
+        <p class="my-2">¡Hola! Bienvenido, ¿en qué puedo ayudarte?</p>
+    </div>
+`;
+chatMensajes.prepend(mensajeBienvenida);
+chatMensajes.scrollTop = chatMensajes.scrollHeight;
 
-            // Enviar mensaje al servidor y mostrar respuesta (Ejercicio 3)
-            sendMessageToServer(messageText, chatMensajes);
-        }
-    });
+// Funcionalidad del chat (Ejercicio 2 y 3)
+sendButton.addEventListener('click', () => {
+    const messageText = messageInput.value.trim();
+    if (messageText !== '') {
+        // Añadir mensaje del usuario (Ejercicio 2)
+        const userMessage = document.createElement('div');
+        userMessage.classList.add('campo-usuario');
+        userMessage.innerHTML = `
+            <div class="mensaje-usuario">
+                <p class="my-2">${messageText}</p>
+            </div>
+            <div class="icono-usuario">
+                <i class="fas fa-user icono-user"></i>
+            </div>
+        `;
+        chatMensajes.appendChild(userMessage);
+
+        // Limpiar el input
+        messageInput.value = '';
+
+        // Hacer scroll al final
+        chatMensajes.scrollTop = chatMensajes.scrollHeight;
+
+        // Enviar mensaje al servidor y mostrar respuesta (Ejercicio 3)
+        sendMessageToServer(messageText, chatMensajes);
+    }
+});
 
     // Enviar mensaje con la tecla Enter
     messageInput.addEventListener('keypress', (event) => {
