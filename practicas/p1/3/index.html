@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Blog</title>
+    <link rel="stylesheet" href="bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="container">
+        <div class="row" id="header">
+            <div class="col-4 text-start align-self-center">
+                <a id="subscribe" href="#">Subscribe</a>
+            </div>
+            <div class="col-4 text-center align-self-center">
+                <a id="large" href="#">Large</a>
+            </div>
+            <div class="col-4 text-end align-self-center">
+                <a href="#" id="search-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" 
+                    stroke-width="2" class="mx-3" role="img" viewBox="0 0 24 24">
+                        <title>Search</title>
+                        <circle cx="10.5" cy="10.5" r="7.5"></circle>
+                        <path d="M21 21l-5.2-5.2"></path>
+                    </svg>
+                </a>
+                <a id="sign-up" href="#">Sign up</a>
+            </div>
+        </div>
+        <hr>
+        <div class="nav-scroller py-1 mb-3" style="border-bottom: 1px solid rgba(108,117,125,1);">
+            <nav class="nav nav-underline justify-content-between">
+              <a class="nav-item nav-link link-body-emphasis active text-white nav-hover" href="#">World</a>
+              <a class="nav-item nav-link link-body-emphasis text-white nav-hover" href="#">U.S.</a>
+              <a class="nav-item nav-link link-body-emphasis text-white nav-hover" href="#">Technology</a>
+              <a class="nav-item nav-link link-body-emphasis text-white nav-hover" href="#">Design</a>
+              <a class="nav-item nav-link link-body-emphasis text-white nav-hover" href="#">Culture</a>
+              <a class="nav-item nav-link link-body-emphasis text-white nav-hover" href="#">Business</a>
+              <a class="nav-item nav-link link-body-emphasis text-white nav-hover" href="#">Politics</a>
+              <a class="nav-item nav-link link-body-emphasis text-white nav-hover" href="#">Opinion</a>
+              <a class="nav-item nav-link link-body-emphasis text-white nav-hover" href="#">Science</a>
+              <a class="nav-item nav-link link-body-emphasis text-white nav-hover" href="#">Health</a>
+              <a class="nav-item nav-link link-body-emphasis text-white nav-hover" href="#">Style</a>
+              <a class="nav-item nav-link link-body-emphasis text-white nav-hover" href="#">Travel</a>
+            </nav>
+        </div>
+    </header>
+    <main class="container">
+        <div class="row mb-4 mt-4" id="main-post">
+            <div class="col-12 col-lg-6">
+                <h1>Title of a longer featured blog post</h1>
+                <p>Multiple lines of text that form the lede, informing new readers quickly and efficiently about what's most interesting in this post's contents.</p>
+                <a href="#">Continue reading...</a>
+            </div>
+            <div class="col-12 col-lg-6">
+                <!-- Sin contenido, solo fondo -->
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-md-6 mt-4 mt-lg-0" id="featured-post-container">
+                <div class="row" id="featured-post">
+                    <div class="col-8" id="featured-post-title">
+                        <strong id="featured-post-topic">World</strong>
+                        <h2>Featured post</h2>
+                        <p id="featured-post-day">Nov 12</p>
+                        <p>This is a wider card with supporting text below as a natural lead-in to additional content.</p>
+                        <a href="#">Continue reading</a>
+                    </div>
+                    <div class="col-lg-4 d-none d-lg-block" id="featured-post-img">
+                        <img src="featured-post-world.jpg" alt="Thumbnail" class="img-fluid" loading="lazy"> <!-- Imagen por poner -->
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 mt-4 mt-lg-0">
+                <div class="row" id="post-title">
+                    <div class="col-8" id="post-title-text">
+                        <strong id="post-title-topic">Design</strong>
+                        <h2>Post title</h2>
+                        <p id="post-title-day">Nov 11</p>
+                        <p>This is a wider card with supporting text below as a natural lead-in to additional content.</p>
+                        <a href="#">Continue reading</a>
+                    </div>
+                    <div class="col-lg-4 d-none d-lg-block" id="post-title-img">
+                        <img src="post-title-design.jpg" alt="Thumbnail" class="img-fluid" loading="lazy"> <!-- Imagen por poner -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row" id="blogs">
+            <div class="col-12 col-md-8">
+                <div class="row">
+                    <div class="col-12">
+                        <h2 id="firehouse">From the Firehose</h2>
+                    </div>
+                </div>
+                <hr>
+                <div class="row blogs-single-blog">
+                    <div class="col-12">
+                        <h2 class="blogs-blog-title">Sample blog post</h2>
+                        <p class="blogs-day-author">Jan 1, 2021 by <a href="#">Mark</a></p>
+                        <p>This blog post shows a few different types of content that's supported and styled with Bootstrap. Basic typography, images, and code are all 
+                            supported.
+                        </p>
+                        <hr>
+                        <p>This is some additional paragraph placeholder content. It has been written to fill the available space and show how a longer snippet of text 
+                            affects the surrounding content. We'll repeat it often to keep the demonstration flowing, so be on the lookout for this exact same string of 
+                            text.
+                        </p>
+                        <h3>Blockquotes</h3>
+                        <p>This is an example blockquote in action:</p>
+                        <blockquote>
+                            <p id="blogs-single-blog-big-quote">Quoted text goes here.</p>
+                        </blockquote>
+                        <p>This is some additional paragraph placeholder content. It has been written to fill the available space and show how a longer snippet of text 
+                            affects the surrounding content. We'll repeat it often to keep the demonstration flowing, so be on the lookout for this exact same string of 
+                            text.
+                        </p>
+                        <h3>Example lists</h3>
+                        <p>This is some additional paragraph placeholder content. It's a slightly shorter version of the other highly repetitive body text used throughout. 
+                            This is an example unordered list:
+                        </p>
+                        <ul>
+                            <li>First list item</li>
+                            <li>Second list item with longer description</li>
+                            <li>Third list item to close it out</li>
+                        </ul>
+                        <p>And this is an ordered list:</p>
+                        <ol>
+                            <li>First list item</li>
+                            <li>Second list item with longer description</li>
+                            <li>Third list item to close it out</li>
+                        </ol>
+                        <p>And this is a definition list:</p>
+                        <dl>
+                            <dt>HyperText Markup Language (HTML)</dt>
+                            <dd>The language used to describe and define the content of a Web page</dd>
+                            <dt>Cascading Style Sheets (CSS)</dt>
+                            <dd>Used to describe the appearance of Web content</dd>
+                            <dt>JavaScript (JS)</dt>
+                            <dd>The programming language used to build advanced Web sites and applications</dd>
+                        </dl>
+                        <h3>Inline HTML elements</h3>
+                        <p>HTML defines a long list of available inline tags, a complete list of which can be found on the <a>Mozilla Developer Network</a>.</p>
+                        <ul>
+                            <li><strong>To bold text</strong>, use <code>&lt;strong&gt;</code>.</li>
+                            <li><em>To italicize text</em>, use <code>&lt;em&gt;</code>.</li>
+                            <li>Abbreviations, like <abbr title="HyperText Markup Language">HTML</abbr> should use <code>&lt;abbr&gt;</code>, with an optional 
+                                <code>title</code> attribute for the full phrase.
+                            </li>
+                            <li>Citations, like <cite>— Mark Otto</cite>, should use <code>&lt;cite&gt;</code>.</li>
+                            <li><del>Deleted</del> text should use <code>&lt;del&gt;</code> and <ins>inserted</ins> text should use <code>&lt;ins&gt;</code>.</li>
+                            <li>Superscript <sup>text</sup> uses <code>&lt;sup&gt;</code> and subscript <sub>text</sub> uses <code>&lt;sub&gt;</code>.</li>
+                        </ul>
+                        <p>Most of these elements are styled by browsers with few modifications on our part.</p>
+                        <h3>Heading</h3>
+                        <p>This is some additional paragraph placeholder content. It has been written to fill the available space and show how a longer snippet of text 
+                            affects the surrounding content. We'll repeat it often to keep the demonstration flowing, so be on the lookout for this exact same string of 
+                            text.
+                        </p>
+                        <h3>Sub-heading</h3>
+                        <p>This is some additional paragraph placeholder content. It has been written to fill the available space and show how a longer snippet of text 
+                            affects the surrounding content. We'll repeat it often to keep the demonstration flowing, so be on the lookout for this exact same string of 
+                            text.
+                        </p>
+                        <pre><code>Example code block</code></pre>
+                        <p>This is some additional paragraph placeholder content. It's a slightly shorter version of the other highly repetitive body text used 
+                            throughout.
+                        </p>
+                    </div>
+                </div>
+                <div class="row blogs-single-blog">
+                    <div class="col-12">
+                        <h2 class="blogs-blog-title">Another blog post</h2>
+                        <p class="blogs-day-author">Dec 23, 2020 by <a href="#">Jacob</a></p>
+                        <p>This is some additional paragraph placeholder content. It has been written to fill the available space and show how a longer snippet of text 
+                            affects the surrounding content. We'll repeat it often to keep the demonstration flowing, so be on the lookout for this exact same string of 
+                            text.
+                        </p>
+                        <blockquote>
+                            <p>Longer quote goes here, maybe with some <strong>emphasized text</strong> in the middle of it.</p>
+                        </blockquote>
+                        <p>This is some additional paragraph placeholder content. It has been written to fill the available space and show how a longer snippet of text 
+                            affects the surrounding content. We'll repeat it often to keep the demonstration flowing, so be on the lookout for this exact same string of 
+                            text.
+                        </p>
+                        <h3>Example table</h3>
+                        <p>And don't forget about tables in these posts:</p>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Upvotes</th>
+                                    <th>Downvotes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Alice</td>
+                                    <td>10</td>
+                                    <td>11</td>
+                                </tr>
+                                <tr>
+                                    <td>Bob</td>
+                                    <td>4</td>
+                                    <td>3</td>
+                                </tr>
+                                <tr>
+                                    <td>Charlie</td>
+                                    <td>7</td>
+                                    <td>9</td>
+                                </tr>
+                                <tfoot>
+                                    <tr>
+                                        <td>Total</td>
+                                        <td>21</td>
+                                        <td>23</td>
+                                    </tr>
+                                </tfoot>
+                            </tbody>    
+                        </table>
+                        <p>This is some additional paragraph placeholder content. It's a slightly shorter version of the other highly repetitive body text used 
+                            throughout.
+                        </p>
+                    </div>
+                </div>
+                <div class="row blogs-single-blog">
+                    <div class="col-12">
+                        <h2 class="blogs-blog-title">New feature</h2>
+                        <p class="blogs-day-author">Dec 14, 2020 by <a href="#">Chris</a></p>
+                        <p>This is some additional paragraph placeholder content. It has been written to fill the available space and show how a longer snippet of text 
+                            affects the surrounding content. We'll repeat it often to keep the demonstration flowing, so be on the lookout for this exact same string of 
+                            text.
+                        </p>
+                        <ol>
+                            <li>First list item</li>
+                            <li>Second list item with longer description</li>
+                            <li>Third list item to close it out</li>
+                        </ol>
+                        <p>This is some additional paragraph placeholder content. It's a slightly shorter version of the other highly repetitive body text used 
+                            throughout.
+                        </p>
+                    </div>
+                </div>
+                <div class="row" id="pagination">
+                    <nav>
+                        <a href="#" class="end-button" id="older">Older</a>
+                        <a href="#" class="end-button" id="newer">Newer</a>
+                    </nav>
+                </div>
+            </div>
+            <div class="col-12 col-md-4 px-4" id="sidebar">
+                <div class="row" id="sidebar-header">
+                    <div class="col-12">
+                        <h4>About</h4>
+                        <p>Customize this section to tell your visitors a little bit about your publication, writers, content, or something else entirely. Totally up to 
+                            you.
+                        </p>
+                    </div>
+                </div>
+                <div class="row" id="sidebar-content">
+                    <div class="col-12">
+                        <h4>Recent posts</h4>
+                        <hr>
+                        <ul id="sidebar-recent-posts">  
+                            <li>
+                                <a href="#">
+                                    <div class="row">
+                                        <div class="col-12 col-lg-4" id="sidebar-recent-posts-img">
+                                            <img src="recent-post-1.jpg" alt='' class="img-fluid" loading="lazy"> <!-- Imagen por poner -->
+                                        </div>
+                                        <div class="col-12 col-lg-8" id="sidebar-recent-posts-text">
+                                            <p class="sidebar-content-title">Example blog post title</p>
+                                            <p class="sidebar-content-date">January 15, 2024</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <hr>
+                            <li>
+                                <a href="#">
+                                    <div class="row">
+                                        <div class="col-12 col-lg-4" id="sidebar-recent-posts-img">
+                                            <img src="recent-post-2.jpg" alt='' class="img-fluid" loading="lazy"> <!-- Imagen por poner -->
+                                        </div>
+                                        <div class="col-12 col-lg-8" id="sidebar-recent-posts-text">
+                                            <p class="sidebar-content-title">This is another blog post title</p>
+                                            <p class="sidebar-content-date">January 14, 2024</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <hr>
+                            <li>
+                                <a href="#">
+                                    <div class="row">
+                                        <div class="col-12 col-lg-4" id="sidebar-recent-posts-img">
+                                            <img src="recent-post-3.jpg" alt='' class="img-fluid" loading="lazy"> <!-- Imagen por poner -->
+                                        </div>
+                                        <div class="col-12 col-lg-8" id="sidebar-recent-posts-text">
+                                            <p class="sidebar-content-title">Longer blog post title: This one has multiple lines!</p>
+                                            <p class="sidebar-content-date">January 13, 2024</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                        </ul>
+                        <h4>Archives</h4>
+                        <ol id="sidebar-archives">
+                            <li><a href="#">March 2021</a></li>
+                            <li><a href="#">February 2021</a></li>
+                            <li><a href="#">January 2021</a></li>
+                            <li><a href="#">December 2020</a></li>
+                            <li><a href="#">November 2020</a></li>
+                            <li><a href="#">October 2020</a></li>
+                            <li><a href="#">September 2020</a></li>
+                            <li><a href="#">August 2020</a></li>
+                            <li><a href="#">July 2020</a></li>
+                            <li><a href="#">June 2020</a></li>
+                            <li><a href="#">May 2020</a></li>
+                            <li><a href="#">April 2020</a></li>
+                        </ol>
+                        <h4>Elsewhere</h4>
+                        <ol id="sidebar-elsewhere">
+                            <li><a href="#">GitHub</a></li>
+                            <li><a href="#">Twitter</a></li>
+                            <li><a href="#">Facebook</a></li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </main>
+    <footer class="row">
+        <div class="col-12">
+            <p>Blog template built for <a href="https://getbootstrap.com/">Bootstrap</a> by <a href="https://twitter.com/mdo">@mdo</a>.</p>
+        </div>
+        <div class="col-12">
+            <p><a href="#">Back to top</a></p>
+        </div>
+    </footer>
+    <script src="bootstrap.bundle.min.js"></script> <!-- En este ejercicio no se hace uso de JS -->
+</body>
+</html>
