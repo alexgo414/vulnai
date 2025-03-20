@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", function () {
             userMessage.classList.add("campo-usuario");
             userMessage.innerHTML = `
                 <div class="mensaje-usuario">
-                    <p class="my-2 text-end">${messageText}</p>
+                    <p class="my-2">${messageText}</p>
                 </div>
                 <div class="icono-usuario">
                     <i class="fas fa-user icono-user"></i>
