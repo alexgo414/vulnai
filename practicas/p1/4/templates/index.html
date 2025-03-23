@@ -114,7 +114,7 @@
                     <div class="col-12 col-md-10 col-lg-8 col-xl-6">
                         <div class="row">
                             <!-- Columna izquierda: Chat -->
-                            <div class="col-10 col-lg-7 mx-auto"> <!--Ocupa 6 columnas de las 12 posibles en pantallas medianas-->
+                            <div id="col-izq-chat" class="col-10 col-lg-7 mx-auto"> <!--Ocupa 6 columnas de las 12 posibles en pantallas medianas-->
                                 <a href="#">
                                     <img src="../static/img/chat_imagen.png" alt="Imagen de chat" class="img-fluid chat-image" id="chat-image"> <!--Imagen de chat-->
                                 </a>
@@ -124,30 +124,36 @@
                             <div class="col-lg-5 mb-4 mb-md-0">
                                 <div class="text-left"> <!--Alinea el texto a la izquierda en lugar de centrarlo (para que aparezca al lado de los números)-->
                                     <!-- Paso 1 -->
-                                    <div class="step">
-                                        <div class="step-header"> <!--Contiene el número y el título del paso correspondiente alineados horizontalmente-->
+                                    <div class="step mt-5 mt-lg-1">
+                                        <div class="step-header"> <!--Contiene el número del paso correspondiente alineados horizontalmente-->
                                             <div class="step-number">1</div>
-                                            <h6 class="step-title">Describe tu proyecto</h6>
                                         </div>
-                                        <p class="step-text">Describe tu proyecto usando nuestro chat.</p>
+                                        <div class="step-description"> 
+                                            <h6 class="step-title">Describe tu proyecto</h6>
+                                            <p class="step-text">Describe tu proyecto usando nuestro chat.</p>
+                                        </div>
                                     </div>
 
                                     <!-- Paso 2 -->
                                     <div class="step">
                                         <div class="step-header">
                                             <div class="step-number">2</div>
-                                            <h6 class="step-title">Recibe sugerencias</h6>
                                         </div>
-                                        <p class="step-text">Nuestra IA buscará vulnerabilidades que puedan ser de tu interés.</p>
+                                        <div class="step-description"> 
+                                            <h6 class="step-title">Recibe sugerencias</h6>
+                                            <p class="step-text">Nuestra IA buscará vulnerabilidades que puedan ser de tu interés.</p>
+                                        </div>
                                     </div>
 
                                     <!-- Paso 3 -->
                                     <div class="step">
                                         <div class="step-header">
                                             <div class="step-number">3</div>
-                                            <h6 class="step-title">Más detalles</h6>
                                         </div>
-                                        <p class="step-text">Sigue hablando con la IA para obtener más información.</p>
+                                        <div class="step-description"> 
+                                            <h6 class="step-title">Más detalles</h6>
+                                            <p class="step-text">Sigue hablando con la IA para obtener más información.</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

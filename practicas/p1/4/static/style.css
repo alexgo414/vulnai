@@ -98,7 +98,7 @@
     gap: 1rem;
 }
 
-@media (max-width: 767px) { /* Esto sólo se aplica cuando el ancho de la ventana es menor o igual a 600px */
+@media (max-width: 991px) { /* Esto sólo se aplica cuando el ancho de la ventana es menor o igual a 600px */
     .cuadro-svaia {
         max-width: 68%;
         width: 80%;
@@ -108,9 +108,23 @@
 
 
 /* descripcion y precios */
+#col-izq-chat {
+    padding-right: 35px;
+}
+
+#step-1 {
+    margin-top: 20px;
+}
+
 .step-header {
     display: flex;
     align-items: center;
+}
+
+@media (max-width: 991px) {
+    .step-number {
+        margin-left: 300px;
+    }
 }
 
 .step-number {
@@ -127,10 +141,23 @@
     color: white;
 }
 
+.step-description {
+    margin-top: -30px;
+}
+
+@media (max-width: 991px) {
+    .step-description {
+        margin-top: 5px;
+    }
+}
+
 .step-title {
     font-size: 1.4rem;
     font-weight: bold;
-    color: #2c3e50; 
+    color: #2c3e50;
+    margin-bottom: 15px;
+    margin-left: 52px;
+    width: 320px;
 }
 
 .step-text {
@@ -141,12 +168,15 @@
     width: 320px;
 }
 
-.step-header:first-child {
-    margin-top: 2rem; /* Margen superior para el primer paso */
+@media (max-width: 991px) {
+    .step-text {
+        width: 100%;
+    }
 }
 
 .step-header,
-.step-text {
+.step-text,
+.step-title {
     opacity: 0;
     transform: translateX(20px);  /* Desplazados desde la derecha */
     transition: opacity 0.6s ease-out, transform 0.6s ease-out;

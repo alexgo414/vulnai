@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     entry.target.classList.add('step-visible');
                     
                     // Get all elements that need animation inside this step
-                    const elementsToAnimate = entry.target.querySelectorAll('.step-header, .step-text, .step-image');
+                    const elementsToAnimate = entry.target.querySelectorAll('.step-header, .step-title, .step-text, .step-image');
                     
                     // Apply transition styles and add visible class to each element
                     elementsToAnimate.forEach((el, index) => {
