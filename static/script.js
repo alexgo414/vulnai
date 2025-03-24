@@ -1,3 +1,10 @@
+function scrollToBottom(container) {
+    const lastChild = container.lastElementChild;
+    if (lastChild) {
+        lastChild.scrollIntoView({ behavior: 'smooth',  block: 'nearest' });
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Animaciones en la sección de guía de SVAIA
     const observer = new IntersectionObserver((entries, observer) => {
@@ -32,7 +39,7 @@ mensajeBienvenida.innerHTML = `
     </div>
 `;
 chatMensajes.prepend(mensajeBienvenida);
-chatMensajes.scrollTop = chatMensajes.scrollHeight;
+scrollToBottom(chatMensajes);
 
 // Funcionalidad del chat (Ejercicio 2 y 3)
 sendButton.addEventListener('click', () => {
@@ -55,7 +62,7 @@ sendButton.addEventListener('click', () => {
         messageInput.value = '';
 
         // Hacer scroll al final
-        chatMensajes.scrollTop = chatMensajes.scrollHeight;
+        scrollToBottom(chatMensajes);
 
         // Enviar mensaje al servidor y mostrar respuesta (Ejercicio 3)
         sendMessageToServer(messageText, chatMensajes);
@@ -103,8 +110,8 @@ async function sendMessageToServer(messageText, chatMensajes) {
         `;
         chatMensajes.appendChild(botMessage);
 
-        // Hacer scroll al final
-        chatMensajes.scrollTop = chatMensajes.scrollHeight;
+        scrollToBottom(chatMensajes);
+        //chatMensajes.scrollTop = chatMensajes.scrollHeight;
     } catch (error) {
         // Mostrar mensaje de error si falla la conexión
         const errorMessage = document.createElement('div');
@@ -120,6 +127,6 @@ async function sendMessageToServer(messageText, chatMensajes) {
         chatMensajes.appendChild(errorMessage);
 
         // Hacer scroll al final
-        chatMensajes.scrollTop = chatMensajes.scrollHeight;
+        scrollToBottom(chatMensajes);
     }
 }
