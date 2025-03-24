@@ -410,7 +410,6 @@
 .chat-mensajes {
     display: flex;
     flex-direction: column;
-    height: 150px;
     gap: 20px;
 }
 
