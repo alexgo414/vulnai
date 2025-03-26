@@ -98,6 +98,14 @@ document.addEventListener("DOMContentLoaded", function () {
     chatMensajes.prepend(mensajeBienvenida);
 });
 
+// Function to scroll to the bottom of the chat container
+function scrollToBottom(container) {
+    const lastChild = container.lastElementChild;
+    if (lastChild) {
+        lastChild.scrollIntoView({ behavior: 'smooth',  block: 'nearest' });
+    }
+}
+
 // Exercise 2: Chat functionality
 document.addEventListener("DOMContentLoaded", function () {
     const chatMensajes = document.querySelector(".chat-mensajes");
@@ -137,8 +145,8 @@ document.addEventListener("DOMContentLoaded", function () {
             // Clear input
             messageInput.value = "";
 
-            // Scroll to bottom
-            chatMensajes.scrollTop = chatMensajes.scrollHeight;
+            // Scroll to the bottom of the chat
+            scrollToBottom(chatMensajes);
         }
     });
 
