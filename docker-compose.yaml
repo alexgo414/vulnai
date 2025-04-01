@@ -1,0 +1,12 @@
+services:
+  vulnai:                
+    container_name: vulnai 
+    build:
+      context: .           
+      dockerfile: Dockerfile  
+    ports:
+      - "5003:5000"       
+    volumes:
+      - .:/app            
+    environment:
+      - FLASK_ENV=development  
