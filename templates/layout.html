@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <link href="../static/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../static/style.css">
-    <title>{% blocktitle %}{% endblock %}</title>
+    <title>{% block title %}{% endblock %}</title>
 </head>
 <body>
     <!-- 1. Barra de navegación -->
@@ -59,7 +59,7 @@
         </nav>
     </header>
 
-    <main>
+    <main {% block main_id %}{% endblock %}>
         {% block content %}
         {% endblock %}
 
