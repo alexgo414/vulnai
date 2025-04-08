@@ -80,6 +80,13 @@
     padding-left: 71px;
 }
 
+.nav-link svg {
+    transition: fill 0.3s; /* Suaviza el cambio de color */
+}
+
+.nav-link:hover svg {
+    fill: #18bc9c; /* Cambia el color al pasar el ratón (ejemplo: azul) */
+}
 .cuadro-svaia {
     background-color: #8da399; /* Amarillo */
     color: white; /* Texto en blanco */
