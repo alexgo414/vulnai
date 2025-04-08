@@ -1,7 +1,9 @@
 {% extends "layout.html" %}
 {% block title %}Login{% endblock %}
 {% block content %}
-<div class="container mt-5">
+
+<div class="container mt-5 mb-5">
+
     <form action="/login" method="POST">
         <div class="form-group mb-3">
             <label for="exampleInputEmail1">Correo electrónico</label>
@@ -12,10 +14,12 @@
             <label for="exampleInputPassword1">Contraseña</label>
             <input type="password" class="form-control" id="exampleInputPassword1" placeholder="Ingresa tu contraseña" required>
         </div>
+        <!-- Recuerdame
         <div class="form-group form-check mb-3">
             <input type="checkbox" class="form-check-input" id="exampleCheck1">
             <label class="form-check-label" for="exampleCheck1">Recordarme</label>
         </div>
+        -->
         <button type="submit" class="btn btn-primary">Iniciar sesión</button>
     </form>
 </div>
