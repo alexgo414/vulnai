@@ -1,6 +1,5 @@
 {% extends "layout.html" %}
 {% block title %}Chat{% endblock %}
-{% block main_id %}id = main-chat{% endblock %}
 {% block content %}
 <div class="container" id="container-path">
     <nav aria-label="breadcrumb">
@@ -10,13 +9,15 @@
         </ol>
     </nav>
 </div>
-<div class="container" id="container-alert">
-    <div class="alert alert-dismissible alert-warning mt-3">
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        <h4 class="alert-heading">Atención!</h4>
-        <p class="mb-0">Mensaje de alerta para indicar que se ha podido producir un error (<a href="#" class="alert-link">ver detalles</a>).</p>
+<!-- Alerta
+    <div class="container" id="container-alert">
+        <div class="alert alert-dismissible alert-warning mt-3">
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <h4 class="alert-heading">Atención!</h4>
+            <p class="mb-0">Mensaje de alerta para indicar que se ha podido producir un error (<a href="#" class="alert-link">ver detalles</a>).</p>
+        </div>
     </div>
-</div>
+    -->
 <div class="container" id="container-chat">
     <div class="row flex-column flex-lg-row ps-lg-5 mt-3 mb-5">
         <!-- Sidebar con orden 1 en pantallas pequeñas -->
