@@ -1,0 +1,498 @@
+/* nav */
+
+#container-header {
+    width: 100%;
+    max-width: 100%;
+    padding-right: 0;
+    padding-left: 0;
+    margin-right: 0;
+    margin-left: 0;
+}
+
+#logo-container {
+    margin-right: 10px;
+}
+
+#svaia-logo {
+  width: 40px;
+  height: auto;
+}
+
+#envelope-icon {
+    width: 20px;
+    height: auto;
+    color: white;
+    margin-right: 20px;
+}
+
+#user-icon {
+    width: 20px;
+    height: auto;
+    color: white;
+    margin-right: 10px;
+}
+
+#describe-form {
+    margin-left: 10px;
+}
+
+/* inicio */
+.fondo-difuminado {
+    min-width: 100vw;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to right bottom, #dee2e6 20%, #526678 90%);
+    clip-path: ellipse(130% 80% at 50% 20%); /* Elipse centrada */
+    
+    padding-top: 5px;
+    padding-bottom: 4rem;
+}
+
+.alert-custom {
+    background-color: #ffa200; /* Amarillo */
+    color: white; /* Texto en blanco */
+    max-width: 94%;
+    margin: 1rem auto;
+}
+
+.btn-close-white {
+    color: white;
+    
+}
+
+#letras-grandes-svaia {
+    margin-top: 100px;
+}
+
+.texto_bajo_logo {
+    font-size: 18px; 
+    color: #5c676c;
+    text-align: center;
+    max-width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: auto;
+    width: auto; /* Para que no altere los cuadros */
+    margin: 0 auto;
+    padding-right: 71px;
+    padding-left: 71px;
+}
+
+.cuadro-svaia {
+    background-color: #8da399; /* Amarillo */
+    color: white; /* Texto en blanco */
+    border: 2px solid #809197;
+    border-radius: 0.5rem; /* Esquinas redondeadas */
+    max-width: 18rem; /* Mismo ancho */
+    padding: 12px 5px; /* 12px se aplica al relleno superior e inferior (arriba y abajo) y 5px se aplica al relleno izquierdo y derecho (a la izquierda y a la derecha) */
+    text-align: center;
+    transition: all 0.3s ease-in-out; /* Esto añade una animación en caso de que se minimice la pantalla */
+    margin-top: 2rem !important;
+}
+.contenedor-cuadros {
+    display: flex; /* Activa Flexbox en el contenedor, para que puedan alinearse los elementos */
+    flex-wrap: wrap; /* Se envuelven si no caben en una sola línea */
+    justify-content: center; /* Se distribuyen en el centro del contenedor, con espacios iguales a ambos lados */
+    gap: 1rem;
+}
+
+@media (max-width: 991px) { /* Esto sólo se aplica cuando el ancho de la ventana es menor o igual a 600px */
+    .cuadro-svaia {
+        max-width: 68%;
+        width: 80%;
+        margin-top: 0.5rem !important;
+    }
+}
+
+
+/* descripcion y precios */
+#col-izq-chat {
+    padding-right: 35px;
+}
+
+#step-1 {
+    margin-top: 20px;
+}
+
+.step-header {
+    display: flex;
+    align-items: center;
+}
+
+@media (max-width: 991px) {
+    .step-number {
+        margin-left: 300px;
+    }
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    background-color: #95a5a6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-right: 10px;
+    color: white;
+}
+
+.step-description {
+    margin-top: -30px;
+}
+
+@media (max-width: 991px) {
+    .step-description {
+        margin-top: 5px;
+    }
+}
+
+.step-title {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 15px;
+    margin-left: 52px;
+    width: 320px;
+}
+
+.step-text {
+    font-size: 1.1rem;
+    color: #2c3e50; 
+    margin-bottom: 20px;
+    margin-left: 52px;
+    width: 320px;
+}
+
+@media (max-width: 991px) {
+    .step-text {
+        width: 100%;
+    }
+}
+
+.step-header,
+.step-text,
+.step-title {
+    opacity: 0;
+    transform: translateX(20px);  /* Desplazados desde la derecha */
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.step-visible {
+    opacity: 1;
+    transform: translateX(0);  /* Regresan a su posición original */
+}
+
+#chat-image {
+    width: 100%;
+    height: auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Sombra moderada */
+    border-radius: 5px; /* Bordes redondeados, opcional */
+    transition: box-shadow 0.3s ease; /* Transición suave para efectos hover */
+
+    margin-top: 30px;
+}
+
+.pricing-section {
+    background-color: #98a4a4;
+    padding: 2rem 0;
+    text-align: center;
+}
+
+.pricing-section h2 { /*Afecta directamente al titulo h2 de la sección de precios */
+
+    margin-bottom: 1rem;
+}
+.pricing-section p {
+
+    margin-bottom: 2rem;
+}
+
+.card {
+    margin: 0 auto; /* Centra las tarjetas horizontalmente */
+    border: none; /* Quitamos el borde predeterminado */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave */
+    transition: transform 0.2s; /* Animación al pasar el mouse */
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 1.5s ease-out, transform 1.5s ease-out;
+    max-width: 20rem; /* Ancho máximo de la tarjeta */
+}
+
+/* Clase para mostrar la tarjeta con efecto pop-up */
+.card-pop-visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.card:hover {
+    transform: translateY(-5px); /* Levanta la tarjeta al pasar el mouse */
+}
+
+.card-header {
+    background-color: #2c3e50;
+    color: white;
+    text-align: center;
+    padding: 1rem;
+}
+
+.card-title {
+    color: #2c3e50;
+    text-align: center;
+}
+
+.card-text {
+    text-align: left;
+    padding: 0 1rem;
+}
+
+.card-footer {
+    background-color: white;
+    border-top: none;
+}
+
+.btn-outline-primary {
+    background-color: white;
+    border-color: #2c3e50;
+    color: #2c3e50;
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.btn-outline-primary:hover {
+    background-color: #2c3e50;
+    color: white;
+}
+
+.section-with-curve {
+    position: relative;
+    background-color: #fff; /* Fondo blanco */
+    padding-bottom: 8rem; /* Espacio para la curva */
+    padding-top: 5rem; /* Espacio para la curva */
+}
+
+.section-with-curve::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 40px; /* Altura de la curva */
+    background: #98a4a4; /* Mismo color que pricing-section */
+    border-top-left-radius: 100% 40px; /* Curva suave en esquina superior izquierda */
+    border-top-right-radius: 100% 40px; /* Curva suave en esquina superior derecha */
+}
+
+/* footer */
+#footer1{
+    background-color: #2c3e50;
+    padding-top: 45px;
+    padding-bottom: 75px;
+}
+
+#footer1 a {
+    color: #18bc9c;
+    text-decoration-line: none;
+}
+
+.fin-de-footer{
+    text-align: center;
+}
+
+#footer2 {
+    background-color: white;
+}
+
+#footer1 h3{
+    color: #fff;
+    font-weight: 400;
+}
+
+.bi-twitter{
+    color: #18bc9c;
+}
+
+.bi-facebook{
+    color: #18bc9c;
+}
+
+.bi-linkedin{
+    color: #18bc9c;
+}
+
+.bi-discord{
+    color: #18bc9c;
+}
+
+#mapa{
+    height: 200px;
+    width: 70%;
+}
+
+/* chat */
+#main-chat {
+    background: linear-gradient(to right bottom, #dee2e6 20%, #526678 90%);
+}
+
+#sidebar {
+    border: #c5c5c5 1px solid;
+    border-radius: 5px;
+    background-color: white;
+    height: 200px;
+}
+
+#create-button {
+    background-color: #18bc9c;
+    border: none;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    width: 30px;
+    height: 30px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0px;
+}
+
+.project-item {
+    position: relative;
+    padding: 10px;
+    border-radius: 5px;
+    transition: background-color 0.2s ease;
+}
+
+.delete-button {
+    background-color: #e74c3c;
+    border: none;
+    color: white;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 3px 8px;
+    border-radius: 4px;
+    display: none;
+}
+
+.project-item:hover {
+    padding: 12px;
+}
+
+.project-item:hover .delete-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+}
+
+#chat {
+    min-height: 300px;  /* Añadido para que no se colapse el chat al estar vacío */
+    height: 700px;
+}
+
+#row-superior {
+    border: #e1e1e1 1px solid;
+    border-bottom: 0px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    background-color: white;
+    height: 635px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+}
+
+.chat-mensajes {
+    display: flex;
+    flex-direction: column;
+    height: 150px;
+    gap: 20px;
+}
+
+.mensaje-bot {
+    align-self: flex-end;
+    background-color: #95a5a6;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 10px;
+    width: 90%;
+    text-align: left;
+    flex-direction: row-reverse;
+
+}
+
+.campo-bot{
+    display: flex;
+}
+
+.icono-bot{
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.mensaje-usuario {
+    align-self: flex-start;
+    background-color: #2c3e50;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 10px;
+    width: 90%;
+    text-align: left;
+}
+
+.campo-usuario{
+    display: flex;
+}
+
+.icono-usuario{
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 10px;
+    text-align: right;
+}
+
+#row-inferior {
+    background-color: #f8f8f8;
+    border: #e1e1e1 1px solid;
+    height: 65px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+#escribir-mensaje {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border-radius: 10px;
+}
+
+#escribir-mensaje input {
+    flex-grow: 1;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: white;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border: #e3e6e9 1px solid;
+
+}
+
+#escribir-mensaje button {
+    padding: 10px 15px;
+    border-radius: 5px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    cursor: pointer;
+    white-space: nowrap;
+}
