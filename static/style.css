@@ -340,11 +340,6 @@
 }
 
 /* chat */
-main {
-    background: linear-gradient(to right bottom, #dee2e6 20%, #526678 90%);
-    padding-bottom: 10px;
-}
-
 #sidebar {
     border: #c5c5c5 1px solid;
     border-radius: 5px;
