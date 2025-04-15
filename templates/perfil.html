@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% block title %}Proyectos{% endblock %}
+{% block content %}
+<div>
+    <h1>Proyectos</h1>
+    <p><a href="{{ url_for('proyecto_nuevo') }}" class="boton">Crear proyecto</a></p>
+</div>
+<div id="proyectos">
+    {% for proyecto in proyectos %}
+    <div>
+        <h2>{{proyecto.nombre}}</h2>
+        <p>{{proyecto.descripcion}}</p>
+        <span>Fecha de creación: {{proyecto.fecha_creacion}}</span>
+        <br>
+        <span>Fecha de modificación: {{proyecto.fecha_modificacion}}</span>
+        <p><a href="{{ url_for('proyecto_editar', id=proyecto.id) }}" class="boton">Editar proyecto</a></p>
+        <p><a href="{{ url_for('proyecto_eliminar', id=proyecto.id) }}" class="boton">Eliminar proyecto</a></p>
+    </div>      
+    {% endfor %}
+</div>
+{% endblock %}
