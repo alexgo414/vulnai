@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% block title %}Proyectos{% endblock %}
+{% block title %}Perfil{% endblock %}
 {% block content %}
 <div>
     <h1>Proyectos</h1>
@@ -15,6 +15,22 @@
         <span>Fecha de modificación: {{proyecto.fecha_modificacion}}</span>
         <p><a href="{{ url_for('proyecto_editar', id=proyecto.id) }}" class="boton">Editar proyecto</a></p>
         <p><a href="{{ url_for('proyecto_eliminar', id=proyecto.id) }}" class="boton">Eliminar proyecto</a></p>
+    </div>      
+    {% endfor %}
+</div>
+<div>
+    <h1>Usuarios</h1>
+    <p><a href="{{ url_for('usuario_nuevo') }}" class="boton">Crear usuario</a></p>
+</div>
+<div id="usuarios">
+    {% for usuario in usuarios %}
+    <div>
+        <h2>{{usuario.nombre}}</h2>
+        <p>{{usuario.apellidos}}</p>
+        <span>Email: {{usuario.email}}</span>
+        <br>
+        <p><a href="{{ url_for('usuario_editar', id=usuario.id) }}" class="boton">Editar usuario</a></p>
+        <p><a href="{{ url_for('usuario_eliminar', id=usuario.id) }}" class="boton">Eliminar usuario</a></p>
     </div>      
     {% endfor %}
 </div>
