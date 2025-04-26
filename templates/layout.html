@@ -70,6 +70,29 @@
     </header>
 
     <main>
+        <!-- Alerta -->
+        <div class="container" id="container-alert">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-dismissible alert-{{ category }} mt-3">
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    <h4 class="alert-heading">
+                        {% set category_map = {
+                            'success': 'Éxito',
+                            'danger': 'Error',
+                            'warning': 'Advertencia',
+                            'info': 'Información'
+                        } %}
+                        {{ category_map[category] if category in category_map else category|capitalize }}
+                    </h4>
+                    <p class="mb-0">{{ message|safe }}</p>
+                </div>
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+        </div>
+        
         {% block content %}
         {% endblock %}
     </main>

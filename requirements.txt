@@ -5,3 +5,4 @@ sqlalchemy
 mariadb
 uuid
 datetime
+Flask_Login

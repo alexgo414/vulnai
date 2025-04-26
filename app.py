@@ -1,12 +1,12 @@
 import toml
 import uuid
-from flask import Flask, render_template, request, flash, redirect, url_for
+from flask import Flask, render_template, request, flash, redirect, url_for, abort
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text, func
 from datetime import date
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-
+from util import url_has_allowed_host_and_scheme
 
 app = Flask(__name__)
 app.config.from_file("config.toml", load=toml.load)
@@ -17,7 +17,25 @@ db.init_app(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = "login"
+login_manager.login_view = 'login'
+login_manager.login_message = 'Debes iniciar sesión para acceder a esta página.'
+login_manager.login_message_category = 'info'
+
+def hash(password): # codificar contraseña
+    return generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
+
+def check(password, hash): # verificar contraseña
+    return check_password_hash(hash, password)
+
+def buscar_usuario_por_id_proyecto(id_proyecto):
+    # Obtener el proyecto por su ID
+    proyecto = db.session.execute(db.select(Proyecto).where(Proyecto.id == id_proyecto)).scalar_one_or_none()
+    if proyecto:
+        # Obtener el nombre del usuario que tiene asignado el proyecto
+        usuario = db.session.execute(db.select(Usuario).where(Usuario.proyectos.contains(id_proyecto))).scalar_one_or_none()
+        if usuario:
+            return usuario.nombre
+    return None
 
 # Definición de modelos
 class Proyecto(db.Model):
@@ -35,13 +53,14 @@ class Usuario(UserMixin, db.Model): # Se añade UserMixin porque así lo manda F
     apellidos = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(50), nullable=False, unique=True)
     password = db.Column(db.String(200), nullable=False)
+    proyectos = db.Column(db.Text, nullable=True)  # Almacenar IDs de proyectos como una lista separada por comas
 
 # Crear el user loader
 @login_manager.user_loader
-def load_user(user_id):
-    return db.session.get(Usuario, user_id)
+def load_user(user_id:str):
+    return db.session.get(Usuario, user_id) # Poner que devuelva None si no existe el usuario??
 
-# Crear la tabla proyectos y crear nuevos usuarios por defecto (si no existen) en la base de datos, finalmente se confirman los cambios
+# Crear la base de datos y el usuario admin si no existe
 with app.app_context():
     db.create_all()
 
@@ -51,17 +70,18 @@ with app.app_context():
             nombre='admin',
             apellidos='administrador',
             email='admin',
-            password=generate_password_hash('admin', method='pbkdf2:sha256', salt_length=16)
-    )
-    db.session.add(admin)
+            password=hash('admin')
+        )
+        db.session.add(admin)
 
     if not Usuario.query.filter_by(email='user').first():
         user = Usuario(
             id=str(uuid.uuid4()),
             nombre='user',
-            apellidos='normal',
+            apellidos='user',
             email='user',
-            password=generate_password_hash('user', method='pbkdf2:sha256', salt_length=16)
+            password=hash('user'),
+            proyectos=''
         )
         db.session.add(user)
 
@@ -78,42 +98,47 @@ def index():
 def chat():
     return render_template('chat.html')
 
+@app.template_filter('buscar_usuario')
+def buscar_usuario(id_proyecto):
+    return buscar_usuario_por_id_proyecto(id_proyecto)
+
 # Ruta para la página del perfil de usuario
-# Sólo el admin verá todos los usuarios y proyectos, y el resto sólo verá su información
 @app.route('/perfil')
 @login_required
 def perfil():
     if current_user.email == 'admin':
         proyectos = db.session.execute(db.select(Proyecto)).scalars().all()
         usuarios = db.session.execute(db.select(Usuario)).scalars().all()
+        return render_template('perfil.html', proyectos=proyectos, usuarios=usuarios)
     else:
-        proyectos = []  # O tus proyectos asociados
-        usuarios = [current_user]
-    return render_template('perfil.html', proyectos=proyectos, usuarios=usuarios)
+        proyectos_ids = current_user.proyectos.split(",") if current_user.proyectos else []
+        proyectos = Proyecto.query.filter(Proyecto.id.in_(proyectos_ids)).all()
+        return render_template('perfil_usuario.html', proyectos=proyectos, usuario=current_user)
 
 # Ruta para la página de login
-# Además de mostrar la página, también autentica al usuario verificando su correo y contraseña al enviar el formulario
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == "POST":
+    if request.method == 'POST':
         email = request.form['email']
-        password = request.form['password']
-        usuario = Usuario.query.filter_by(email=email).first()
-        if usuario and check_password_hash(usuario.password, password):
-            login_user(usuario)
-            flash("Inicio de sesión exitoso.", "exito")
-            return redirect(url_for('perfil'))
+        password = request.form['password']       
+        user = Usuario.query.filter_by(email=email).first()
+        if user and check(password, user.password):
+            login_user(user, remember=True)  # Flask-Login
+            flash('Has iniciado sesión correctamente.', 'success')
+            next = request.form.get('next', '/perfil') 
+            if not url_has_allowed_host_and_scheme(next, request.host):
+                return abort(400)                
+            return redirect(next)
         else:
-            flash("Credenciales inválidas.", "error")
-
+            flash('Nombre de usuario o contraseña incorrectos.', 'danger')    
     return render_template('login.html')
 
 # Ruta para logout
 @app.route('/logout')
 @login_required
 def logout():
-    logout_user()
-    flash('Sesión cerrada correctamente.', 'exito')
+    logout_user()  # Cerrar sesión con Flask-Login
+    flash('Has cerrado la sesión.', 'info')
     return redirect(url_for('login'))
 
 # Ruta para la página de crear proyecto
@@ -137,8 +162,15 @@ def proyecto_nuevo():
         
         # Guardar el nuevo proyecto en la base de datos
         db.session.add(p)
+
+        # Guardar el ID del proyecto en el usuario actual
+        if current_user.proyectos:
+            current_user.proyectos += f",{id}"  # Agregar el nuevo ID a la lista existente
+        else:
+            current_user.proyectos = id  # Si no hay proyectos, inicializar con el nuevo ID
+
         db.session.commit()
-        flash(f"Proyecto <em>{nombre}</em> añadido con éxito.", "exito")
+        flash(f"Proyecto <strong>{nombre}</strong> añadido con éxito.", "success")
         return redirect(url_for("perfil"))
     else:
         return render_template("proyecto_nuevo.html")
@@ -153,7 +185,7 @@ def proyecto_editar(id=None):
         p.descripcion = request.form['descripcion']
         p.fecha_modificacion = date.today()
         db.session.commit()
-        flash(f"Proyecto <em>{p.nombre}</em> modificado con éxito.", "exito")
+        flash(f"Proyecto <strong>{p.nombre}</strong> modificado con éxito.", "success")
         return redirect(url_for("perfil"))
     else:
         return render_template("proyecto_editar.html", proyecto=p)
@@ -165,7 +197,7 @@ def proyecto_eliminar(id=None):
     p = db.one_or_404(db.select(Proyecto).where(Proyecto.id == id))
     db.session.delete(p)
     db.session.commit()
-    flash(f"Proyecto <em>{p.nombre}</em> eliminado con éxito.", "exito")
+    flash(f"Proyecto <strong>{p.nombre}</strong> eliminado con éxito.", "success")
     return redirect(url_for("perfil"))
 
 # Ruta para crear un nuevo usuario
@@ -185,12 +217,12 @@ def usuario_nuevo():
         password = request.form['password']
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
 
-        u = Usuario(id=id, nombre=nombre, apellidos=apellidos, email=email, password=hashed_password)
+        u = Usuario(id=id, nombre=nombre, apellidos=apellidos, email=email, password=hashed_password, proyectos='')
 
         # Guardar el nuevo proyecto en la base de datos
         db.session.add(u)
         db.session.commit()
-        flash(f"Usuario <em>{nombre}</em> añadido con éxito.", "exito")
+        flash(f"Usuario <strong>{nombre}</strong> añadido con éxito.", "success")
         return redirect(url_for("perfil"))
     else:
         return render_template("usuario_nuevo.html")
@@ -213,7 +245,7 @@ def usuario_editar(id=None):
         u.password = hashed_password
 
         db.session.commit()
-        flash(f"Usuario <em>{u.nombre}</em> modificado con éxito.", "exito")
+        flash(f"Usuario <strong>{u.nombre}</strong> modificado con éxito.", "success")
         return redirect(url_for("perfil"))
     else:
         return render_template("usuario_editar.html", usuario=u)
@@ -225,7 +257,7 @@ def usuario_eliminar(id=None):
     u = db.one_or_404(db.select(Usuario).where(Usuario.id == id))
     db.session.delete(u)
     db.session.commit()
-    flash(f"Proyecto <em>{u.nombre}</em> eliminado con éxito.", "exito")
+    flash(f"Proyecto <strong>{u.nombre}</strong> eliminado con éxito.", "success")
     return redirect(url_for("perfil"))
 
 if __name__ == '__main__':

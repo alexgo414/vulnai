@@ -10,6 +10,7 @@
     <div>
         <h2>{{proyecto.nombre}}</h2>
         <p>{{proyecto.descripcion}}</p>
+        <span>Propietario: {{ proyecto.id | buscar_usuario }}</span> <br>
         <span>Fecha de creación: {{proyecto.fecha_creacion}}</span>
         <br>
         <span>Fecha de modificación: {{proyecto.fecha_modificacion}}</span>
@@ -34,4 +35,5 @@
     </div>      
     {% endfor %}
 </div>
+<p><a href="{{ url_for('logout') }}" class="boton">Cerrar sesión</a></p>
 {% endblock %}

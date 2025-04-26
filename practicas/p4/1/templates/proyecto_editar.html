@@ -1,0 +1,15 @@
+{% from 'macros.html' import imprimir_lista, imprimir_tabla with context %}
+{% extends "layout.html" %}
+{% block title %}Editar {{proyecto.nombre}}{% endblock %}
+{% block content %}
+<div id="proyecto_nuevo">
+  <h1>Editar proyecto {{proyecto.nombre}}</h1>
+  <form action="{{ url_for('proyecto_editar', id=proyecto.id) }}" method="post">
+    <label for="nombre">Nombre:</label>
+    <input type="text" id="nombre" name="nombre" required value="{{proyecto.nombre}}">
+    <label for="descripcion">Descripción:</label>
+    <textarea id="descripcion" name="descripcion">{{proyecto.descripcion}}</textarea>
+    <input type="submit" value="Actualizar">
+  </form>
+</div>
+{% endblock %}

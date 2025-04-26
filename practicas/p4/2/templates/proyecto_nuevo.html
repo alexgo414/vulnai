@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block title %}Crear nuevo proyecto{% endblock %}
+{% block content %}
+<div id="proyecto_nuevo">
+  <h1>Crear nuevo proyecto</h1>
+  <form action="{{ url_for('proyecto_nuevo') }}" method="post">
+    <label for="nombre">Nombre:</label>
+    <input type="text" id="nombre" name="nombre" required>
+    <label for="descripcion">Descripción:</label>
+    <textarea id="descripcion" name="descripcion"></textarea>
+    <input type="submit" value="Crear">
+  </form>
+</div>
+{% endblock %}

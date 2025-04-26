@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% block title %}Perfil{% endblock %}
+{% block content %}
+<div>
+    <h1>Proyectos</h1>
+    <p><a href="{{ url_for('proyecto_nuevo') }}" class="boton">Crear proyecto</a></p>
+</div>
+<div id="proyectos">
+    {% for proyecto in proyectos %}
+    <div>
+        <h2>{{proyecto.nombre}}</h2>
+        <p>{{proyecto.descripcion}}</p>
+        <span>Fecha de creación: {{proyecto.fecha_creacion}}</span>
+        <br>
+        <span>Fecha de modificación: {{proyecto.fecha_modificacion}}</span>
+        <p><a href="{{ url_for('proyecto_editar', id=proyecto.id) }}" class="boton">Editar proyecto</a></p>
+        <p><a href="{{ url_for('proyecto_eliminar', id=proyecto.id) }}" class="boton">Eliminar proyecto</a></p>
+    </div>      
+    {% endfor %}
+</div>
+<div>
+    <h1>Información personal</h1>
+    <p><strong>Nombre:</strong> {{ usuario.nombre }}</p>
+    <p><strong>Apellidos:</strong> {{ usuario.apellidos }}</p>
+    <p><strong>Email:</strong> {{ usuario.email }}</p>
+    <p><a href="{{ url_for('usuario_editar', id=usuario.id) }}" class="boton">Editar perfil</a></p>
+</div>
+<p><a href="{{ url_for('logout') }}" class="boton">Cerrar sesión</a></p>
+{% endblock %}
