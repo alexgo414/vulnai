@@ -1,0 +1,37 @@
+services:
+  vulnai:                
+    container_name: vulnai 
+    build:
+      context: .           
+      dockerfile: Dockerfile  
+    ports:
+      - "5003:5000"       
+    volumes:
+      - .:/app            
+    environment:
+      FLASK_ENV: development
+
+  mariadb:
+    image: mariadb:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: vulnai_db
+      MYSQL_USER: usuario
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./db_data:/var/lib/mysql # Persist data
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: mariadb
+      PMA_USER: usuario
+      PMA_PASSWORD: password
+    ports:
+      - "8080:80"
+    depends_on:
+      - mariadb

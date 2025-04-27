@@ -1,0 +1,72 @@
+/* Contenedor principal */
+#proyectos, #usuarios {
+    margin: 20px auto;
+    max-width: 1200px;
+    padding: 20px;
+    background-color: #f8f9fa; /* Fondo claro */
+    border-radius: 8px; /* Bordes redondeados */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave */
+}
+
+/* Títulos */
+h1 {
+    font-size: 2rem;
+    color: #2c3e50; /* Azul oscuro */
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+h5.card-title {
+    font-size: 1.25rem;
+    color: #34495e; /* Azul más oscuro */
+    margin-bottom: 10px;
+}
+
+/* Botones */
+.btn {
+    font-size: 0.9rem;
+    padding: 8px 15px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-success {
+    background-color: #18bc9c;
+    border-color: #18bc9c;
+}
+
+.btn-success:hover {
+    background-color: #148f77;
+    border-color: #148f77;
+}
+
+.btn-danger {
+    background-color: #e74c3c;
+    border-color: #e74c3c;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
+    border-color: #c0392b;
+}
+
+/* Tarjetas */
+.card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px); /* Efecto de elevación */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Sombra más fuerte */
+}
+
+/* Texto dentro de las tarjetas */
+.card-text {
+    font-size: 0.95rem;
+    color: #7f8c8d; /* Gris elegante */
+    margin-bottom: 10px;
+}
+

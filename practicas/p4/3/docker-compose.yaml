@@ -1,0 +1,40 @@
+services:
+  vulnai:                
+    container_name: vulnai 
+    build:
+      context: .           
+      dockerfile: Dockerfile  
+    ports:
+      - "5003:5000"       
+    volumes:
+      - .:/app            
+    environment:
+      FLASK_ENV: development
+    depends_on:
+      - mysql
+    command: ["flask", "run", "--host=0.0.0.0"]
+
+  mysql:
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: vulnai_db
+      MYSQL_USER: vulnai
+      MYSQL_PASSWORD: xmw1pW9CPyI4xKSN
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./db_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: vulnai
+      PMA_PASSWORD: xmw1pW9CPyI4xKSN
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql

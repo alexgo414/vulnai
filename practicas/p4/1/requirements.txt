@@ -1,0 +1,7 @@
+toml
+flask
+flask_sqlalchemy
+sqlalchemy
+mariadb
+uuid
+datetime
