@@ -4,7 +4,9 @@
 
 <div class="container mt-5 mb-5">
 
-    <form action="/login" method="POST">
+    <form id="login-form">
+        <div id="error-msg" class="text-danger mt-2"></div>
+
         <div class="form-group mb-3">
             <label for="username">Nombre de usuario</label>
             <input type="text" class="form-control" id="username" name="username" placeholder="Ingresa tu nombre de usuario" required>
@@ -22,4 +24,38 @@
         <button type="submit" class="btn btn-primary">Iniciar sesión</button>
     </form>
 </div>
+
+<script>
+    document.getElementById("login-form").addEventListener("submit", async function (e) {
+      e.preventDefault(); // evita el envío clásico del formulario
+  
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+  
+      try {
+        const response = await fetch("http://localhost:5001/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        });
+  
+        const result = await response.json();
+        
+
+
+        if (response.ok && result.success) {
+            const token = result.access_token;
+        
+            sessionStorage.setItem("token", result.access_token);
+            sessionStorage.setItem("usuario", JSON.stringify(result.usuario));
+            window.location.href = "/perfil";
+        } else {
+          document.getElementById("error-msg").textContent = result.message || "Credenciales incorrectas.";
+        }
+      } catch (error) {
+        document.getElementById("error-msg").textContent = "Error de conexión con la API.";
+      }
+    });
+  </script>
+
 {% endblock %}

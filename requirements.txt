@@ -8,3 +8,5 @@ sqlalchemy
 python-dotenv
 uuid
 flask_restful
+flask_jwt_extended
+flask-cors
