@@ -10,9 +10,26 @@ services:
       - .:/app            
     environment:
       FLASK_ENV: development
+      FLASK_APP: web/app.py
     depends_on:
       - mysql
-    command: ["flask", "run", "--host=0.0.0.0"]
+    command: ["flask", "run", "--host=0.0.0.0", "--debug"]
+
+  api:
+    container_name: api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5000"  # Exponer la API en el puerto 5001
+    volumes:
+      - .:/app
+    environment:
+      FLASK_ENV: development
+      FLASK_APP: api/app.py  # Ruta al archivo de la API
+    depends_on:
+      - mysql
+    command: ["flask", "run", "--host=0.0.0.0", "--debug"]
 
   mysql:
     image: mysql:latest

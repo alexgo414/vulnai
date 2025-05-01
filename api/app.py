@@ -1,0 +1,248 @@
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from flask_restful import Api, Resource
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import LoginManager, UserMixin
+import uuid
+from datetime import date
+import os
+from dotenv import load_dotenv
+import uuid
+from flask import Flask, render_template, request, flash, redirect, url_for, abort, make_response
+from flask_sqlalchemy import SQLAlchemy
+from datetime import date
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from util import url_has_allowed_host_and_scheme
+import os
+from dotenv import load_dotenv
+
+# Cargar configuración desde .env
+load_dotenv()
+
+# Configurar Flask
+app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("SQLALCHEMY_DATABASE_URI")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS") == "true"
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+
+db = SQLAlchemy(app)
+api = Api(app)
+
+# Configurar Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = 'Debes iniciar sesión para acceder a esta página.'
+login_manager.login_message_category = 'info'
+
+# Modelos
+class Proyecto(db.Model):
+    __tablename__ = 'proyectos'
+    id = db.Column(db.String(36), primary_key=True)
+    nombre = db.Column(db.String(20), nullable=False)
+    descripcion = db.Column(db.Text, nullable=True)
+    fecha_creacion = db.Column(db.Date, nullable=False)
+    fecha_modificacion = db.Column(db.Date, nullable=False)
+    usuario_id = db.Column(db.String(36), db.ForeignKey('usuarios.id'), nullable=False)
+
+class Usuario(UserMixin, db.Model):
+    __tablename__ = 'usuarios'
+    id = db.Column(db.String(36), primary_key=True)
+    username = db.Column(db.String(20), nullable=False, unique=True)
+    nombre = db.Column(db.String(20), nullable=False)
+    apellidos = db.Column(db.String(50), nullable=False)
+    email = db.Column(db.String(50), nullable=False, unique=True)
+    password = db.Column(db.String(200), nullable=False)
+    proyectos = db.relationship('Proyecto', backref='propietario', lazy=True)
+
+def check(password, hash): # verificar contraseña
+    return check_password_hash(hash, password)
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
+
+# Crear el user loader
+@login_manager.user_loader
+def load_user(user_id:str):
+    return db.session.get(Usuario, user_id) # Poner que devuelva None si no existe el usuario??
+
+# Crear la base de datos y el usuario admin si no existe
+with app.app_context():
+    db.create_all()
+
+    if not Usuario.query.filter((Usuario.username == 'admin') | (Usuario.email == 'admin@admin.es')).first():
+        admin = Usuario(
+            id=str(uuid.uuid4()),
+            username='admin',
+            nombre='admin',
+            apellidos='administrador',
+            email='admin@admin.es',
+            password=hash('admin')
+        )
+        db.session.add(admin)
+
+    if not Usuario.query.filter((Usuario.username == 'user') | (Usuario.email == 'user@user.es')).first():
+        user = Usuario(
+            id=str(uuid.uuid4()),
+            username='user',
+            nombre='user',
+            apellidos='user',
+            email='user@user.es',
+            password=hash('user')
+        )
+        db.session.add(user)
+
+    db.session.commit()
+
+# Recursos RESTful
+class UsuarioResource(Resource):
+    def get(self, user_id=None):
+        if user_id:
+            user = Usuario.query.get(user_id)
+            if not user:
+                return {"message": "Usuario no encontrado"}, 404
+            return {
+                "id": user.id,
+                "username": user.username,
+                "nombre": user.nombre,
+                "apellidos": user.apellidos,
+                "email": user.email
+            }
+        else:
+            users = Usuario.query.all()
+            return [
+                {
+                    "id": user.id,
+                    "username": user.username,
+                    "nombre": user.nombre,
+                    "apellidos": user.apellidos,
+                    "email": user.email
+                }
+                for user in users
+            ]
+
+    def post(self):
+        data = request.json
+        hashed_password = generate_password_hash(data["password"], method='pbkdf2:sha256', salt_length=16)
+        new_user = Usuario(
+            id=str(uuid.uuid4()),
+            username=data["username"],
+            nombre=data["nombre"],
+            apellidos=data["apellidos"],
+            email=data["email"],
+            password=hashed_password
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        return {"message": "Usuario creado con éxito"}, 201
+
+    def put(self, user_id):
+        user = Usuario.query.get(user_id)
+        if not user:
+            return {"message": "Usuario no encontrado"}, 404
+        data = request.json
+        user.username = data.get("username", user.username)
+        user.nombre = data.get("nombre", user.nombre)
+        user.apellidos = data.get("apellidos", user.apellidos)
+        user.email = data.get("email", user.email)
+        if "password" in data:
+            user.password = generate_password_hash(data["password"], method='pbkdf2:sha256', salt_length=16)
+        db.session.commit()
+        return {"message": "Usuario actualizado con éxito"}
+
+    def delete(self, user_id):
+        user = Usuario.query.get(user_id)
+        if not user:
+            return {"message": "Usuario no encontrado"}, 404
+        if user.username == "admin":
+            return {"message": "No se puede eliminar el usuario administrador"}, 403
+        db.session.delete(user)
+        db.session.commit()
+        return {"message": "Usuario eliminado con éxito"}
+
+class ProyectoResource(Resource):
+    def get(self, proyecto_id=None):
+        if proyecto_id:
+            proyecto = Proyecto.query.get(proyecto_id)
+            if not proyecto:
+                return {"message": "Proyecto no encontrado"}, 404
+            return {
+                "id": proyecto.id,
+                "nombre": proyecto.nombre,
+                "descripcion": proyecto.descripcion,
+                "fecha_creacion": proyecto.fecha_creacion.isoformat(),
+                "fecha_modificacion": proyecto.fecha_modificacion.isoformat(),
+                "usuario_id": proyecto.usuario_id
+            }
+        else:
+            proyectos = Proyecto.query.all()
+            return [
+                {
+                    "id": proyecto.id,
+                    "nombre": proyecto.nombre,
+                    "descripcion": proyecto.descripcion,
+                    "fecha_creacion": proyecto.fecha_creacion.isoformat(),
+                    "fecha_modificacion": proyecto.fecha_modificacion.isoformat(),
+                    "usuario_id": proyecto.usuario_id
+                }
+                for proyecto in proyectos
+            ]
+
+    def post(self):
+        data = request.json
+        print("Datos recibidos:", data)  # Verificar los datos recibidos
+
+        try:
+            # Crear el proyecto directamente
+            new_proyecto = Proyecto(
+                id=str(uuid.uuid4()),
+                nombre=data["nombre"],
+                descripcion=data["descripcion"],
+                fecha_creacion=date.today(),
+                fecha_modificacion=date.today(),
+                usuario_id=data["usuario_id"]  # Usar el usuario_id proporcionado
+            )
+            db.session.add(new_proyecto)
+            db.session.commit()
+            return {"message": "Proyecto creado con éxito"}, 201
+        except Exception as e:
+            print("Error al guardar el proyecto:", str(e))
+            return {"message": "Error al crear el proyecto"}, 500
+
+    def put(self, proyecto_id):
+        proyecto = Proyecto.query.get(proyecto_id)
+        if not proyecto:
+            return {"message": "Proyecto no encontrado"}, 404
+        data = request.json
+        proyecto.nombre = data.get("nombre", proyecto.nombre)
+        proyecto.descripcion = data.get("descripcion", proyecto.descripcion)
+        proyecto.fecha_modificacion = date.today()
+        db.session.commit()
+        return {"message": "Proyecto actualizado con éxito"}
+
+    def delete(self, proyecto_id):
+        proyecto = Proyecto.query.get(proyecto_id)
+        if not proyecto:
+            return {"message": "Proyecto no encontrado"}, 404
+        db.session.delete(proyecto)
+        db.session.commit()
+        return {"message": "Proyecto eliminado con éxito"}
+
+@app.route('/api/usuario_actual', methods=['GET'])
+@login_required
+def usuario_actual():
+    return jsonify({"usuario_id": current_user.id})
+
+# Rutas de la API
+api.add_resource(UsuarioResource, '/usuarios', '/usuarios/<string:user_id>')
+api.add_resource(ProyectoResource, '/proyectos', '/proyectos/<string:proyecto_id>')
+
+# Crear la base de datos
+with app.app_context():
+    db.create_all()
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5001, debug=True)
