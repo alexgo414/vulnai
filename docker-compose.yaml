@@ -9,6 +9,7 @@ services:
     volumes:
       - .:/app            
     environment:
+      TZ: Europe/Madrid
       FLASK_ENV: development
       FLASK_APP: web/app.py
     depends_on:
@@ -25,6 +26,7 @@ services:
     volumes:
       - .:/app
     environment:
+      TZ: Europe/Madrid
       FLASK_ENV: development
       FLASK_APP: api/app.py  # Ruta al archivo de la API
     depends_on:
@@ -35,6 +37,7 @@ services:
     image: mysql:latest
     restart: always
     environment:
+      TZ: Europe/Madrid
       MYSQL_ROOT_PASSWORD: root_password
       MYSQL_DATABASE: vulnai_db
       MYSQL_USER: vulnai

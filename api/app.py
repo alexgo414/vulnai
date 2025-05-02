@@ -16,8 +16,8 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from util import url_has_allowed_host_and_scheme
 import os
 from dotenv import load_dotenv
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_cors import CORS
+import flask_praetorian
 
 # Cargar configuración desde .env
 load_dotenv()
@@ -27,15 +27,14 @@ app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("SQLALCHEMY_DATABASE_URI")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS") == "true"
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
-
-# ejercicio 3, añadir JWT autenticacion
-app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
-jwt = JWTManager(app)
-
-CORS(app)
+app.config["PRAETORIAN_HASH_SCHEMES"] = ["pbkdf2_sha256"]
+app.config["JWT_ACCESS_LIFESPAN"] = {"hours": 24}
+app.config["JWT_REFRESH_LIFESPAN"] = {"days": 30}
 
 db = SQLAlchemy(app)
 api = Api(app)
+guard = flask_praetorian.Praetorian()
+CORS(app)
 
 # Configurar Flask-Login
 login_manager = LoginManager()
@@ -63,17 +62,65 @@ class Usuario(UserMixin, db.Model):
     email = db.Column(db.String(50), nullable=False, unique=True)
     password = db.Column(db.String(200), nullable=False)
     proyectos = db.relationship('Proyecto', backref='propietario', lazy=True)
+    roles = db.Column(db.Text)  # Necesario para Praetorian
+    is_active = db.Column(db.Boolean, default=True)
+
+    @property
+    def identity(self):
+        """
+        *Required Attribute or Property*
+
+        flask-praetorian requires that the user class has an ``identity`` instance
+        attribute or property that provides the unique id of the user instance
+        """
+        return self.id
+
+    @property
+    def rolenames(self):
+        """
+        *Required Attribute or Property*
+
+        flask-praetorian requires that the user class has a ``rolenames`` instance
+        attribute or property that provides a list of strings that describe the roles
+        attached to the user instance
+        """
+        try:
+            return self.roles.split(",")
+        except Exception:
+            return []
+
+    @classmethod
+    def lookup(cls, username):
+        """
+        *Required Method*
+
+        flask-praetorian requires that the user class implements a ``lookup()``
+        class method that takes a single ``username`` argument and returns a user
+        instance if there is one that matches or ``None`` if there is not.
+        """
+        return cls.query.filter_by(username=username).one_or_none()
+
+    @classmethod
+    def identify(cls, id):
+        """
+        *Required Method*
+
+        flask-praetorian requires that the user class implements an ``identify()``
+        class method that takes a single ``id`` argument and returns user instance if
+        there is one that matches or ``None`` if there is not.
+        """
+        return cls.query.get(id)
+
+    def is_valid(self):
+        return self.is_active
+
+guard.init_app(app, Usuario)
 
 def check(password, hash): # verificar contraseña
     return check_password_hash(hash, password)
 
-@app.after_request
-def add_cors_headers(response):
-    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5003'
-    response.headers['Access-Control-Allow-Headers'] = 'Authorization, Content-Type'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-    return response
-
+def hash_password(password):
+    return generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
 
 # Crear el user loader
 @login_manager.user_loader
@@ -91,7 +138,8 @@ with app.app_context():
             nombre='admin',
             apellidos='administrador',
             email='admin@admin.es',
-            password=generate_password_hash('admin')
+            password=guard.hash_password('admin'),
+            roles='admin'
         )
         db.session.add(admin)
 
@@ -102,43 +150,33 @@ with app.app_context():
             nombre='user',
             apellidos='user',
             email='user@user.es',
-            password=generate_password_hash('user')
+            password=guard.hash_password('user'),
+            roles='user'
         )
         db.session.add(user)
 
     db.session.commit()
 
 
-@app.route('/login', methods=['POST'])
-def api_login():
-    data = request.get_json()
-
-    if not data or 'username' not in data or 'password' not in data:
-        return jsonify({"success": False, "message": "Faltan campos"}), 400
-
-    user = Usuario.query.filter_by(username=data['username']).first()
-
-    if user: #and check_password_hash(user.password, data['password']):
-        access_token = create_access_token(identity=user.id)
-        return jsonify({
-            "success": True,
-            "access_token": access_token,
-            "usuario": {
-                "id": user.id,
-                "username": user.username,
-                "nombre": user.nombre,
-                "apellidos": user.apellidos,
-                "email": user.email
-            }
-        }), 200
-
-    return jsonify({"success": False, "message": "Credenciales incorrectas"}), 401
-
-
+@app.route("/login", methods=["POST"])
+def login():
+    """
+    Logs a user in by parsing a POST request containing user credentials and
+    issuing a JWT token.
+    .. example::
+       $ curl http://localhost:5000/login -X POST \
+         -d '{"username":"Walter","password":"calmerthanyouare"}'
+    """
+    req = request.get_json(force=True)
+    username = req.get("username", None)
+    password = req.get("password", None)
+    user = guard.authenticate(username, password)
+    ret = {"access_token": guard.encode_jwt_token(user)}
+    return (jsonify(ret), 200)
 
 # Recursos RESTful
 class UsuarioResource(Resource):
-    @jwt_required()
+    @flask_praetorian.auth_required
     def get(self, user_id=None):
         if user_id:
             user = Usuario.query.get(user_id)
@@ -164,8 +202,7 @@ class UsuarioResource(Resource):
                 for user in users
             ]
 
-
-
+    @flask_praetorian.roles_required('admin')
     def post(self):
         data = request.json
         hashed_password = generate_password_hash(data["password"], method='pbkdf2:sha256', salt_length=16)
@@ -181,6 +218,7 @@ class UsuarioResource(Resource):
         db.session.commit()
         return {"message": "Usuario creado con éxito"}, 201
 
+    @flask_praetorian.roles_required('admin')
     def put(self, user_id):
         user = Usuario.query.get(user_id)
         if not user:
@@ -195,6 +233,7 @@ class UsuarioResource(Resource):
         db.session.commit()
         return {"message": "Usuario actualizado con éxito"}
 
+    @flask_praetorian.roles_required('admin')
     def delete(self, user_id):
         user = Usuario.query.get(user_id)
         if not user:
@@ -206,7 +245,7 @@ class UsuarioResource(Resource):
         return {"message": "Usuario eliminado con éxito"}
 
 class ProyectoResource(Resource):
-    @jwt_required()
+    @flask_praetorian.auth_required
     def get(self, proyecto_id=None):
         if proyecto_id:
             proyecto = Proyecto.query.get(proyecto_id)
@@ -234,6 +273,7 @@ class ProyectoResource(Resource):
                 for proyecto in proyectos
             ]
 
+    @flask_praetorian.auth_required
     def post(self):
         data = request.json
         print("Datos recibidos:", data)  # Verificar los datos recibidos
@@ -255,6 +295,7 @@ class ProyectoResource(Resource):
             print("Error al guardar el proyecto:", str(e))
             return {"message": "Error al crear el proyecto"}, 500
 
+    @flask_praetorian.auth_required
     def put(self, proyecto_id):
         proyecto = Proyecto.query.get(proyecto_id)
         if not proyecto:
@@ -266,6 +307,7 @@ class ProyectoResource(Resource):
         db.session.commit()
         return {"message": "Proyecto actualizado con éxito"}
 
+    @flask_praetorian.auth_required
     def delete(self, proyecto_id):
         proyecto = Proyecto.query.get(proyecto_id)
         if not proyecto:
@@ -276,7 +318,19 @@ class ProyectoResource(Resource):
 
 @app.route('/api/usuario_actual', methods=['GET'])
 def usuario_actual():
-    return jsonify({"usuario_id": current_user.id})
+    @flask_praetorian.auth_required
+    def get_current_user():
+        user = flask_praetorian.current_user()
+        if not user:
+            return jsonify({"message": "Usuario no encontrado"}), 404
+        return jsonify({
+            "id": user.id,
+            "username": user.username,
+            "nombre": user.nombre,
+            "apellidos": user.apellidos,
+            "email": user.email
+        }), 200
+    return get_current_user()
 
 # Rutas de la API
 api.add_resource(UsuarioResource, '/usuarios', '/usuarios/<string:user_id>')

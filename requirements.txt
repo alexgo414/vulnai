@@ -1,12 +1,11 @@
 cryptography
-datetime
 flask
 flask_sqlalchemy
-Flask_Login
+Flask-Login
 PyMySQL
 sqlalchemy
 python-dotenv
-uuid
 flask_restful
 flask_jwt_extended
 flask-cors
+flask-praetorian

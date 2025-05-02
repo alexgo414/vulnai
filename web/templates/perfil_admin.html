@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/perfil.css') }}">
 {% endblock %}
 {% block content %}
-<div class="container mt-5">
+<div class="container mt-5" id="perfil-admin">
     <!-- Sección de Proyectos -->
     <div class="mb-5">
         <h1 class="text-center mb-4">Proyectos</h1>
@@ -32,92 +32,4 @@
         <a href="{{ url_for('logout') }}" class="btn btn-danger">Cerrar sesión</a>
     </div>
 </div>
-
-<script>
-async function cargarDatos() {
-  const token = sessionStorage.getItem("token");
-  if (!token) {
-    window.location.href = "/login";
-    return;
-  }
-
-  try {
-    const [proyectosRes, usuariosRes] = await Promise.all([
-      fetch("http://localhost:5001/proyectos", {
-        headers: { "Authorization": "Bearer " + token }
-      }),
-      fetch("http://localhost:5001/usuarios", {
-        headers: { "Authorization": "Bearer " + token }
-      })
-    ]);
-
-    const proyectosText = await proyectosRes.text();
-    const usuariosText = await usuariosRes.text();
-
-    if (proyectosText.includes("Token has expired") || usuariosText.includes("Token has expired")) {
-      sessionStorage.clear();
-      window.location.href = "/login";
-      return;
-    }
-
-    const proyectos = JSON.parse(proyectosText);
-    const usuarios = JSON.parse(usuariosText);
-
-    const proyectosContainer = document.getElementById("proyectos-container");
-    proyectosContainer.innerHTML = ''; // limpiar
-    proyectos.forEach(proyecto => {
-      const card = document.createElement("div");
-      card.className = "col-md-6 col-lg-4 mb-4";
-      card.innerHTML = `
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <h5 class="card-title text-primary">${proyecto.nombre}</h5>
-            <p class="card-text">${proyecto.descripcion}</p>
-            <p class="text-muted">
-              <strong>Fecha de creación:</strong> ${proyecto.fecha_creacion} <br>
-              <strong>Fecha de modificación:</strong> ${proyecto.fecha_modificacion}
-            </p>
-            <div class="d-flex justify-content-between">
-              <a href="/perfil/proyecto_editar?id=${proyecto.id}" class="btn btn-primary btn-sm">Editar</a>
-              <a href="/perfil/proyecto_eliminar?id=${proyecto.id}" class="btn btn-danger btn-sm">Eliminar</a>
-            </div>
-          </div>
-        </div>
-      `;
-      proyectosContainer.appendChild(card);
-    });
-
-    const usuariosContainer = document.getElementById("usuarios-container");
-    usuariosContainer.innerHTML = ''; // limpiar
-    usuarios.forEach(usuario => {
-      const card = document.createElement("div");
-      card.className = "col-md-6 col-lg-4 mb-4";
-      card.innerHTML = `
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <h5 class="card-title text-primary">${usuario.username}</h5>
-            <p class="card-text">
-              <strong>Nombre:</strong> ${usuario.nombre} <br>
-              <strong>Apellidos:</strong> ${usuario.apellidos} <br>
-              <strong>Email:</strong> ${usuario.email}
-            </p>
-            <div class="d-flex justify-content-between">
-              <a href="/perfil/usuario_editar?id=${usuario.id}" class="btn btn-primary btn-sm">Editar</a>
-              <a href="/perfil/usuario_eliminar?id=${usuario.id}" class="btn btn-danger btn-sm">Eliminar</a>
-            </div>
-          </div>
-        </div>
-      `;
-      usuariosContainer.appendChild(card);
-    });
-
-  } catch (error) {
-    console.error("Error al cargar los datos:", error);
-    sessionStorage.clear();
-    window.location.href = "/login";
-  }
-}
-
-cargarDatos();
-</script>
 {% endblock %}

@@ -238,7 +238,6 @@
     border: none; /* Quitamos el borde predeterminado */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave */
     transition: transform 0.2s; /* Animación al pasar el mouse */
-    opacity: 0;
     transform: scale(0.8);
     transition: opacity 1.5s ease-out, transform 1.5s ease-out;
     max-width: 20rem; /* Ancho máximo de la tarjeta */
@@ -248,10 +247,6 @@
 .card-pop-visible {
     opacity: 1;
     transform: scale(1);
-}
-
-.card:hover {
-    transform: translateY(-5px); /* Levanta la tarjeta al pasar el mouse */
 }
 
 .card-header {

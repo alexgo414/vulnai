@@ -42,7 +42,6 @@ def index():
     return render_template('index.html')
 
 @app.route('/perfil')
-# @jwt_required()  no es necesario porque ya se gestiona en la pagina de perfil con js (session storage and sum sht)
 def perfil():
     return render_template('perfil_admin.html')
 
@@ -57,39 +56,32 @@ def login():
     return render_template('login.html')
 
 @app.route('/perfil/proyecto_nuevo', methods=['GET', 'POST'])
-@jwt_required()
 def proyecto_nuevo():
     return render_template('proyecto_nuevo.html')
 
 @app.route('/perfil/proyecto_editar', methods=['GET', 'POST'])
-@jwt_required()
 def proyecto_editar():
     return render_template('proyecto_editar.html')
 
 @app.route('/perfil/proyecto_eliminar', methods=['GET', 'POST'])
-@jwt_required()
 def proyecto_eliminar():
     return render_template('proyecto_eliminar.html')
 
 @app.route('/perfil/usuario_nuevo', methods=['GET', 'POST'])
-@jwt_required()
 def usuario_nuevo():
     return render_template('usuario_nuevo.html')
 
 @app.route('/perfil/usuario_editar', methods=['GET', 'POST'])
-@jwt_required()
 def usuario_editar():
     return render_template('usuario_editar.html')
 
 @app.route('/perfil/usuario_eliminar', methods=['GET', 'POST'])
-@jwt_required()
 def usuario_eliminar():
     return render_template('usuario_eliminar.html')
 
 
 # Ruta para logout
 @app.route('/logout')
-@jwt_required()
 def logout():
     logout_user()  # Cerrar sesión con Flask-Login
     flash('Has cerrado la sesión.', 'info')
