@@ -286,7 +286,7 @@ class ProyectoResource(Resource):
                 descripcion=data["descripcion"],
                 fecha_creacion=date.today(),
                 fecha_modificacion=date.today(),
-                usuario_id=data["usuario_id"]  # Usar el usuario_id proporcionado
+                usuario_id=flask_praetorian.current_user().id
             )
             db.session.add(new_proyecto)
             db.session.commit()
@@ -315,22 +315,6 @@ class ProyectoResource(Resource):
         db.session.delete(proyecto)
         db.session.commit()
         return {"message": "Proyecto eliminado con éxito"}
-
-@app.route('/api/usuario_actual', methods=['GET'])
-def usuario_actual():
-    @flask_praetorian.auth_required
-    def get_current_user():
-        user = flask_praetorian.current_user()
-        if not user:
-            return jsonify({"message": "Usuario no encontrado"}), 404
-        return jsonify({
-            "id": user.id,
-            "username": user.username,
-            "nombre": user.nombre,
-            "apellidos": user.apellidos,
-            "email": user.email
-        }), 200
-    return get_current_user()
 
 # Rutas de la API
 api.add_resource(UsuarioResource, '/usuarios', '/usuarios/<string:user_id>')

@@ -59,9 +59,9 @@ def login():
 def proyecto_nuevo():
     return render_template('proyecto_nuevo.html')
 
-@app.route('/perfil/proyecto_editar', methods=['GET', 'POST'])
-def proyecto_editar():
-    return render_template('proyecto_editar.html')
+@app.route('/perfil/proyecto_editar/<string:proyecto_id>', methods=['GET', 'POST'])
+def proyecto_editar(proyecto_id):
+    return render_template('proyecto_editar.html', proyecto_id=proyecto_id)
 
 @app.route('/perfil/proyecto_eliminar', methods=['GET', 'POST'])
 def proyecto_eliminar():

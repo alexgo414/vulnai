@@ -280,6 +280,10 @@ async function obtenerProyectoPorId(proyectoId) {
             throw new Error(`Error al obtener el proyecto: ${response.statusText}`);
         }
         const proyecto = await response.json();
+        if (!proyecto) {
+            return null;
+        }
+        console.log("Proyecto obtenido:", proyecto);
         return proyecto;
     } catch (error) {
         console.error(error);
@@ -289,6 +293,9 @@ async function obtenerProyectoPorId(proyectoId) {
 
 // Función para eliminar un proyecto
 async function eliminarProyecto(proyectoId) {
+    if (!confirm("¿Estás seguro de que deseas eliminar este proyecto?")) {
+        return;
+    }
     try {
         const token = sessionStorage.getItem("token");
         const response = await fetch(`${API_BASE_URL}/proyectos/${proyectoId}`, {
@@ -301,10 +308,11 @@ async function eliminarProyecto(proyectoId) {
             throw new Error(`Error al eliminar proyecto: ${response.statusText}`);
         }
         const resultado = await response.json();
-        console.log("Proyecto eliminado:", resultado);
+        alert("Proyecto eliminado con éxito");
         obtenerProyectos(); // Actualizar la lista de proyectos
     } catch (error) {
         console.error(error);
+        alert("Hubo un error al eliminar el proyecto");
     }
 }
 
@@ -312,16 +320,27 @@ async function eliminarProyecto(proyectoId) {
 async function obtenerProyectos() {
     try {
         const token = sessionStorage.getItem("token");
-        const response = await fetch(`${API_BASE_URL}/proyectos`, {
+        const proyectosresponse = await fetch(`${API_BASE_URL}/proyectos`, {
             headers: {
                 "Authorization": "Bearer " + token
             }
         });
-        if (!response.ok) {
+        const usuariosresponse = await fetch(`${API_BASE_URL}/usuarios`, {
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+        if (!proyectosresponse.ok) {
             throw new Error(`Error al obtener proyectos: ${response.statusText}`);
         }
-        const proyectos = await response.json();
-        renderizarProyectos(proyectos);
+        if (!usuariosresponse.ok) {
+            throw new Error(`Error al obtener usuarios: ${response.statusText}`);
+        }
+        const proyectos = await proyectosresponse.json();
+        const usuarios = await usuariosresponse.json();
+        console.log("Proyectos obtenidos:", proyectos);
+        console.log("Usuarios obtenidos:", usuarios);
+        renderizarProyectos(proyectos, usuarios); // Renderizar proyectos con usuarios
     } catch (error) {
         console.error(error);
     }
@@ -355,10 +374,21 @@ function renderizarUsuarios(usuarios) {
 }
 
 // Función para renderizar proyectos en el HTML
-function renderizarProyectos(proyectos) {
+function renderizarProyectos(proyectos, usuarios) {
+    console.log("Renderizando proyectos:", proyectos);
+    // Buscar propietario de cada proyecto segun el id
+    let proyecto_propietario = null; // Inicializar propietario como null
+    proyectos.forEach((proyecto) => {
+        const propietario = usuarios.find(usuario => usuario.id === proyecto.usuario_id);
+        if (propietario) {
+            proyecto_propietario = propietario;
+        }
+    });
     const proyectosContainer = document.getElementById("proyectos-container"); // Selecciona el contenedor de proyectos
     proyectosContainer.innerHTML = ""; // Limpia el contenido previo
     proyectos.forEach((proyecto) => {
+        console.log("Proyecto:", proyecto);
+        console.log("Propietario:", proyecto_propietario);
         const proyectoDiv = document.createElement("div");
         proyectoDiv.classList.add("col-md-6", "col-lg-4", "mb-4");
         proyectoDiv.innerHTML = `
@@ -367,10 +397,14 @@ function renderizarProyectos(proyectos) {
                     <h5 class="card-title text-primary">${proyecto.nombre}</h5>
                     <p class="card-text">${proyecto.descripcion}</p>
                     <p class="text-muted">
-                        <strong>Propietario:</strong> ${proyecto.propietario?.username || "Sin propietario"} <br>
+                        <strong>Propietario:</strong> ${proyecto_propietario["username"]} <br>
                         <strong>Fecha de creación:</strong> ${proyecto.fecha_creacion} <br>
                         <strong>Fecha de modificación:</strong> ${proyecto.fecha_modificacion}
                     </p>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <button class="btn btn-primary" onclick="window.location.href='/perfil/proyecto_editar/${proyecto.id}'">Editar</button>
+                    <button class="btn btn-danger" onclick="eliminarProyecto('${proyecto.id}')">Eliminar</button>
                 </div>
             </div>
         `;
@@ -380,13 +414,69 @@ function renderizarProyectos(proyectos) {
 
 // Función para manejar la edición del proyecto
 async function editarProyecto(proyectoId) {
+    console.log("Editando proyecto con ID:", proyectoId);
     const proyecto = await obtenerProyectoPorId(proyectoId);
+    console.log("Proyecto a editar:", proyecto);
     if (proyecto) {
         // Almacenar el proyecto en localStorage
-        localStorage.setItem("proyectoEditar", JSON.stringify(proyecto));
-        // Redirigir a la página de edición
-        window.location.href = `/perfil/proyecto_editar/${proyectoId}`;
+        localStorage.setItem("proyectoEditar", proyecto.id);
     }
+    if (!proyecto) {
+        alert("No se pudo cargar el proyecto. Redirigiendo al perfil.");
+        window.location.href = "/perfil";
+        return;
+    }
+
+    // Generar el formulario de edición
+    const formContainer = document.createElement("div");
+    formContainer.classList.add("card-body");
+    formContainer.innerHTML = `
+        <form action="/perfil/proyecto_editar/${proyecto.id}" method="post">
+            <div class="mb-3">
+                <label for="nombre" class="form-label"><strong>Nombre del proyecto:</strong></label>
+                <input type="text" id="nombre" name="nombre" class="form-control" required value="${proyecto.nombre}">
+            </div>
+            <div class="mb-3">
+                <label for="descripcion" class="form-label"><strong>Descripción:</strong></label>
+                <textarea id="descripcion" name="descripcion" class="form-control" rows="4" placeholder="Describe brevemente el proyecto">${proyecto.descripcion}</textarea>
+            </div>
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary">Actualizar</button>
+                <a href="/perfil" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    `;
+    document.getElementById("proyecto-editar-container").appendChild(formContainer);
+
+    const form = formContainer.querySelector("form");
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const nombre = document.getElementById("nombre").value;
+        const descripcion = document.getElementById("descripcion").value;
+        const token = sessionStorage.getItem("token");
+
+        try {
+            const response = await fetch(`http://localhost:5001/proyectos/${proyecto.id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + token
+                },
+                body: JSON.stringify({ nombre, descripcion })
+            });
+
+            if (!response.ok) {
+                throw new Error("Error al actualizar el proyecto");
+            }
+
+            alert("Proyecto actualizado con éxito");
+            window.location.href = "/perfil"; // Redirige al perfil o donde quieras
+        } catch (error) {
+            alert("Hubo un error al actualizar el proyecto");
+            console.error(error);
+        }
+    });
 }
 
 // Función para crear un nuevo proyecto
@@ -416,26 +506,6 @@ async function crearProyecto(proyecto) {
 async function cargarFormularioCrearProyecto() {
     const form = document.getElementById("crear-proyecto-form");
 
-    // Obtener el usuario_id desde la API
-    let usuarioId;
-    try {
-        const token = sessionStorage.getItem("token");
-        const response = await fetch("http://localhost:5001/api/usuario_actual", {
-            headers: {
-                "Authorization": "Bearer " + token
-            }
-        });
-        if (!response.ok) {
-            throw new Error("Error al obtener el usuario actual");
-        }
-        const data = await response.json();
-        usuarioId = data.usuario_id;
-    } catch (error) {
-        console.error("Error al obtener el usuario actual:", error);
-        alert("No se pudo obtener el usuario actual");
-        return;
-    }
-
     // Manejar el envío del formulario
     form.addEventListener("submit", async (event) => {
         event.preventDefault(); // Evitar el envío tradicional del formulario
@@ -448,7 +518,6 @@ async function cargarFormularioCrearProyecto() {
         const nuevoProyecto = {
             nombre: nombre,
             descripcion: descripcion,
-            usuario_id: usuarioId // Usar el usuario_id obtenido de la API
         };
 
         // Llamar a la función crearProyecto
@@ -502,7 +571,7 @@ async function cargarDatos() {
         console.log("Usuarios:", usuarios);
 
         // Renderizar proyectos
-        renderizarProyectos(proyectos);
+        renderizarProyectos(proyectos, usuarios);
         // Renderizar usuarios
         renderizarUsuarios(usuarios);
 
@@ -557,18 +626,17 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("crear-proyecto-form")) {
         cargarFormularioCrearProyecto();
     }
-
-    if (document.getElementById("proyectos-container")) {
-        obtenerProyectos();
-    }
-
-    if (document.getElementById("usuarios-container")) {
-        obtenerUsuarios();
-    }
     
     if (document.getElementById("perfil-admin")) {
         cargarDatos();
     }
 
+    if (document.getElementById("proyecto-editar-container")) {
+        // Extraer el ID de la URL
+        const pathParts = window.location.pathname.split("/");
+        const proyectoId = pathParts[pathParts.length - 1];
+        editarProyecto(proyectoId);
+    }
+    
     animateSteps();
 });
