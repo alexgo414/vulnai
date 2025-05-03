@@ -8,10 +8,10 @@
     <h1 class="text-center mb-4">Crear nuevo usuario</h1>
     <div class="card shadow-sm mx-auto" style="max-width: 600px;">
         <div class="card-body">
-            <form action="{{ url_for('usuario_nuevo') }}" method="post">
+            <form id="crear-usuario-form">
                 <div class="mb-3">
                     <label for="username" class="form-label"><strong>Nombre de usuario:</strong></label>
-                    <input type="text" id="username" name="username" class="form-control" required value="{{ usuario.username }}">
+                    <input type="text" id="username" name="username" class="form-control" required placeholder="Ingresa el nombre de usuario">
                 </div>
                 <div class="mb-3">
                     <label for="nombre" class="form-label"><strong>Nombre:</strong></label>
@@ -37,4 +37,58 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Función para crear un nuevo usuario
+async function crearUsuario(usuario) {
+    console.log("Creando usuario:", usuario);
+    try {
+        const token = sessionStorage.getItem("token");
+        const response = await fetch(`${API_BASE_URL}/usuarios`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify(usuario),
+        });
+        if (!response.ok) {
+            throw new Error(`Error al crear usuario: ${response.statusText}`);
+        }
+        const resultado = await response.json();
+        console.log("Usuario creado:", resultado);
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// Manejar el envío del formulario de creación de usuario
+async function cargarFormularioCrearUsuario() {
+    const form = document.getElementById("crear-usuario-form");
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault(); // Evitar el envío clásico
+
+        const username = document.getElementById("username").value;
+        const nombre = document.getElementById("nombre").value;
+        const apellidos = document.getElementById("apellidos").value;
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        const nuevoUsuario = {
+            username,
+            nombre,
+            apellidos,
+            email,
+            password,
+        };
+
+    });
+}
+
+// Llamar a la función al cargar
+document.addEventListener("DOMContentLoaded", cargarFormularioCrearUsuario);
+
+</script>
+
 {% endblock %}
