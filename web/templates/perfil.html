@@ -6,18 +6,18 @@
 {% block content %}
 <div class="container mt-5">
     <!-- Sección de Proyectos -->
-    <div class="mb-5" id="proyectos-container">
+    <div class="row mb-5" id="proyectos-container">
         <!-- Proyectos se inyectarán aquí -->
     </div>
 
     <!-- Sección de Usuarios -->
-    <div class="mb-5" id="usuarios-container">
+    <div class="row mb-5" id="usuarios-container">
         <!-- Usuarios se inyectarán aquí -->
     </div>
 
     <!-- Botón de Cerrar Sesión -->
     <div class="text-center mb-3">
-        <a href="{{ url_for('logout') }}" class="btn btn-danger">Cerrar sesión</a>
+        <a href="{{ url_for('logout') }}" class="btn btn-danger" id="logout-link">Cerrar sesión</a>
     </div>
 </div>
 {% endblock %}

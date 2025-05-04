@@ -360,20 +360,18 @@ function renderizarUsuarios(usuarios) {
         const usuarioDiv = document.createElement("div");
         usuarioDiv.classList.add("col-md-6", "col-lg-4", "mb-4");
         usuarioDiv.innerHTML = `
-            <div class="row">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title text-primary">${usuario.username}</h5>
-                        <p class="card-text">
-                            <strong>Nombre:</strong> ${usuario.nombre} <br>
-                            <strong>Apellidos:</strong> ${usuario.apellidos} <br>
-                            <strong>Email:</strong> ${usuario.email}
-                        </p>
-                    </div>
-                    <div class="card-footer d-flex justify-content-between">
-                        <button class="btn btn-primary" onclick="editarUsuario(${usuario.id})">Editar</button>
-                        <button class="btn btn-danger" onclick="eliminarUsuario(${usuario.id})">Eliminar</button>
-                    </div>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">${usuario.username}</h5>
+                    <p class="card-text">
+                        <strong>Nombre:</strong> ${usuario.nombre} <br>
+                        <strong>Apellidos:</strong> ${usuario.apellidos} <br>
+                        <strong>Email:</strong> ${usuario.email}
+                    </p>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <button class="btn btn-primary" onclick="editarUsuario(${usuario.id})">Editar</button>
+                    <button class="btn btn-danger" onclick="eliminarUsuario(${usuario.id})">Eliminar</button>
                 </div>
             </div>
         `;
@@ -397,21 +395,19 @@ function renderizarProyectos(proyectos, usuarios) {
         const proyectoDiv = document.createElement("div");
         proyectoDiv.classList.add("col-md-6", "col-lg-4", "mb-4");
         proyectoDiv.innerHTML = `
-            <div class="row">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title text-primary">${proyecto.nombre}</h5>
-                        <p class="card-text">${proyecto.descripcion}</p>
-                        <p class="text-muted">
-                            <strong>Propietario:</strong> ${propietarioNombre} <br>
-                            <strong>Fecha de creación:</strong> ${proyecto.fecha_creacion} <br>
-                            <strong>Fecha de modificación:</strong> ${proyecto.fecha_modificacion}
-                        </p>
-                    </div>
-                    <div class="card-footer d-flex justify-content-between">
-                        <button class="btn btn-primary" onclick="window.location.href='/perfil/proyecto_editar/${proyecto.id}'">Editar</button>
-                        <button class="btn btn-danger" onclick="eliminarProyecto('${proyecto.id}')">Eliminar</button>
-                    </div>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">${proyecto.nombre}</h5>
+                    <p class="card-text">${proyecto.descripcion}</p>
+                    <p class="text-muted">
+                        <strong>Propietario:</strong> ${propietarioNombre} <br>
+                        <strong>Fecha de creación:</strong> ${proyecto.fecha_creacion} <br>
+                        <strong>Fecha de modificación:</strong> ${proyecto.fecha_modificacion}
+                    </p>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <button class="btn btn-primary" onclick="window.location.href='/perfil/proyecto_editar/${proyecto.id}'">Editar</button>
+                    <button class="btn btn-danger" onclick="eliminarProyecto('${proyecto.id}')">Eliminar</button>
                 </div>
             </div>
         `;
@@ -668,7 +664,6 @@ async function logearUsuario() {
 
             sessionStorage.setItem("token", data.access_token);
             console.log("Token guardado:", data.access_token);
-            alert("Inicio de sesión exitoso.");
             window.location.href = "/perfil";
         } catch (error) {
             console.error(error);
@@ -698,13 +693,27 @@ async function obtenerRolUsuario() {
     }
 }
 
+function configurarLogout() {
+    const logoutLink = document.getElementById("logout-link");
+    if (logoutLink) {
+        logoutLink.addEventListener("click", function() {
+            sessionStorage.clear(); // Limpiar el token del sessionStorage
+            console.log("Sesión cerrada. Token eliminado.");
+        });
+    }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+
+    configurarLogout(); // Configurar el evento de logout
+    console.log("Configuración de logout completada.");
 
     console.log("DOM completamente cargado y analizado.");
     if (document.getElementById("login-form")) {
         console.log("Formulario de inicio de sesión encontrado.");
         logearUsuario();
     }
+
     if (document.getElementById("container-chat")) {
         const { chatMensajes, messageInput, sendButton } = inicializarChat();
         configurarChat(chatMensajes, messageInput, sendButton);

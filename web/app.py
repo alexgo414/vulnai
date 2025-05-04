@@ -82,8 +82,6 @@ def usuario_eliminar():
 # Ruta para logout
 @app.route('/logout')
 def logout():
-    logout_user()  # Cerrar sesión con Flask-Login
-    flash('Has cerrado la sesión.', 'info')
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
