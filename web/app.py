@@ -43,7 +43,7 @@ def index():
 
 @app.route('/perfil')
 def perfil():
-    return render_template('perfil_admin.html')
+    return render_template('perfil.html')
 
 # Ruta para la página de chat
 @app.route('/chat')
@@ -78,7 +78,6 @@ def usuario_editar():
 @app.route('/perfil/usuario_eliminar', methods=['GET', 'POST'])
 def usuario_eliminar():
     return render_template('usuario_eliminar.html')
-
 
 # Ruta para logout
 @app.route('/logout')

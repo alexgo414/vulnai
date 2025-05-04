@@ -174,6 +174,18 @@ def login():
     ret = {"access_token": guard.encode_jwt_token(user)}
     return (jsonify(ret), 200)
 
+@app.route("/usuarios/rol", methods=["GET"])
+@flask_praetorian.auth_required
+def get_user_role():
+    """
+    Endpoint para obtener el rol del usuario autenticado.
+    """
+    user = flask_praetorian.current_user()
+    if user:
+        return jsonify({"rol": user.rolenames}), 200
+    else:
+        return jsonify({"message": "Usuario no autenticado"}), 401
+
 # Recursos RESTful
 class UsuarioResource(Resource):
     @flask_praetorian.auth_required
@@ -247,20 +259,29 @@ class UsuarioResource(Resource):
 class ProyectoResource(Resource):
     @flask_praetorian.auth_required
     def get(self, proyecto_id=None):
+        user = flask_praetorian.current_user()
         if proyecto_id:
             proyecto = Proyecto.query.get(proyecto_id)
             if not proyecto:
                 return {"message": "Proyecto no encontrado"}, 404
-            return {
-                "id": proyecto.id,
-                "nombre": proyecto.nombre,
-                "descripcion": proyecto.descripcion,
-                "fecha_creacion": proyecto.fecha_creacion.isoformat(),
-                "fecha_modificacion": proyecto.fecha_modificacion.isoformat(),
-                "usuario_id": proyecto.usuario_id
-            }
+            # Solo permite ver el proyecto si es admin o propietario
+            if "admin" in user.rolenames or proyecto.usuario_id == user.id:
+                return {
+                    "id": proyecto.id,
+                    "nombre": proyecto.nombre,
+                    "descripcion": proyecto.descripcion,
+                    "fecha_creacion": proyecto.fecha_creacion.isoformat(),
+                    "fecha_modificacion": proyecto.fecha_modificacion.isoformat(),
+                    "usuario_id": proyecto.usuario_id
+                }
+            else:
+                return {"message": "No autorizado"}, 403
         else:
-            proyectos = Proyecto.query.all()
+            # Si es admin, ve todos; si no, solo los suyos
+            if "admin" in user.rolenames:
+                proyectos = Proyecto.query.all()
+            else:
+                proyectos = Proyecto.query.filter_by(usuario_id=user.id).all()
             return [
                 {
                     "id": proyecto.id,

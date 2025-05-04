@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+{% block title %}Perfil{% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/perfil.css') }}">
+{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <!-- Sección de Proyectos -->
+    <div class="mb-5" id="proyectos-container">
+        <!-- Proyectos se inyectarán aquí -->
+    </div>
+
+    <!-- Sección de Usuarios -->
+    <div class="mb-5" id="usuarios-container">
+        <!-- Usuarios se inyectarán aquí -->
+    </div>
+
+    <!-- Botón de Cerrar Sesión -->
+    <div class="text-center mb-3">
+        <a href="{{ url_for('logout') }}" class="btn btn-danger">Cerrar sesión</a>
+    </div>
+</div>
+{% endblock %}
