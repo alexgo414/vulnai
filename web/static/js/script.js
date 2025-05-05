@@ -350,6 +350,12 @@ async function obtenerProyectos() {
 function renderizarUsuarios(usuarios) {
     const usuariosContainer = document.getElementById("usuarios-container"); // Selecciona el contenedor de usuarios
     usuariosContainer.innerHTML = ""; // Limpia el contenido previo
+    usuariosContainer.innerHTML = `
+        <h1 class="text-center mb-4">Usuarios</h1>
+        <div class="text-center mb-3">
+            <a href="/perfil/usuario_nuevo" class="btn btn-success">Crear usuario</a>
+        </div>
+    `
     usuarios.forEach((usuario) => {
         const usuarioDiv = document.createElement("div");
         usuarioDiv.classList.add("col-md-6", "col-lg-4", "mb-4");
@@ -375,20 +381,17 @@ function renderizarUsuarios(usuarios) {
 
 // Función para renderizar proyectos en el HTML
 function renderizarProyectos(proyectos, usuarios) {
-    console.log("Renderizando proyectos:", proyectos);
-    // Buscar propietario de cada proyecto segun el id
-    let proyecto_propietario = null; // Inicializar propietario como null
+    const proyectosContainer = document.getElementById("proyectos-container");
+    if (!proyectosContainer) return;
+    proyectosContainer.innerHTML = `
+        <h1 class="text-center mb-4">Proyectos</h1>
+        <div class="text-center mb-3">
+            <a href="/perfil/proyecto_nuevo" class="btn btn-success">Crear proyecto</a>
+        </div>
+    `;
     proyectos.forEach((proyecto) => {
         const propietario = usuarios.find(usuario => usuario.id === proyecto.usuario_id);
-        if (propietario) {
-            proyecto_propietario = propietario;
-        }
-    });
-    const proyectosContainer = document.getElementById("proyectos-container"); // Selecciona el contenedor de proyectos
-    proyectosContainer.innerHTML = ""; // Limpia el contenido previo
-    proyectos.forEach((proyecto) => {
-        console.log("Proyecto:", proyecto);
-        console.log("Propietario:", proyecto_propietario);
+        const propietarioNombre = propietario ? propietario.username : "Desconocido";
         const proyectoDiv = document.createElement("div");
         proyectoDiv.classList.add("col-md-6", "col-lg-4", "mb-4");
         proyectoDiv.innerHTML = `
@@ -397,7 +400,7 @@ function renderizarProyectos(proyectos, usuarios) {
                     <h5 class="card-title text-primary">${proyecto.nombre}</h5>
                     <p class="card-text">${proyecto.descripcion}</p>
                     <p class="text-muted">
-                        <strong>Propietario:</strong> ${proyecto_propietario["username"]} <br>
+                        <strong>Propietario:</strong> ${propietarioNombre} <br>
                         <strong>Fecha de creación:</strong> ${proyecto.fecha_creacion} <br>
                         <strong>Fecha de modificación:</strong> ${proyecto.fecha_modificacion}
                     </p>
@@ -532,7 +535,7 @@ async function cargarFormularioCrearProyecto() {
     });
 };
 
-async function cargarDatos() {
+async function cargarDatosAdmin() {
     console.log("Cargando datos...");
     // Verificar si el token existe en sessionStorage
     const token = sessionStorage.getItem("token");
@@ -584,10 +587,59 @@ async function cargarDatos() {
     }
 };
 
+async function cargarDatosUsuarios() {
+    console.log("Cargando datos...");
+    // Verificar si el token existe en sessionStorage
+    const token = sessionStorage.getItem("token");
+    if (!token) {
+        window.location.href = "/login";
+        return;
+    }
+
+    console.log("Token encontrado:", token);
+    try {
+        const proyectosRes = await fetch("http://localhost:5001/proyectos", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        const usuariosRes = await fetch("http://localhost:5001/usuarios", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+
+        const proyectosText = await proyectosRes.text();
+        const usuariosText = await usuariosRes.text();
+
+        if (proyectosText.includes("Token has expired")) {
+        sessionStorage.clear();
+        window.location.href = "/login";
+        return;
+        }
+
+        console.log("Respuesta de proyectos:", proyectosText);
+
+        const proyectos = JSON.parse(proyectosText);
+        const usuarios = JSON.parse(usuariosText);
+
+
+        console.log("Proyectos:", proyectos);
+
+        // Renderizar proyectos
+        renderizarProyectos(proyectos, usuarios);
+
+        console.log("Datos cargados correctamente.");
+  
+    } catch (error) {
+        console.error("Error al cargar los datos:", error);
+        sessionStorage.clear();
+        window.location.href = "/login";
+    }
+};
+
 async function logearUsuario() {
+    console.log("Iniciando sesión...");
     const form = document.getElementById("login-form");
     form.addEventListener("submit", async (event) => {
         event.preventDefault(); // Evitar el envío tradicional del formulario
+        console.log("Formulario de inicio de sesión enviado.");
 
         const username = document.getElementById("username").value;
         const password = document.getElementById("password").value;
@@ -600,12 +652,19 @@ async function logearUsuario() {
             });
 
             if (!response.ok) {
-                throw new Error("Error al iniciar sesión");
+                alert("Usuario o contraseña incorrectos");
+                return;
+            }
+            
+            const data = await response.json();
+            if (!data.access_token) {
+                alert("Error al iniciar sesión. Token no recibido.");
+                return;
             }
 
-            const data = await response.json();
             sessionStorage.setItem("token", data.access_token);
-            window.location.href = "/perfil"; // Redirigir al perfil después de iniciar sesión
+            console.log("Token guardado:", data.access_token);
+            window.location.href = "/perfil";
         } catch (error) {
             console.error(error);
             alert("Error al iniciar sesión. Verifica tus credenciales.");
@@ -613,10 +672,48 @@ async function logearUsuario() {
     });
 }
 
+async function obtenerRolUsuario() {
+    try {
+        const token = sessionStorage.getItem("token");
+        const response = await fetch(`${API_BASE_URL}/usuarios/rol`, {
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+        if (!response.ok) {
+            throw new Error(`Error al obtener el rol del usuario: ${response.statusText}`);
+        }
+        const rol = await response.json();
+        console.log("Rol del usuario obtenido:", rol);
+        console.log("Rol del usuario:", rol.rol[0]);
+        return rol.rol[0];
+    } catch (error) {
+        console.error("Error al obtener el rol del usuario:", error);
+        return null;
+    }
+}
+
+function configurarLogout() {
+    const logoutLink = document.getElementById("logout-link");
+    if (logoutLink) {
+        logoutLink.addEventListener("click", function() {
+            sessionStorage.clear(); // Limpiar el token del sessionStorage
+            console.log("Sesión cerrada. Token eliminado.");
+        });
+    }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+
+    configurarLogout(); // Configurar el evento de logout
+    console.log("Configuración de logout completada.");
+
+    console.log("DOM completamente cargado y analizado.");
     if (document.getElementById("login-form")) {
+        console.log("Formulario de inicio de sesión encontrado.");
         logearUsuario();
     }
+
     if (document.getElementById("container-chat")) {
         const { chatMensajes, messageInput, sendButton } = inicializarChat();
         configurarChat(chatMensajes, messageInput, sendButton);
@@ -627,8 +724,21 @@ document.addEventListener("DOMContentLoaded", () => {
         cargarFormularioCrearProyecto();
     }
     
-    if (document.getElementById("perfil-admin")) {
-        cargarDatos();
+    if (
+        document.getElementById("proyectos-container") ||
+        document.getElementById("usuarios-container")
+    ) {
+        obtenerRolUsuario().then(rol => {
+            if (rol === "admin") {
+                cargarDatosAdmin();
+            } else if (rol === "user") {
+                cargarDatosUsuarios();
+            } else {
+                console.error("Rol de usuario no reconocido:", rol);
+            }
+        }).catch(error => {
+            console.error("Error al obtener el rol del usuario:", error);
+        });
     }
 
     if (document.getElementById("proyecto-editar-container")) {

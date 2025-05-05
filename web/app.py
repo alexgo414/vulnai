@@ -43,7 +43,7 @@ def index():
 
 @app.route('/perfil')
 def perfil():
-    return render_template('perfil_admin.html')
+    return render_template('perfil.html')
 
 # Ruta para la página de chat
 @app.route('/chat')
@@ -79,12 +79,9 @@ def usuario_editar():
 def usuario_eliminar():
     return render_template('usuario_eliminar.html')
 
-
 # Ruta para logout
 @app.route('/logout')
 def logout():
-    logout_user()  # Cerrar sesión con Flask-Login
-    flash('Has cerrado la sesión.', 'info')
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
