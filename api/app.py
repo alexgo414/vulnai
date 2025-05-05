@@ -217,14 +217,14 @@ class UsuarioResource(Resource):
     @flask_praetorian.roles_required('admin')
     def post(self):
         data = request.json
-        hashed_password = generate_password_hash(data["password"], method='pbkdf2:sha256', salt_length=16)
         new_user = Usuario(
             id=str(uuid.uuid4()),
             username=data["username"],
             nombre=data["nombre"],
             apellidos=data["apellidos"],
             email=data["email"],
-            password=hashed_password
+            password=guard.hash_password(data["password"]),
+            roles=data.get("roles", "user")  # Asignar rol por defecto como 'user'
         )
         db.session.add(new_user)
         db.session.commit()
@@ -242,7 +242,7 @@ class UsuarioResource(Resource):
             user.apellidos = data.get("apellidos", user.apellidos)
             user.email = data.get("email", user.email)
             if "password" in data:
-                user.password = generate_password_hash(data["password"], method='pbkdf2:sha256', salt_length=16)
+                user.password = guard.hash_password(data["password"])
             db.session.commit()
             return {"message": "Usuario actualizado con éxito"}
         except Exception as e:
@@ -256,6 +256,8 @@ class UsuarioResource(Resource):
             return {"message": "Usuario no encontrado"}, 404
         if user.username == "admin":
             return {"message": "No se puede eliminar el usuario administrador"}, 403
+        if user.proyectos and len(user.proyectos) > 0:
+            return {"message": "No se puede eliminar el usuario porque tiene proyectos asociados."}, 400
         db.session.delete(user)
         db.session.commit()
         return {"message": "Usuario eliminado con éxito"}

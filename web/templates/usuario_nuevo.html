@@ -8,10 +8,10 @@
     <h1 class="text-center mb-4">Crear nuevo usuario</h1>
     <div class="card shadow-sm mx-auto" style="max-width: 600px;">
         <div class="card-body">
-            <form action="{{ url_for('usuario_nuevo') }}" method="post">
+            <form action="{{ url_for('usuario_nuevo') }}" method="post" id="usuario-nuevo-form">
                 <div class="mb-3">
                     <label for="username" class="form-label"><strong>Nombre de usuario:</strong></label>
-                    <input type="text" id="username" name="username" class="form-control" required value="{{ usuario.username }}">
+                    <input type="text" id="username" name="username" class="form-control" required placeholder="Ingresa el nombre de usuario">
                 </div>
                 <div class="mb-3">
                     <label for="nombre" class="form-label"><strong>Nombre:</strong></label>

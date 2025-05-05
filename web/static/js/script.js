@@ -246,8 +246,35 @@ async function crearUsuario(usuario) {
     }
 }
 
+function mostrarAlerta(mensaje, tipo = "info") {
+    // tipo: 'success', 'danger', 'warning', 'info'
+    const container = document.getElementById("container-alert");
+    if (!container) return;
+
+    // Mapeo de títulos por tipo
+    const categoryMap = {
+        success: "Éxito",
+        danger: "Error",
+        warning: "Advertencia",
+        info: "Información"
+    };
+    const titulo = categoryMap[tipo] || tipo.charAt(0).toUpperCase() + tipo.slice(1);
+
+    container.innerHTML = `
+        <div class="alert alert-dismissible alert-${tipo} mt-3">
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <h4 class="alert-heading">${titulo}</h4>
+            <p class="mb-0">${mensaje}</p>
+        </div>
+    `;
+}
+
 // Función para eliminar un usuario
 async function eliminarUsuario(userId) {
+    if (!confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
+        return;
+    }
+    console.log("Eliminando usuario con ID:", userId);
     try {
         const token = sessionStorage.getItem("token");
         const response = await fetch(`${API_BASE_URL}/usuarios/${userId}`, {
@@ -256,11 +283,20 @@ async function eliminarUsuario(userId) {
                 "Authorization": "Bearer " + token
             }
         });
-        if (!response.ok) {
-            throw new Error(`Error al eliminar usuario: ${response.statusText}`);
-        }
         const resultado = await response.json();
+        if (!response.ok) {
+            // Mostrar mensaje claro si tiene proyectos asociados
+            if (resultado.message && resultado.message.includes("proyectos asociados")) {
+                mostrarAlerta("No se puede eliminar el usuario porque tiene proyectos asociados. Elimine primero los proyectos de este usuario.", "danger");
+            } else if (resultado.message && resultado.message.includes("administrador")) {
+                mostrarAlerta("No se puede eliminar el usuario administrador.", "danger");
+            } else {
+                mostrarAlerta(resultado.message || response.statusText, "danger");
+            }
+            throw new Error(resultado.message || response.statusText);
+        }
         console.log("Usuario eliminado:", resultado);
+        mostrarAlerta("Usuario eliminado con éxito", "success");
         obtenerUsuarios(); // Actualizar la lista de usuarios
     } catch (error) {
         console.error(error);
@@ -328,7 +364,7 @@ async function eliminarProyecto(proyectoId) {
             throw new Error(`Error al eliminar proyecto: ${response.statusText}`);
         }
         const resultado = await response.json();
-        alert("Proyecto eliminado con éxito");
+        mostrarAlerta("Proyecto eliminado con éxito", "success");
         obtenerProyectos(); // Actualizar la lista de proyectos
     } catch (error) {
         console.error(error);
@@ -390,11 +426,18 @@ function renderizarUsuarios(usuarios) {
                     </p>
                 </div>
                 <div class="card-footer d-flex justify-content-between">
-                    <button class="btn btn-primary" onclick="window.location.href='/perfil/usuario_editar/${usuario.id}'">Editar</button>
-                    <button class="btn btn-danger" onclick="eliminarUsuario(${usuario.id})">Eliminar</button>
+                    <button class="btn btn-primary btn-editar">Editar</button>
+                    <button class="btn btn-danger btn-eliminar">Eliminar</button>
                 </div>
             </div>
         `;
+        // Añadir listeners después de insertar el HTML
+        usuarioDiv.querySelector('.btn-editar').addEventListener('click', () => {
+            window.location.href = `/perfil/usuario_editar/${usuario.id}`;
+        });
+        usuarioDiv.querySelector('.btn-eliminar').addEventListener('click', () => {
+            eliminarUsuario(usuario.id);
+        });
         usuariosContainer.appendChild(usuarioDiv);
     });
 }
@@ -651,6 +694,43 @@ async function cargarFormularioCrearProyecto() {
     });
 };
 
+// Manejar el envío del formulario al cargar la página
+async function cargarFormularioCrearUsuario() {
+    const form = document.getElementById("usuario-nuevo-form");
+
+    // Manejar el envío del formulario
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault(); // Evitar el envío tradicional del formulario
+
+        // Obtener los datos del formulario
+        const username = document.getElementById("username").value;
+        const nombre = document.getElementById("nombre").value;
+        const apellidos = document.getElementById("apellidos").value;
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        // Crear el objeto del usuario
+        const nuevoUsuario = {
+            username: username,
+            nombre: nombre,
+            apellidos: apellidos,
+            email: email,
+            password: password,
+        };
+
+        // Llamar a la función crearUsuario
+        try {
+            await crearUsuario(nuevoUsuario); // Reutilizar la función crearUsuario
+            alert("Usuario creado con éxito");
+            window.location.href = "/perfil"; // Redirigir al perfil después de crear el usuario
+        }
+        catch (error) {
+            console.error("Error al crear el usuario:", error);
+            alert("Hubo un error al crear el usuario");
+        }
+    });
+};
+
 async function cargarDatosAdmin() {
     console.log("Cargando datos...");
     // Verificar si el token existe en sessionStorage
@@ -839,6 +919,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("crear-proyecto-form")) {
         cargarFormularioCrearProyecto();
     }
+
+    if (document.getElementById("usuario-nuevo-form")) {
+        cargarFormularioCrearUsuario();
+    }
+
     
     if (
         document.getElementById("proyectos-container") ||
