@@ -291,6 +291,26 @@ async function obtenerProyectoPorId(proyectoId) {
     }
 }
 
+async function obtenerUsuarioPorId(usuarioId) {
+    try {
+        const token = sessionStorage.getItem("token");
+        const response = await fetch(`${API_BASE_URL}/usuarios/${usuarioId}`, {
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+        if (!response.ok) {
+            throw new Error(`Error al obtener el usuario: ${response.statusText}`);
+        }
+        const usuario = await response.json();
+        return usuario;
+    } catch (error) {
+        console.error(error);
+        alert("Hubo un error al obtener el usuario.");
+        return null;
+    }
+}
+
 // Función para eliminar un proyecto
 async function eliminarProyecto(proyectoId) {
     if (!confirm("¿Estás seguro de que deseas eliminar este proyecto?")) {
@@ -370,7 +390,7 @@ function renderizarUsuarios(usuarios) {
                     </p>
                 </div>
                 <div class="card-footer d-flex justify-content-between">
-                    <button class="btn btn-primary" onclick="editarUsuario(${usuario.id})">Editar</button>
+                    <button class="btn btn-primary" onclick="window.location.href='/perfil/usuario_editar/${usuario.id}'">Editar</button>
                     <button class="btn btn-danger" onclick="eliminarUsuario(${usuario.id})">Eliminar</button>
                 </div>
             </div>
@@ -477,6 +497,102 @@ async function editarProyecto(proyectoId) {
             window.location.href = "/perfil"; // Redirige al perfil o donde quieras
         } catch (error) {
             alert("Hubo un error al actualizar el proyecto");
+            console.error(error);
+        }
+    });
+}
+
+// Función para manejar la edición del usuario
+async function editarUsuario(usuarioId) {
+    console.log("Editando usuario con ID:", usuarioId);
+    const usuario = await obtenerUsuarioPorId(usuarioId);
+    console.log("Usuario a editar:", usuario);
+    if (usuario) {
+        // Almacenar el usuario en localStorage
+        localStorage.setItem("usuarioEditar", usuario.id);
+    }
+    if (!usuario) {
+        alert("No se pudo cargar el usuario. Redirigiendo al perfil.");
+        window.location.href = "/perfil";
+        return;
+    }
+
+    // Generar el formulario de edición
+    const formContainer = document.createElement("div");
+    formContainer.classList.add("card-body");
+    formContainer.innerHTML = `
+        <form action="/perfil/usuario_editar/${usuario.id}" method="post">
+            <div class="mb-3">
+                <label for="username" class="form-label"><strong>Nombre de usuario:</strong></label>
+                <input type="text" id="username" name="username" class="form-control" required value="${usuario.username}">
+            <div class="mb-3">
+                <label for="nombre" class="form-label"><strong>Nombre:</strong></label>
+                <input type="text" id="nombre" name="nombre" class="form-control" required value="${usuario.nombre}">
+            </div>
+            <div class="mb-3">
+                <label for="apellidos" class="form-label"><strong>Apellidos:</strong></label>
+                <input type="text" id="apellidos" name="apellidos" class="form-control" required value="${usuario.apellidos}">
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label"><strong>Email:</strong></label>
+                <input type="email" id="email" name="email" class="form-control" required value="${usuario.email}">
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label"><strong>Contraseña:</strong></label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="Dejar en blanco para no cambiar">
+            </div>
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary">Actualizar</button>
+                <a href="/perfil" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    `;
+    document.getElementById("usuario-editar-container").appendChild(formContainer);
+
+    const form = formContainer.querySelector("form");
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const username = document.getElementById("username").value;
+        const nombre = document.getElementById("nombre").value;
+        const apellidos = document.getElementById("apellidos").value;
+        const email = document.getElementById("email").value;
+        let password;
+        // Si la contraseña está vacía, no se envía al servidor
+        if (document.getElementById("password").value) {
+            password = document.getElementById("password").value;
+        }
+        const token = sessionStorage.getItem("token");
+
+        try {
+            let response;
+            if (password) {
+                response = await fetch(`http://localhost:5001/usuarios/${usuario.id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + token
+                    },
+                    body: JSON.stringify({ username, nombre, apellidos, email, password })
+                });
+            } else {
+                response = await fetch(`http://localhost:5001/usuarios/${usuario.id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + token
+                    },
+                    body: JSON.stringify({ username, nombre, apellidos, email })
+                });   
+            }
+            if (!response.ok) {
+                throw new Error("Error al actualizar el usuario");
+            }
+
+            alert("Usuario actualizado con éxito");
+            window.location.href = "/perfil"; // Redirige al perfil o donde quieras
+        } catch (error) {
+            alert("Hubo un error al actualizar el usuario");
             console.error(error);
         }
     });
@@ -746,6 +862,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const pathParts = window.location.pathname.split("/");
         const proyectoId = pathParts[pathParts.length - 1];
         editarProyecto(proyectoId);
+    }
+
+    if (document.getElementById("usuario-editar-container")) {
+        // Extraer el ID de la URL
+        const pathParts = window.location.pathname.split("/");
+        const usuarioId = pathParts[pathParts.length - 1];
+        editarUsuario(usuarioId);
     }
     
     animateSteps();

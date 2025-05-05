@@ -25,9 +25,6 @@ jwt = JWTManager(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'
-login_manager.login_message = 'Debes iniciar sesión para acceder a esta página.'
-login_manager.login_message_category = 'info'
 
 def check(password, hash): # verificar contraseña
     return check_password_hash(hash, password)
@@ -71,9 +68,9 @@ def proyecto_eliminar():
 def usuario_nuevo():
     return render_template('usuario_nuevo.html')
 
-@app.route('/perfil/usuario_editar', methods=['GET', 'POST'])
-def usuario_editar():
-    return render_template('usuario_editar.html')
+@app.route('/perfil/usuario_editar/<string:usuario_id>', methods=['GET', 'POST'])
+def usuario_editar(usuario_id):
+    return render_template('usuario_editar.html', usuario_id=usuario_id)
 
 @app.route('/perfil/usuario_eliminar', methods=['GET', 'POST'])
 def usuario_eliminar():

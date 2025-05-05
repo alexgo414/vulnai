@@ -232,18 +232,22 @@ class UsuarioResource(Resource):
 
     @flask_praetorian.roles_required('admin')
     def put(self, user_id):
-        user = Usuario.query.get(user_id)
-        if not user:
-            return {"message": "Usuario no encontrado"}, 404
-        data = request.json
-        user.username = data.get("username", user.username)
-        user.nombre = data.get("nombre", user.nombre)
-        user.apellidos = data.get("apellidos", user.apellidos)
-        user.email = data.get("email", user.email)
-        if "password" in data:
-            user.password = generate_password_hash(data["password"], method='pbkdf2:sha256', salt_length=16)
-        db.session.commit()
-        return {"message": "Usuario actualizado con éxito"}
+        try:
+            user = Usuario.query.get(user_id)
+            if not user:
+                return {"message": "Usuario no encontrado"}, 404
+            data = request.json
+            user.username = data.get("username", user.username)
+            user.nombre = data.get("nombre", user.nombre)
+            user.apellidos = data.get("apellidos", user.apellidos)
+            user.email = data.get("email", user.email)
+            if "password" in data:
+                user.password = generate_password_hash(data["password"], method='pbkdf2:sha256', salt_length=16)
+            db.session.commit()
+            return {"message": "Usuario actualizado con éxito"}
+        except Exception as e:
+            print("Error en PUT /usuarios/<user_id>:", str(e))
+            return {"message": f"Error interno: {str(e)}"}, 500
 
     @flask_praetorian.roles_required('admin')
     def delete(self, user_id):
