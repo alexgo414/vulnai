@@ -1,17 +1,17 @@
 services:
-  vulnai:                
-    container_name: vulnai 
+  vulnai:
+    container_name: vulnai
     build:
-      context: .           
-      dockerfile: Dockerfile  
+      context: ./web
+      dockerfile: Dockerfile
     ports:
-      - "5003:5000"       
+      - "5003:5000"
     volumes:
-      - .:/app            
+      - ./web:/app
     environment:
       TZ: Europe/Madrid
       FLASK_ENV: development
-      FLASK_APP: web/app.py
+      FLASK_APP: app.py
     depends_on:
       - mysql
     command: ["flask", "run", "--host=0.0.0.0", "--debug"]
@@ -19,16 +19,16 @@ services:
   api:
     container_name: api
     build:
-      context: .
+      context: ./api
       dockerfile: Dockerfile
     ports:
-      - "5001:5000"  # Exponer la API en el puerto 5001
+      - "5001:5000"
     volumes:
-      - .:/app
+      - ./api:/app
     environment:
       TZ: Europe/Madrid
       FLASK_ENV: development
-      FLASK_APP: api/app.py  # Ruta al archivo de la API
+      FLASK_APP: app.py
     depends_on:
       - mysql
     command: ["flask", "run", "--host=0.0.0.0", "--debug"]
