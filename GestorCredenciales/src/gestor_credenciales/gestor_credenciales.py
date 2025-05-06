@@ -27,26 +27,51 @@ class GestorCredenciales:
         self._clave_maestra_hashed = self._hash_clave(clave_maestra)
         self._credenciales = {}
 
-    @require(lambda servicio, usuario: servicio and usuario)
-    @require(lambda servicio: all(c not in ";&|" for c in servicio))
-    @require(lambda password: len(password) >= 12)
-    @require(lambda password: any(c.isupper() for c in password))
-    @require(lambda password: any(c.islower() for c in password))
-    @require(lambda password: any(c.isdigit() for c in password))
-    @require(lambda password: any(c in "!@#$%^&*" for c in password))
-    @ensure(lambda servicio, usuario, result: result is None)
+    @require(lambda servicio, usuario: servicio and usuario, error=ErrorPoliticaPassword("El servicio y el usuario no pueden estar vacíos"))
+    # Precondiciones para servicio y password
+    @require(lambda servicio: all(c not in ";&|" for c in servicio), error=ErrorPoliticaPassword("El servicio no puede contener caracteres especiales como ; & |"))
+    @require(lambda password: len(password) >= 12, error=ErrorPoliticaPassword("La contraseña debe tener al menos 12 caracteres"))
+    @require(lambda password: any(c.isupper() for c in password), error=ErrorPoliticaPassword("La contraseña debe contener al menos una letra mayúscula"))
+    @require(lambda password: any(c.islower() for c in password), error=ErrorPoliticaPassword("La contraseña debe contener al menos una letra minúscula"))
+    @require(lambda password: any(c.isdigit() for c in password), error=ErrorPoliticaPassword("La contraseña debe contener al menos un número"))
+    @require(lambda password: any(c in "!@#$%^&*" for c in password), error=ErrorPoliticaPassword("La contraseña debe contener al menos un carácter especial"))
+    # Precondiciones para usuario
+    @require(lambda usuario: all(c not in ";&|" for c in usuario), error=ErrorPoliticaPassword("El usuario no puede contener caracteres especiales como ; & |"))
+    @ensure(lambda servicio, usuario, result: result is None, error=ErrorCredencialExistente("La credencial ya existe")) # Esta postcondición asegura que la función no devuelve nada si la credencial ya existe
     def añadir_credencial(self, clave_maestra: str, servicio: str, usuario: str, password: str) -> None:
-        print(f"Gurt: {clave_maestra}")
         """Añade una nueva credencial al gestor."""
         if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
-            print(clave_maestra, self._clave_maestra_hashed, type(clave_maestra), type(self._clave_maestra_hashed))
-            print(clave_maestra == self._clave_maestra_hashed)
             raise ErrorAutenticacion("Clave maestra incorrecta")
         if servicio not in self._credenciales:
             self._credenciales[servicio] = {}
         if usuario in self._credenciales[servicio]:
             raise ErrorCredencialExistente("La credencial ya existe")
-        self._credenciales[servicio][usuario] = self._hash_clave(password)
+        self._credenciales[servicio][usuario] = {
+            'usuario': usuario,
+            'password': self._hash_clave(password)
+        }
+        # {
+        #     "servicio1": {
+        #         "usuario1": {
+        #             "usuario": "usuario1",
+        #             "password": <hash de password1>
+        #         },
+        #         "usuario2": {
+        #             "usuario": "usuario2",
+        #             "password": <hash de password2>
+        #         }
+        #     },
+        #     "servicio2": {
+        #         "usuario3": {
+        #             "usuario": "usuario3",
+        #             "password": <hash de password3>
+        #         },
+        #         "usuario4": {
+        #             "usuario": "usuario4",
+        #             "password": <hash de password4>
+        #         }
+        #     }
+        # }
         #verificar que el usuario no contenga caracteres especiales como ; & |.
 
 
@@ -54,11 +79,11 @@ class GestorCredenciales:
     @ensure(lambda servicio, result: result is not None)
     def obtener_password(self, clave_maestra: str, servicio: str, usuario: str) -> str:
         """Recupera una contraseña almacenada."""
-        if clave_maestra != self._clave_maestra_hashed:
+        if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
             raise ErrorAutenticacion("Clave maestra incorrecta.")
         if servicio not in self._credenciales:
             raise ErrorServicioNoEncontrado("El servicio no se encuentra en la lista.")
-        credencial = self._credenciales[servicio]
+        credencial = self._credenciales[servicio][usuario]
         if credencial['usuario'] != usuario:
             raise ErrorServicioNoEncontrado("El usuario no coincide con el servicio.")
         return credencial['password']
@@ -73,18 +98,17 @@ class GestorCredenciales:
     @ensure(lambda result: isinstance(result, list))
     def listar_servicios(self, clave_maestra: str) -> list:
         """Lista todos los servicios almacenados."""
-        if clave_maestra != self._clave_maestra_hashed:
+        if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
             raise ErrorAutenticacion("Clave maestra incorrecta.")
         return list(self._credenciales.keys())
 
-    def _hash_clave(self, clave: str) -> bytes:
+    def _hash_clave(self, clave: str) -> str:
         """Hashea una clave usando bcrypt."""
-        hashed = bcrypt.hashpw(clave.encode('utf-8'), bcrypt.gensalt())
-        return hashed.decode('utf-8')
+        return bcrypt.hashpw(clave.encode('utf-8'), bcrypt.gensalt())
 
-    def _verificar_clave(self, clave: str, clave_hashed: str) -> bool:
+    def _verificar_clave(self, clave: str, clave_hashed: bytes) -> bool:
         """Verifica si una clave coincide con su hash."""
-        return bcrypt.checkpw(clave.encode('utf-8'), clave_hashed.encode('utf-8'))
+        return bcrypt.checkpw(clave.encode('utf-8'), clave_hashed)
 
     @require(lambda password: isinstance(password, str) and password, "La contraseña debe ser una cadena no vacía")
     def es_password_segura(self, password):
