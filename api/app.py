@@ -1,23 +1,15 @@
-from flask import Flask, request, jsonify
+import os
+import uuid
+from datetime import date
+from dotenv import load_dotenv
+from flask import Flask, request, jsonify, render_template, flash, redirect, url_for, abort, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api, Resource
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import LoginManager, UserMixin
-import uuid
-from datetime import date
-import os
-from dotenv import load_dotenv
-import uuid
-from flask import Flask, render_template, request, flash, redirect, url_for, abort, make_response
-from flask_sqlalchemy import SQLAlchemy
-from datetime import date
-from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from util import url_has_allowed_host_and_scheme
-import os
-from dotenv import load_dotenv
 from flask_cors import CORS
 import flask_praetorian
+from werkzeug.security import generate_password_hash, check_password_hash
+from util import url_has_allowed_host_and_scheme
 
 # Cargar configuración desde .env
 load_dotenv()
