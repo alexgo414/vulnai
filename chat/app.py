@@ -10,3 +10,4 @@ from flask_cors import CORS
 import flask_praetorian
 from werkzeug.security import generate_password_hash, check_password_hash
 from util import url_has_allowed_host_and_scheme
+

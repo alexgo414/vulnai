@@ -1,7 +1,7 @@
 /* PERFIL.CSS - Estilos exclusivos para la página de perfil */
 
 /* Títulos */
-#usuarios-container h1, #proyectos-container h1 {
+#usuarios-container h1, #proyectos-container h1, #informacion-personal-container h1 {
     font-size: 2.2rem;
     color: #22313f;
     text-align: center;
@@ -61,4 +61,21 @@
 #usuarios-container .btn-danger, #proyectos-container .btn-danger {
     border: none;
     color: #fff;
+}
+
+#informacion-personal-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 250px;
+}
+
+#informacion-personal-container .card {
+    min-width: 400px;
+    max-width: 600px;
+    width: 100%;
+    margin: 0 auto;
+    font-size: 1.15rem;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(44, 62, 80, 0.18);
 }

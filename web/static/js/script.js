@@ -478,6 +478,38 @@ function renderizarProyectos(proyectos, usuarios) {
     });
 }
 
+// Función para renderizar información personal en el HTML
+function renderizarInformacionPersonal(usuario) {
+    const informacionPersonalContainer = document.getElementById("informacion-personal-container");
+    if (!informacionPersonalContainer) return;
+    informacionPersonalContainer.innerHTML = `
+        <h1 class="text-center mb-4">Información Personal</h1>
+    `;
+    
+    const informacionPersonalDiv = document.createElement("div");
+    informacionPersonalDiv.classList.add("col-md-6", "col-lg-4", "mb-4");
+    informacionPersonalDiv.innerHTML = `
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-primary">${usuario.username}</h5>
+                <p class="card-text">
+                    <strong>Nombre:</strong> ${usuario.nombre} <br>
+                    <strong>Apellidos:</strong> ${usuario.apellidos} <br>
+                    <strong>Email:</strong> ${usuario.email}
+                </p>
+            </div>
+            <div class="card-footer d-flex justify-content-between">
+                <button class="btn btn-primary btn-editar">Editar</button>
+            </div>
+        </div>
+    `;
+    // Añadir listeners después de insertar el HTML
+    informacionPersonalDiv.querySelector('.btn-editar').addEventListener('click', () => {
+        window.location.href = `/perfil/usuario_editar/${usuario.id}`;
+    });
+    informacionPersonalContainer.appendChild(informacionPersonalDiv);
+}
+
 // Función para manejar la edición del proyecto
 async function editarProyecto(proyectoId) {
     console.log("Editando proyecto con ID:", proyectoId);
@@ -773,6 +805,17 @@ async function cargarDatosAdmin() {
         renderizarProyectos(proyectos, usuarios);
         // Renderizar usuarios
         renderizarUsuarios(usuarios);
+        // Renderizar el usuario actual a partir de usuarios
+        const usernameActual = sessionStorage.getItem("username");
+        console.log("Username actual:", usernameActual);
+        const usuarioActual = usuarios.find(usuario => usuario.username === usernameActual);
+        console.log("Usuario actual:", usuarioActual);
+
+        if (usuarioActual) {
+            renderizarInformacionPersonal(usuarioActual);
+        } else {
+            console.error("Usuario actual no encontrado en la lista de usuarios.");
+        }
 
         console.log("Datos cargados correctamente.");
   
@@ -820,6 +863,18 @@ async function cargarDatosUsuarios() {
 
         // Renderizar proyectos
         renderizarProyectos(proyectos, usuarios);
+        console.log("Usuarios:", usuarios);
+        // Renderizar el usuario actual a partir de usuarios
+        const usernameActual = sessionStorage.getItem("username");
+        console.log("Username actual:", usernameActual);
+        const usuarioActual = usuarios.find(usuario => usuario.username === usernameActual);
+        console.log("Usuario actual:", usuarioActual);
+
+        if (usuarioActual) {
+            renderizarInformacionPersonal(usuarioActual);
+        } else {
+            console.error("Usuario actual no encontrado en la lista de usuarios.");
+        }
 
         console.log("Datos cargados correctamente.");
   
@@ -858,6 +913,8 @@ async function logearUsuario() {
                 return;
             }
 
+            sessionStorage.setItem("username", username);
+            console.log("Username guardado:", username);
             sessionStorage.setItem("token", data.access_token);
             console.log("Token guardado:", data.access_token);
             window.location.href = "/perfil";

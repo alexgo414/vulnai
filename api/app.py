@@ -222,7 +222,6 @@ class UsuarioResource(Resource):
         db.session.commit()
         return {"message": "Usuario creado con éxito"}, 201
 
-    @flask_praetorian.roles_required('admin')
     def put(self, user_id):
         try:
             user = Usuario.query.get(user_id)
