@@ -29,7 +29,10 @@ class TestFuncionalesGestorCredenciales(unittest.TestCase):
 
     def test_listar_servicios(self):
         # Implementar según TDD
-        self.fail()
+        clave_maestra = self.gestor._clave_maestra_hashed
+        self.gestor.añadir_credencial(clave_maestra, "servicio3", "usuario3", "Password123!")
+        servicios = self.gestor.listar_servicios(clave_maestra)
+        self.assertIn("servicio3", servicios)
 
 if __name__ == "__main__":
     unittest.main()
