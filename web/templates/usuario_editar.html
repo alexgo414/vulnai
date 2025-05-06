@@ -6,34 +6,8 @@
 {% block content %}
 <div class="container mt-5">
     <h1 class="text-center mb-4">Editar Usuario</h1>
-    <div class="card shadow-sm mx-auto" style="max-width: 600px;">
-        <div class="card-body">
-            <form action="{{ url_for('usuario_editar', id=usuario.id) }}" method="post">
-                <div class="mb-3">
-                    <label for="username" class="form-label"><strong>Nombre de usuario:</strong></label>
-                    <input type="text" id="username" name="username" class="form-control" required value="{{ usuario.username }}">
-                <div class="mb-3">
-                    <label for="nombre" class="form-label"><strong>Nombre:</strong></label>
-                    <input type="text" id="nombre" name="nombre" class="form-control" required value="{{ usuario.nombre }}">
-                </div>
-                <div class="mb-3">
-                    <label for="apellidos" class="form-label"><strong>Apellidos:</strong></label>
-                    <input type="text" id="apellidos" name="apellidos" class="form-control" required value="{{ usuario.apellidos }}">
-                </div>
-                <div class="mb-3">
-                    <label for="email" class="form-label"><strong>Email:</strong></label>
-                    <input type="email" id="email" name="email" class="form-control" required value="{{ usuario.email }}">
-                </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label"><strong>Contraseña:</strong></label>
-                    <input type="password" id="password" name="password" class="form-control" placeholder="Dejar en blanco para no cambiar">
-                </div>
-                <div class="text-center">
-                    <button type="submit" class="btn btn-primary">Actualizar</button>
-                    <a href="{{ url_for('perfil') }}" class="btn btn-secondary">Cancelar</a>
-                </div>
-            </form>
-        </div>
+    <div class="card shadow-sm mx-auto" id="usuario-editar-container">
+        <!-- Formulario para editar el usuario -->
     </div>
 </div>
 {% endblock %}

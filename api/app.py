@@ -1,23 +1,15 @@
-from flask import Flask, request, jsonify
+import os
+import uuid
+from datetime import date
+from dotenv import load_dotenv
+from flask import Flask, request, jsonify, render_template, flash, redirect, url_for, abort, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api, Resource
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import LoginManager, UserMixin
-import uuid
-from datetime import date
-import os
-from dotenv import load_dotenv
-import uuid
-from flask import Flask, render_template, request, flash, redirect, url_for, abort, make_response
-from flask_sqlalchemy import SQLAlchemy
-from datetime import date
-from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from util import url_has_allowed_host_and_scheme
-import os
-from dotenv import load_dotenv
 from flask_cors import CORS
 import flask_praetorian
+from werkzeug.security import generate_password_hash, check_password_hash
+from util import url_has_allowed_host_and_scheme
 
 # Cargar configuración desde .env
 load_dotenv()
@@ -174,6 +166,18 @@ def login():
     ret = {"access_token": guard.encode_jwt_token(user)}
     return (jsonify(ret), 200)
 
+@app.route("/usuarios/rol", methods=["GET"])
+@flask_praetorian.auth_required
+def get_user_role():
+    """
+    Endpoint para obtener el rol del usuario autenticado.
+    """
+    user = flask_praetorian.current_user()
+    if user:
+        return jsonify({"rol": user.rolenames}), 200
+    else:
+        return jsonify({"message": "Usuario no autenticado"}), 401
+
 # Recursos RESTful
 class UsuarioResource(Resource):
     @flask_praetorian.auth_required
@@ -205,14 +209,14 @@ class UsuarioResource(Resource):
     @flask_praetorian.roles_required('admin')
     def post(self):
         data = request.json
-        hashed_password = generate_password_hash(data["password"], method='pbkdf2:sha256', salt_length=16)
         new_user = Usuario(
             id=str(uuid.uuid4()),
             username=data["username"],
             nombre=data["nombre"],
             apellidos=data["apellidos"],
             email=data["email"],
-            password=hashed_password
+            password=guard.hash_password(data["password"]),
+            roles=data.get("roles", "user")  # Asignar rol por defecto como 'user'
         )
         db.session.add(new_user)
         db.session.commit()
@@ -220,18 +224,22 @@ class UsuarioResource(Resource):
 
     @flask_praetorian.roles_required('admin')
     def put(self, user_id):
-        user = Usuario.query.get(user_id)
-        if not user:
-            return {"message": "Usuario no encontrado"}, 404
-        data = request.json
-        user.username = data.get("username", user.username)
-        user.nombre = data.get("nombre", user.nombre)
-        user.apellidos = data.get("apellidos", user.apellidos)
-        user.email = data.get("email", user.email)
-        if "password" in data:
-            user.password = generate_password_hash(data["password"], method='pbkdf2:sha256', salt_length=16)
-        db.session.commit()
-        return {"message": "Usuario actualizado con éxito"}
+        try:
+            user = Usuario.query.get(user_id)
+            if not user:
+                return {"message": "Usuario no encontrado"}, 404
+            data = request.json
+            user.username = data.get("username", user.username)
+            user.nombre = data.get("nombre", user.nombre)
+            user.apellidos = data.get("apellidos", user.apellidos)
+            user.email = data.get("email", user.email)
+            if "password" in data:
+                user.password = guard.hash_password(data["password"])
+            db.session.commit()
+            return {"message": "Usuario actualizado con éxito"}
+        except Exception as e:
+            print("Error en PUT /usuarios/<user_id>:", str(e))
+            return {"message": f"Error interno: {str(e)}"}, 500
 
     @flask_praetorian.roles_required('admin')
     def delete(self, user_id):
@@ -240,6 +248,8 @@ class UsuarioResource(Resource):
             return {"message": "Usuario no encontrado"}, 404
         if user.username == "admin":
             return {"message": "No se puede eliminar el usuario administrador"}, 403
+        if user.proyectos and len(user.proyectos) > 0:
+            return {"message": "No se puede eliminar el usuario porque tiene proyectos asociados."}, 400
         db.session.delete(user)
         db.session.commit()
         return {"message": "Usuario eliminado con éxito"}
@@ -247,20 +257,29 @@ class UsuarioResource(Resource):
 class ProyectoResource(Resource):
     @flask_praetorian.auth_required
     def get(self, proyecto_id=None):
+        user = flask_praetorian.current_user()
         if proyecto_id:
             proyecto = Proyecto.query.get(proyecto_id)
             if not proyecto:
                 return {"message": "Proyecto no encontrado"}, 404
-            return {
-                "id": proyecto.id,
-                "nombre": proyecto.nombre,
-                "descripcion": proyecto.descripcion,
-                "fecha_creacion": proyecto.fecha_creacion.isoformat(),
-                "fecha_modificacion": proyecto.fecha_modificacion.isoformat(),
-                "usuario_id": proyecto.usuario_id
-            }
+            # Solo permite ver el proyecto si es admin o propietario
+            if "admin" in user.rolenames or proyecto.usuario_id == user.id:
+                return {
+                    "id": proyecto.id,
+                    "nombre": proyecto.nombre,
+                    "descripcion": proyecto.descripcion,
+                    "fecha_creacion": proyecto.fecha_creacion.isoformat(),
+                    "fecha_modificacion": proyecto.fecha_modificacion.isoformat(),
+                    "usuario_id": proyecto.usuario_id
+                }
+            else:
+                return {"message": "No autorizado"}, 403
         else:
-            proyectos = Proyecto.query.all()
+            # Si es admin, ve todos; si no, solo los suyos
+            if "admin" in user.rolenames:
+                proyectos = Proyecto.query.all()
+            else:
+                proyectos = Proyecto.query.filter_by(usuario_id=user.id).all()
             return [
                 {
                     "id": proyecto.id,
