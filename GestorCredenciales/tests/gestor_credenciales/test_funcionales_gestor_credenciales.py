@@ -11,11 +11,21 @@ class TestFuncionalesGestorCredenciales(unittest.TestCase):
     # Tests funcionales
     def test_añadir_credencial(self):
         # Implementar según TDD
-        self.fail()
+        clave_maestra = self.gestor._clave_maestra_hashed
+        self.gestor.añadir_credencial(clave_maestra, "servicio1", "usuario1", "Password123!")
+        self.assertIn("servicio1", self.gestor._credenciales)
+        self.assertEqual(self.gestor._credenciales["servicio1"]['usuario'], "usuario1")
+        self.assertNotEqual(self.gestor._credenciales["servicio1"]['password'], "Password123!")
+        # self.fail()
 
     def test_recuperar_credencial(self):
         # Implementar según TDD
-        self.fail()
+        clave_maestra = self.gestor._clave_maestra_hashed
+        self.gestor.añadir_credencial(clave_maestra, "servicio2", "usuario2", "Password123!")
+        password_recuperada = self.gestor.obtener_password(clave_maestra, "servicio2", "usuario2")
+        self.assertNotEqual(password_recuperada, "Password123!")
+        self.assertEqual(password_recuperada, self.gestor._credenciales["servicio2"]['password'])
+        # self.fail()
 
     def test_listar_servicios(self):
         # Implementar según TDD
