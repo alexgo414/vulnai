@@ -2,6 +2,7 @@ import unittest
 import hashlib
 import bcrypt
 from icontract import require, ensure
+import re
 
 class ErrorPoliticaPassword(Exception):
     pass
@@ -72,3 +73,16 @@ class GestorCredenciales:
         """Verifica si una clave coincide con su hash."""
         return bcrypt.checkpw(clave.encode('utf-8'), clave_hashed.encode('utf-8'))
 
+    @require(lambda password: isinstance(password, str) and password, "La contraseña debe ser una cadena no vacía")
+    def es_password_segura(self, password):
+        if len(password) < 12:  # Cambiar a 12 para coincidir con el decorador
+            return False
+        if not re.search(r"[A-Z]", password):
+            return False
+        if not re.search(r"[a-z]", password):
+            return False
+        if not re.search(r"\d", password):
+            return False
+        if not re.search(r"[!@#$%^&*]", password):
+            return False
+        return True
