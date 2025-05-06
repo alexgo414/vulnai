@@ -11,8 +11,9 @@ class TestFuncionalesGestorCredenciales(unittest.TestCase):
     # Tests funcionales
     def test_añadir_credencial(self):
         # Implementar según TDD
+        clave_maestra = "claveMaestraSegura123!"
         # Test 1 - contraseña segura
-        self.gestor.añadir_credencial(self.gestor._clave_maestra_hashed, "servicio1", "usuario1", "Password123!")
+        self.gestor.añadir_credencial(clave_maestra, "servicio1", "usuario1", "Password123!")
         self.assertIn("servicio1", self.gestor._credenciales)
         self.assertEqual(self.gestor._credenciales["servicio1"]['usuario'], "usuario1")
         self.assertNotEqual(self.gestor._credenciales["servicio1"]['password'], "Password123!")
