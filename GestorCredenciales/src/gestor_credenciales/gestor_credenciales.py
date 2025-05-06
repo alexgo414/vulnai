@@ -4,6 +4,9 @@ import bcrypt
 from icontract import require, ensure
 import re
 
+#añadir logs siempre y cuando se modifique cualquier cosa en el código. 
+#verificar que cada clave maestra sea única, y que un usuario con una clave maetra diferente a otro usuario no pueda acceder a sus credenciales
+
 class ErrorPoliticaPassword(Exception):
     pass
 
@@ -18,6 +21,8 @@ class ErrorCredencialExistente(Exception):
 
 class GestorCredenciales:
     def __init__(self, clave_maestra: str):
+        #añadir verificación de que la clave maestra no sea una cadena vacía
+        #añadir verificación de que la clave maestra igual que con las contraseñas independientes. 
         """Inicializa el gestor con una clave maestra."""
         self._clave_maestra_hashed = self._hash_clave(clave_maestra)
         self._credenciales = {}
@@ -42,6 +47,7 @@ class GestorCredenciales:
         if usuario in self._credenciales[servicio]:
             raise ErrorCredencialExistente("La credencial ya existe")
         self._credenciales[servicio][usuario] = self._hash_clave(password)
+        #verificar que el usuario no contenga caracteres especiales como ; & |.
 
 
     @require(lambda servicio: servicio)
@@ -56,6 +62,7 @@ class GestorCredenciales:
         if credencial['usuario'] != usuario:
             raise ErrorServicioNoEncontrado("El usuario no coincide con el servicio.")
         return credencial['password']
+    #añadir verificación de que la contraseña no se haya modificado de manera externa. 
 
     @require(lambda servicio: servicio)
     @ensure(lambda servicio, result: result is None)

@@ -88,6 +88,94 @@ class TestSeguridadGestorCredenciales(unittest.TestCase):
         with self.assertRaises(ErrorAutenticacion):
             self.gestor.obtener_password("claveIncorrecta", "GitHub", "user1")
 
+    def test_no_logging_contraseñas_sensibles(self):
+        servicio = "GitHub"
+        usuario = "user1"
+        password = "PasswordSegura123!"
+        
+        # Configurar un manejador de logs para capturar mensajes
+        import logging
+        from io import StringIO
+        log_stream = StringIO()
+        handler = logging.StreamHandler(log_stream)
+        logging.getLogger().addHandler(handler)
+        
+        try:
+            self.gestor.añadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
+            log_output = log_stream.getvalue()
+            self.assertFalse(password in log_output, "La contraseña aparece en los logs")
+        finally:
+            logging.getLogger().removeHandler(handler)
+    
+    def test_integridad_credenciales(self):
+        servicio = "GitHub"
+        usuario = "user1"
+        password = "PasswordSegura123!"
+        
+        self.gestor.añadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
+        
+        # Intentar modificar directamente el almacenamiento interno
+        original_credencial = self.gestor._credenciales[servicio][usuario]
+        self.gestor._credenciales[servicio][usuario] = "contraseña_modificada"
+        
+        # Verificar que el sistema detecta la modificación
+        with self.assertRaises(ValueError):
+            self.gestor.obtener_password("claveMaestraSegura123!", servicio, usuario)
 
+    def test_clave_maestra_debil(self):
+        claves_débiles = ["123", "password", "abc", ""]
+        for clave in claves_débiles:
+            with self.subTest(clave=clave):
+                with self.assertRaises(ValueError):
+                    GestorCredenciales(clave)
+
+    def test_auditoria_acciones(self):
+        servicio = "GitHub"
+        usuario = "user1"
+        password = "PasswordSegura123!"
+        
+        # Configurar captura de logs
+        import logging
+        from io import StringIO
+        log_stream = StringIO()
+        handler = logging.StreamHandler(log_stream)
+        logging.getLogger().addHandler(handler)
+        
+        try:
+            self.gestor.añadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
+            self.gestor.obtener_password("claveMaestraSegura123!", servicio, usuario)
+            self.gestor.eliminar_credencial("claveMaestraSegura123!", servicio, usuario)
+            
+            log_output = log_stream.getvalue()
+            self.assertIn("añadir_credencial", log_output, "No se registró la acción de añadir")
+            self.assertIn("obtener_password", log_output, "No se registró la acción de obtener")
+            self.assertIn("eliminar_credencial", log_output, "No se registró la acción de eliminar")
+            self.assertFalse(password in log_output, "La contraseña aparece en el log de auditoría")
+        finally:
+            logging.getLogger().removeHandler(handler)
+
+    def test_deteccion_inyeccion_usuario(self):
+        casos_inyeccion = ["user;123", "user|mal", "user&test", "user'--"]
+        for usuario in casos_inyeccion:
+            with self.subTest(usuario=usuario):
+                with self.assertRaises(ValueError):
+                    self.gestor.añadir_credencial(
+                        "claveMaestraSegura123!",
+                        "GitHub",
+                        usuario,
+                        "PasswordSegura123!"
+                    )
+
+    def test_acceso_concurrente_claves_diferentes(self):
+        servicio = "GitHub"
+        usuario = "user1"
+        password = "PasswordSegura123!"
+        
+        self.gestor.añadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
+        
+        # Simular un segundo gestor con una clave maestra diferente
+        gestor2 = GestorCredenciales("otraClaveMaestra123!")
+        with self.assertRaises(ErrorAutenticacion):
+            gestor2.obtener_password("otraClaveMaestra123!", servicio, usuario)
 if __name__ == "__main__":
     unittest.main()
