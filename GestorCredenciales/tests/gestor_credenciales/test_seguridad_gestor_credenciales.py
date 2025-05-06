@@ -26,8 +26,14 @@ class TestSeguridadGestorCredenciales(unittest.TestCase):
         self.gestor.añadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
 
         # Verificar que el almacenamiento no contiene el password en plano
-        self.assertNotEqual(self.gestor._credenciales[servicio][usuario], password)
-        # añadir más chequeos
+        stored_password = self.gestor._credenciales[servicio][usuario]
+        self.assertNotEqual(stored_password, password, "La contraseña se almacenó en texto plano")
+        
+        # Chequeo adicional: Verificar que el valor almacenado no contiene el password original
+        self.assertFalse(password in str(stored_password), "El password aparece en el almacenamiento")
+        
+        # Chequeo adicional: Verificar que el formato parece cifrado (ejemplo: longitud diferente)
+        self.assertNotEqual(len(stored_password), len(password), "El formato no parece cifrado")
 
     # Este es un test parametrizado usando subTests
     def test_deteccion_inyeccion_servicio(self):
@@ -65,8 +71,16 @@ class TestSeguridadGestorCredenciales(unittest.TestCase):
                             f"Se aceptó una contraseña débil: {contrasena_generada}")
 
     def test_politica_passwords_con_password_robusta(self):
-        # Implementar según TDD
-        self.fail()
+        servicio = "GitHub"
+        usuario = "user1"
+        password = "Segura123!"
+
+        try:
+            self.gestor.añadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
+            self.assertTrue(self.gestor.es_password_segura(password), "La contraseña robusta no fue aceptada")
+        except ErrorPoliticaPassword:
+            self.fail("La contraseña robusta fue rechazada incorrectamente")
+
 
     def test_acceso_con_clave_maestra_erronea(self):
         self.gestor.añadir_credencial("claveMaestraSegura123!", "GitHub", "user1", "PasswordSegura123!")
