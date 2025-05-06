@@ -63,7 +63,9 @@ class GestorCredenciales:
     @ensure(lambda result: isinstance(result, list))
     def listar_servicios(self, clave_maestra: str) -> list:
         """Lista todos los servicios almacenados."""
-        pass
+        if clave_maestra != self._clave_maestra_hashed:
+            raise ErrorAutenticacion("Clave maestra incorrecta.")
+        return list(self._credenciales.keys())
 
     def _hash_clave(self, clave: str) -> str:
         """Hashea una clave usando bcrypt."""
