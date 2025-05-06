@@ -145,14 +145,20 @@ function configurarEnvioConEnter(messageInput, sendButton) {
     });
 }
 
+// Base URL de la API
+const API_BASE_URL_CHAT = "http://localhost:5002";
+
 // Función para enviar el mensaje al servidor y mostrar la respuesta (Ejercicio 3)
 async function sendMessageToServer(messageText, chatMensajes) {
     try {
         // Realizar la petición POST al servidor
-        const response = await fetch('https://albertosalguero.eu.pythonanywhere.com/send-message', {
+        const token = sessionStorage.getItem("token");
+        console.log("Token encontrado:", token);
+        const response = await fetch(`${API_BASE_URL_CHAT}/chat/mensajes`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({ message: messageText }),
         });

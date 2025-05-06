@@ -10,4 +10,25 @@ from flask_cors import CORS
 import flask_praetorian
 from werkzeug.security import generate_password_hash, check_password_hash
 from util import url_has_allowed_host_and_scheme
+import random
 
+app = Flask(__name__)
+CORS(app)
+
+@app.route('/chat/mensajes', methods=['POST'])
+def chat_mensajes():
+    mensajes = [
+        "¡Hola! ¿En qué puedo ayudarte hoy?",
+        "Recuerda que puedes preguntarme sobre tus proyectos.",
+        "¿Necesitas ayuda con algún usuario?",
+        "¡Estoy aquí para ayudarte!",
+        "¿Quieres saber más sobre tus tareas?"
+    ]
+    # Puedes usar el mensaje recibido si lo necesitas:
+    data = request.get_json()
+    message_text = data.get('message', '')
+    print(f"Mensaje recibido: {message_text}")
+
+    respuesta = random.choice(mensajes)
+    print(f"Respuesta generada: {respuesta}")
+    return jsonify({"message": respuesta})
