@@ -37,7 +37,6 @@ def chat_mensajes():
 
     # Genera la descripción
     response = model.generate_content([message_text])
+    response_text = response.text  # Extraer el texto generado
     
-    respuesta = random.choice(mensajes)
-    print(f"Respuesta generada: {respuesta}")
-    return jsonify({"message": response})
+    return jsonify({"message": response_text})

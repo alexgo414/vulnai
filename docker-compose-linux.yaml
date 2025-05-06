@@ -62,5 +62,22 @@ services:
     depends_on:
       - mysql
 
+  chat:
+    container_name: chat
+    build:
+      context: ./chat
+      dockerfile: Dockerfile
+    ports:
+      - "5002:5000"
+    volumes:
+      - ./chat:/app:z
+    environment:
+      TZ: Europe/Madrid
+      FLASK_ENV: development
+      FLASK_APP: app.py
+    depends_on:
+      - vulnai
+    command: ["flask", "run", "--host=0.0.0.0", "--debug"]
+
 volumes:
   mysql-data:
