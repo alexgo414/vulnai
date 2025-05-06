@@ -31,8 +31,11 @@ class GestorCredenciales:
     @require(lambda password: any(c in "!@#$%^&*" for c in password))
     @ensure(lambda servicio, usuario, result: result is None)
     def añadir_credencial(self, clave_maestra: str, servicio: str, usuario: str, password: str) -> None:
+        print(f"Gurt: {clave_maestra}")
         """Añade una nueva credencial al gestor."""
         if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
+            print(clave_maestra, self._clave_maestra_hashed, type(clave_maestra), type(self._clave_maestra_hashed))
+            print(clave_maestra == self._clave_maestra_hashed)
             raise ErrorAutenticacion("Clave maestra incorrecta")
         if servicio not in self._credenciales:
             self._credenciales[servicio] = {}
@@ -67,9 +70,10 @@ class GestorCredenciales:
             raise ErrorAutenticacion("Clave maestra incorrecta.")
         return list(self._credenciales.keys())
 
-    def _hash_clave(self, clave: str) -> str:
+    def _hash_clave(self, clave: str) -> bytes:
         """Hashea una clave usando bcrypt."""
-        return bcrypt.hashpw(clave.encode('utf-8'), bcrypt.gensalt())
+        hashed = bcrypt.hashpw(clave.encode('utf-8'), bcrypt.gensalt())
+        return hashed.decode('utf-8')
 
     def _verificar_clave(self, clave: str, clave_hashed: str) -> bool:
         """Verifica si una clave coincide con su hash."""
