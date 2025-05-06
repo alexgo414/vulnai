@@ -11,9 +11,15 @@ import flask_praetorian
 from werkzeug.security import generate_password_hash, check_password_hash
 from util import url_has_allowed_host_and_scheme
 import random
+import google.generativeai as genai
 
 app = Flask(__name__)
 CORS(app)
+
+# Configura la API key
+genai.configure(api_key="AIzaSyCB078pezEpEA0K_-c1Zkz1VAX5GNJ_Qqs")
+# Crea una instancia del modelo (por ejemplo, Gemini 1.5 Flash)
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 @app.route('/chat/mensajes', methods=['POST'])
 def chat_mensajes():
@@ -29,6 +35,9 @@ def chat_mensajes():
     message_text = data.get('message', '')
     print(f"Mensaje recibido: {message_text}")
 
+    # Genera la descripción
+    response = model.generate_content([message_text])
+    
     respuesta = random.choice(mensajes)
     print(f"Respuesta generada: {respuesta}")
-    return jsonify({"message": respuesta})
+    return jsonify({"message": response})
