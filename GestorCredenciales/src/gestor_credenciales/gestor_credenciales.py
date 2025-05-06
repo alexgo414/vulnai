@@ -38,7 +38,8 @@ class GestorCredenciales:
             self._credenciales[servicio] = {}
         if usuario in self._credenciales[servicio]:
             raise ErrorCredencialExistente("La credencial ya existe")
-        self._credenciales[servicio][usuario] = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        self._credenciales[servicio][usuario] = self._hash_clave(password)
+
 
     @require(lambda servicio: servicio)
     @ensure(lambda servicio, result: result is not None)
