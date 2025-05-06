@@ -32,14 +32,13 @@ class GestorCredenciales:
     @ensure(lambda servicio, usuario, result: result is None)
     def añadir_credencial(self, clave_maestra: str, servicio: str, usuario: str, password: str) -> None:
         """Añade una nueva credencial al gestor."""
-        if clave_maestra != self._clave_maestra_hashed:
-            raise ErrorAutenticacion("Clave maestra incorrecta.")
-        if servicio in self._credenciales:
-            raise ErrorCredencialExistente("La credencial ya existe.")
-        self._credenciales[servicio] = {
-            'usuario': usuario,
-            'password': self._hash_clave(password)
-        }
+        if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
+            raise ErrorAutenticacion("Clave maestra incorrecta")
+        if servicio not in self._credenciales:
+            self._credenciales[servicio] = {}
+        if usuario in self._credenciales[servicio]:
+            raise ErrorCredencialExistente("La credencial ya existe")
+        self._credenciales[servicio][usuario] = self._hash_clave(password)
 
     @require(lambda servicio: servicio)
     @ensure(lambda servicio, result: result is not None)
