@@ -28,14 +28,12 @@ class GestorCredenciales:
         self._credenciales = {}
 
     @require(lambda servicio, usuario: servicio and usuario, error=ErrorPoliticaPassword("El servicio y el usuario no pueden estar vacíos"))
-    # Precondiciones para servicio y password
     @require(lambda servicio: all(c not in ";&|" for c in servicio), error=ErrorPoliticaPassword("El servicio no puede contener caracteres especiales como ; & |"))
     @require(lambda password: len(password) >= 12, error=ErrorPoliticaPassword("La contraseña debe tener al menos 12 caracteres"))
     @require(lambda password: any(c.isupper() for c in password), error=ErrorPoliticaPassword("La contraseña debe contener al menos una letra mayúscula"))
     @require(lambda password: any(c.islower() for c in password), error=ErrorPoliticaPassword("La contraseña debe contener al menos una letra minúscula"))
     @require(lambda password: any(c.isdigit() for c in password), error=ErrorPoliticaPassword("La contraseña debe contener al menos un número"))
     @require(lambda password: any(c in "!@#$%^&*" for c in password), error=ErrorPoliticaPassword("La contraseña debe contener al menos un carácter especial"))
-    # Precondiciones para usuario
     @require(lambda usuario: all(c not in ";&|" for c in usuario), error=ErrorPoliticaPassword("El usuario no puede contener caracteres especiales como ; & |"))
     @ensure(lambda servicio, usuario, result: result is None, error=ErrorCredencialExistente("La credencial ya existe")) # Esta postcondición asegura que la función no devuelve nada si la credencial ya existe
     def añadir_credencial(self, clave_maestra: str, servicio: str, usuario: str, password: str) -> None:
