@@ -8,6 +8,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from util import url_has_allowed_host_and_scheme
 import os
 from dotenv import load_dotenv
+from api.app import api_blueprint, db, login_manager, guard, Usuario
 
 app = Flask(__name__)
 
@@ -19,19 +20,47 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("SQLALCHEMY_DATABASE_URI")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS") == "true"
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
-# ejercicio 3, añadir JWT autenticacion
-app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
-jwt = JWTManager(app)
-
-login_manager = LoginManager()
+db.init_app(app)  # inicializa SQLAlchemy con la app principal
 login_manager.init_app(app)
+guard.init_app(app, Usuario)
+
+# Crear el user loader
+@login_manager.user_loader
+def load_user(user_id:str):
+    return db.session.get(Usuario, user_id)
+
+# Crear la base de datos y el usuario admin si no existe
+with app.app_context():
+    db.create_all()
+
+    if not Usuario.query.filter((Usuario.username == 'admin') | (Usuario.email == 'admin@admin.es')).first():
+        admin = Usuario(
+            id=str(uuid.uuid4()),
+            username='admin',
+            nombre='admin',
+            apellidos='administrador',
+            email='admin@admin.es',
+            password=guard.hash_password('admin'),
+            roles='admin'
+        )
+        db.session.add(admin)
+
+    if not Usuario.query.filter((Usuario.username == 'user') | (Usuario.email == 'user@user.es')).first():
+        user = Usuario(
+            id=str(uuid.uuid4()),
+            username='user',
+            nombre='user',
+            apellidos='user',
+            email='user@user.es',
+            password=guard.hash_password('user'),
+            roles='user'
+        )
+        db.session.add(user)
+
+    db.session.commit()
 
 def check(password, hash): # verificar contraseña
     return check_password_hash(hash, password)
-
-@login_manager.user_loader
-def load_user(user_id):
-    return None
 
 # Ruta para la página inicial
 @app.route('/')
@@ -80,6 +109,13 @@ def usuario_eliminar():
 @app.route('/logout')
 def logout():
     return redirect(url_for('login'))
+
+# Estas importaciones deben estar al final del archivo para evitar problemas en PythonAnywhere
+from api.app import api_blueprint
+from chat.app import chat_blueprint
+
+app.register_blueprint(api_blueprint, url_prefix="/api")
+app.register_blueprint(chat_blueprint, url_prefix="/chat")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -145,8 +145,10 @@ function configurarEnvioConEnter(messageInput, sendButton) {
     });
 }
 
+// Base URL del chat
+const API_BASE_URL_CHAT = "https://vulnaimicro.pythonanywhere.com";
 // Base URL de la API
-const API_BASE_URL_CHAT = "http://localhost:5002";
+const API_BASE_URL = "https://vulnaimicro.pythonanywhere.com/api";
 
 // Función para enviar el mensaje al servidor y mostrar la respuesta (Ejercicio 3)
 async function sendMessageToServer(messageText, chatMensajes) {
@@ -162,6 +164,12 @@ async function sendMessageToServer(messageText, chatMensajes) {
             },
             body: JSON.stringify({ message: messageText }),
         });
+
+        // Si el usuario no está autenticado, redirige al login
+        if (response.status === 401) {
+            window.location.href = "/login";
+            return;
+        }
 
         // Verificar si la respuesta es exitosa
         if (!response.ok) {
@@ -206,8 +214,6 @@ async function sendMessageToServer(messageText, chatMensajes) {
 }
 
 // Funciones para la api
-// Base URL de la API
-const API_BASE_URL = "http://localhost:5001";
 
 // Función para obtener y renderizar usuarios
 async function obtenerUsuarios() {
@@ -561,7 +567,7 @@ async function editarProyecto(proyectoId) {
         const token = sessionStorage.getItem("token");
 
         try {
-            const response = await fetch(`http://localhost:5001/proyectos/${proyecto.id}`, {
+            const response = await fetch(`${API_BASE_URL}/proyectos/${proyecto.id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -648,7 +654,7 @@ async function editarUsuario(usuarioId) {
         try {
             let response;
             if (password) {
-                response = await fetch(`http://localhost:5001/usuarios/${usuario.id}`, {
+                response = await fetch(`${API_BASE_URL}/usuarios/${usuario.id}`, {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
@@ -657,7 +663,7 @@ async function editarUsuario(usuarioId) {
                     body: JSON.stringify({ username, nombre, apellidos, email, password })
                 });
             } else {
-                response = await fetch(`http://localhost:5001/usuarios/${usuario.id}`, {
+                response = await fetch(`${API_BASE_URL}/usuarios/${usuario.id}`, {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
@@ -781,10 +787,10 @@ async function cargarDatosAdmin() {
     console.log("Token encontrado:", token);
     try {
         const [proyectosRes, usuariosRes] = await Promise.all([
-        fetch("http://localhost:5001/proyectos", {
+        fetch(`${API_BASE_URL}/proyectos`, {
             headers: { "Authorization": "Bearer " + token }
         }),
-        fetch("http://localhost:5001/usuarios", {
+        fetch(`${API_BASE_URL}/usuarios`, {
             headers: { "Authorization": "Bearer " + token }
         })
         ]);
@@ -843,10 +849,10 @@ async function cargarDatosUsuarios() {
 
     console.log("Token encontrado:", token);
     try {
-        const proyectosRes = await fetch("http://localhost:5001/proyectos", {
+        const proyectosRes = await fetch(`${API_BASE_URL}/proyectos`, {
             headers: { "Authorization": "Bearer " + token }
         });
-        const usuariosRes = await fetch("http://localhost:5001/usuarios", {
+        const usuariosRes = await fetch(`${API_BASE_URL}/usuarios`, {
             headers: { "Authorization": "Bearer " + token }
         });
 
@@ -902,7 +908,7 @@ async function logearUsuario() {
         const password = document.getElementById("password").value;
 
         try {
-            const response = await fetch("http://localhost:5001/login", {
+            const response = await fetch(`${API_BASE_URL}/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, password })
@@ -923,6 +929,7 @@ async function logearUsuario() {
             console.log("Username guardado:", username);
             sessionStorage.setItem("token", data.access_token);
             console.log("Token guardado:", data.access_token);
+
             window.location.href = "/perfil";
         } catch (error) {
             console.error(error);

@@ -2,7 +2,7 @@ import os
 import uuid
 from datetime import date
 from dotenv import load_dotenv
-from flask import Flask, request, jsonify, render_template, flash, redirect, url_for, abort, make_response
+from flask import Flask, request, jsonify, Blueprint, render_template, flash, redirect, url_for, abort, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api, Resource
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -11,26 +11,14 @@ import flask_praetorian
 from werkzeug.security import generate_password_hash, check_password_hash
 from util import url_has_allowed_host_and_scheme
 
-# Cargar configuración desde .env
-load_dotenv()
-
-# Configurar Flask
-app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("SQLALCHEMY_DATABASE_URI")
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS") == "true"
-app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
-app.config["PRAETORIAN_HASH_SCHEMES"] = ["pbkdf2_sha256"]
-app.config["JWT_ACCESS_LIFESPAN"] = {"hours": 24}
-app.config["JWT_REFRESH_LIFESPAN"] = {"days": 30}
-
-db = SQLAlchemy(app)
-api = Api(app)
+db = SQLAlchemy()
+api_blueprint = Blueprint('api', __name__)
+api = Api(api_blueprint)
 guard = flask_praetorian.Praetorian()
-CORS(app)
+CORS(api_blueprint)
 
 # Configurar Flask-Login
 login_manager = LoginManager()
-login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Debes iniciar sesión para acceder a esta página.'
 login_manager.login_message_category = 'info'
@@ -106,51 +94,18 @@ class Usuario(UserMixin, db.Model):
     def is_valid(self):
         return self.is_active
 
-guard.init_app(app, Usuario)
-
 def check(password, hash): # verificar contraseña
     return check_password_hash(hash, password)
 
 def hash_password(password):
     return generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
 
-# Crear el user loader
-@login_manager.user_loader
-def load_user(user_id:str):
-    return db.session.get(Usuario, user_id) # Poner que devuelva None si no existe el usuario??
 
-# Crear la base de datos y el usuario admin si no existe
-with app.app_context():
-    db.create_all()
+@api_blueprint.route('/hello')
+def hello_api():
+    return jsonify({"message": "Hola desde API"})
 
-    if not Usuario.query.filter((Usuario.username == 'admin') | (Usuario.email == 'admin@admin.es')).first():
-        admin = Usuario(
-            id=str(uuid.uuid4()),
-            username='admin',
-            nombre='admin',
-            apellidos='administrador',
-            email='admin@admin.es',
-            password=guard.hash_password('admin'),
-            roles='admin'
-        )
-        db.session.add(admin)
-
-    if not Usuario.query.filter((Usuario.username == 'user') | (Usuario.email == 'user@user.es')).first():
-        user = Usuario(
-            id=str(uuid.uuid4()),
-            username='user',
-            nombre='user',
-            apellidos='user',
-            email='user@user.es',
-            password=guard.hash_password('user'),
-            roles='user'
-        )
-        db.session.add(user)
-
-    db.session.commit()
-
-
-@app.route("/login", methods=["POST"])
+@api_blueprint.route('/login', methods=["POST"])
 def login():
     """
     Logs a user in by parsing a POST request containing user credentials and
@@ -166,7 +121,7 @@ def login():
     ret = {"access_token": guard.encode_jwt_token(user)}
     return (jsonify(ret), 200)
 
-@app.route("/usuarios/rol", methods=["GET"])
+@api_blueprint.route('/usuarios/rol', methods=["GET"])
 @flask_praetorian.auth_required
 def get_user_role():
     """
@@ -338,9 +293,4 @@ class ProyectoResource(Resource):
 api.add_resource(UsuarioResource, '/usuarios', '/usuarios/<string:user_id>')
 api.add_resource(ProyectoResource, '/proyectos', '/proyectos/<string:proyecto_id>')
 
-# Crear la base de datos
-with app.app_context():
-    db.create_all()
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=True)
+__all__ = ["api_blueprint"]
