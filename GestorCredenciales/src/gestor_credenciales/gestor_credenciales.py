@@ -3,9 +3,12 @@ import hashlib
 import bcrypt
 from icontract import require, ensure
 import re
+import logging
+from io import StringIO
 
-#añadir logs siempre y cuando se modifique cualquier cosa en el código. 
-#verificar que cada clave maestra sea única, y que un usuario con una clave maetra diferente a otro usuario no pueda acceder a sus credenciales
+# Configuración de logging seguro
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class ErrorPoliticaPassword(Exception):
     pass
@@ -21,11 +24,15 @@ class ErrorCredencialExistente(Exception):
 
 class GestorCredenciales:
     def __init__(self, clave_maestra: str):
-        #añadir verificación de que la clave maestra no sea una cadena vacía
-        #añadir verificación de que la clave maestra igual que con las contraseñas independientes. 
         """Inicializa el gestor con una clave maestra."""
+        # Validar que la clave maestra no sea vacía y cumpla la política
+        if not clave_maestra:
+            raise ValueError("La clave maestra no puede estar vacía")
+        if not self.es_password_segura(clave_maestra):
+            raise ValueError("La clave maestra debe cumplir con la política de seguridad")
         self._clave_maestra_hashed = self._hash_clave(clave_maestra)
         self._credenciales = {}
+        logger.info("GestorCredenciales inicializado")
 
     @require(lambda servicio, usuario: servicio and usuario, error=ErrorPoliticaPassword("El servicio y el usuario no pueden estar vacíos"))
     @require(lambda servicio: all(c not in ";&|" for c in servicio), error=ErrorPoliticaPassword("El servicio no puede contener caracteres especiales como ; & |"))
@@ -34,12 +41,15 @@ class GestorCredenciales:
     @require(lambda password: any(c.islower() for c in password), error=ErrorPoliticaPassword("La contraseña debe contener al menos una letra minúscula"))
     @require(lambda password: any(c.isdigit() for c in password), error=ErrorPoliticaPassword("La contraseña debe contener al menos un número"))
     @require(lambda password: any(c in "!@#$%^&*" for c in password), error=ErrorPoliticaPassword("La contraseña debe contener al menos un carácter especial"))
-    @require(lambda usuario: all(c not in ";&|" for c in usuario), error=ErrorPoliticaPassword("El usuario no puede contener caracteres especiales como ; & |"))
-    @ensure(lambda servicio, usuario, result: result is None, error=ErrorCredencialExistente("La credencial ya existe")) # Esta postcondición asegura que la función no devuelve nada si la credencial ya existe
+    @require(lambda usuario: all(c not in ";&|'--" for c in usuario), error=ErrorPoliticaPassword("El usuario no puede contener caracteres especiales como ; & | ' --"))
+    @ensure(lambda servicio, usuario, result: result is None, error=ErrorCredencialExistente("La credencial ya existe"))
+    @require(lambda servicio: all(c not in ";&|'--" for c in servicio), error=ErrorPoliticaPassword("El servicio no puede contener caracteres especiales como ; & | ' --"))
     def añadir_credencial(self, clave_maestra: str, servicio: str, usuario: str, password: str) -> None:
         """Añade una nueva credencial al gestor."""
         if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
             raise ErrorAutenticacion("Clave maestra incorrecta")
+        if not self.es_password_segura(password):
+            raise ErrorPoliticaPassword("La contraseña no cumple con la política de seguridad")
         if servicio not in self._credenciales:
             self._credenciales[servicio] = {}
         if usuario in self._credenciales[servicio]:
@@ -48,69 +58,61 @@ class GestorCredenciales:
             'usuario': usuario,
             'password': self._hash_clave(password)
         }
-        # {
-        #     "servicio1": {
-        #         "usuario1": {
-        #             "usuario": "usuario1",
-        #             "password": <hash de password1>
-        #         },
-        #         "usuario2": {
-        #             "usuario": "usuario2",
-        #             "password": <hash de password2>
-        #         }
-        #     },
-        #     "servicio2": {
-        #         "usuario3": {
-        #             "usuario": "usuario3",
-        #             "password": <hash de password3>
-        #         },
-        #         "usuario4": {
-        #             "usuario": "usuario4",
-        #             "password": <hash de password4>
-        #         }
-        #     }
-        # }
-        #verificar que el usuario no contenga caracteres especiales como ; & |.
-
+        logger.info(f"añadir_credencial: servicio={servicio}, usuario={usuario}")
 
     @require(lambda servicio: servicio)
     @ensure(lambda servicio, result: result is not None)
     def obtener_password(self, clave_maestra: str, servicio: str, usuario: str) -> str:
-        """Recupera una contraseña almacenada."""
-        if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
-            raise ErrorAutenticacion("Clave maestra incorrecta.")
-        if servicio not in self._credenciales:
-            raise ErrorServicioNoEncontrado("El servicio no se encuentra en la lista.")
-        credencial = self._credenciales[servicio][usuario]
-        if credencial['usuario'] != usuario:
-            raise ErrorServicioNoEncontrado("El usuario no coincide con el servicio.")
-        return credencial['password']
-    #añadir verificación de que la contraseña no se haya modificado de manera externa. 
+            if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
+                raise ErrorAutenticacion("Clave maestra incorrecta")
+            if servicio not in self._credenciales or usuario not in self._credenciales[servicio]:
+                raise ErrorServicioNoEncontrado("Servicio o usuario no encontrado")
+            credencial = self._credenciales[servicio][usuario]
+            # Verificar que credencial es un diccionario y tiene un hash válido
+            if not isinstance(credencial, dict) or 'password' not in credencial:
+                raise ValueError("Credencial corrupta o modificada")
+            try:
+                bcrypt.checkpw(b"dummy", credencial['password'])
+            except ValueError:
+                raise ValueError("Credencial corrupta o modificada")
+            logger.info(f"obtener_password: servicio={servicio}, usuario={usuario}")
+            return credencial['password']
 
     @require(lambda servicio: servicio)
     @ensure(lambda servicio, result: result is None)
     def eliminar_credencial(self, clave_maestra: str, servicio: str, usuario: str) -> None:
         """Elimina una credencial existente."""
-        pass
+        if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
+            raise ErrorAutenticacion("Clave maestra incorrecta")
+        if servicio not in self._credenciales or usuario not in self._credenciales[servicio]:
+            raise ErrorServicioNoEncontrado("Servicio o usuario no encontrado")
+        del self._credenciales[servicio][usuario]
+        if not self._credenciales[servicio]:
+            del self._credenciales[servicio]
+        logger.info(f"eliminar_credencial: servicio={servicio}, usuario={usuario}")
 
     @ensure(lambda result: isinstance(result, list))
     def listar_servicios(self, clave_maestra: str) -> list:
         """Lista todos los servicios almacenados."""
         if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
-            raise ErrorAutenticacion("Clave maestra incorrecta.")
+            raise ErrorAutenticacion("Clave maestra incorrecta")
+        logger.info("listar_servicios ejecutado")
         return list(self._credenciales.keys())
 
-    def _hash_clave(self, clave: str) -> str:
+    def _hash_clave(self, clave: str) -> bytes:
         """Hashea una clave usando bcrypt."""
         return bcrypt.hashpw(clave.encode('utf-8'), bcrypt.gensalt())
 
     def _verificar_clave(self, clave: str, clave_hashed: bytes) -> bool:
         """Verifica si una clave coincide con su hash."""
-        return bcrypt.checkpw(clave.encode('utf-8'), clave_hashed)
+        try:
+            return bcrypt.checkpw(clave.encode('utf-8'), clave_hashed)
+        except ValueError:
+            return False
 
     @require(lambda password: isinstance(password, str) and password, "La contraseña debe ser una cadena no vacía")
     def es_password_segura(self, password):
-        if len(password) < 12:  # Cambiar a 12 para coincidir con el decorador
+        if len(password) < 12:
             return False
         if not re.search(r"[A-Z]", password):
             return False
