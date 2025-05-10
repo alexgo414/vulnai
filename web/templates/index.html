@@ -36,16 +36,12 @@
     <!-- Cuadros -->
     <div class="row d-flex contenedor-cuadros justify-content-center align-items-center">
         <div class="cuadro-svaia mt-5 me-2">
-            <a href="chat" class="text-decoration-none text-white">
-                <div class="text-center" style="font-size: 22px; font-weight:400">¡Comienza ya!</div>
-                <div class="text-center mt-2 mb-1 px-4" style="font-size: 14px;">Describe tu proyecto y comienza a recibir sugerencias sobre seguridad por parte de nuestra Inteligencia Artificial.</div>
-            </a>
+            <div class="text-center" style="font-size: 22px; font-weight:400">¡Comienza ya!</div>
+            <div class="text-center mt-2 mb-1 px-4" style="font-size: 14px;">Describe tu proyecto y comienza a recibir sugerencias sobre seguridad por parte de nuestra Inteligencia Artificial.</div>
         </div>
         <div class="cuadro-svaia mt-5">
-            <a href="chat" class="text-decoration-none text-white">
-                <div class="text-center" style="font-size: 22px; font-weight:400">Vulnerabilidades</div>
-                <div class="text-center mt-2 mb-1 px-4" style="font-size: 14px;">Nuestro modelo se basa en miles de vulnerabilidades conocidas y en la información más reciente de la industria.</div>
-            </a>
+            <div class="text-center" style="font-size: 22px; font-weight:400">Vulnerabilidades</div>
+            <div class="text-center mt-2 mb-1 px-4" style="font-size: 14px;">Nuestro modelo se basa en miles de vulnerabilidades conocidas y en la información más reciente de la industria.</div>
         </div>
     </div>
 </div>
@@ -58,9 +54,7 @@
                 <div class="row">
                     <!-- Columna izquierda: Chat -->
                     <div id="col-izq-chat" class="col-10 col-lg-7 mx-auto"> <!--Ocupa 6 columnas de las 12 posibles en pantallas medianas-->
-                        <a href="chat">
-                            <img src="{{ url_for('static', filename='images/chat_imagen.png') }}" alt="Imagen de chat" class="img-fluid chat-image" id="chat-image"> <!--Imagen de chat-->
-                        </a>
+                        <img src="{{ url_for('static', filename='images/chat_imagen.png') }}" alt="Imagen de chat" class="img-fluid chat-image" id="chat-image"> <!--Imagen de chat-->
                     </div>
 
                     <!-- Columna derecha: Pasos -->
@@ -121,7 +115,9 @@
                         <p class="card-text">1 proyecto<br>10 sugerencias<br>Sin soporte</p>
                     </div>
                     <div class="card-footer text-center">
-                        <button type="button" class="btn btn-outline-primary">Comenzar</button>
+                        <a href="/login">
+                            <button type="button" class="btn btn-outline-primary">Comenzar</button>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -135,7 +131,9 @@
                         <p class="card-text">10 proyectos<br>100 sugerencias<br>Soporte por chat<br>Acceso a la API</p>
                     </div>
                     <div class="card-footer text-center">
-                        <button type="button" class="btn btn-outline-primary">Comenzar</button>
+                        <a href="/login">
+                            <button type="button" class="btn btn-outline-primary">Comenzar</button>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -149,7 +147,9 @@
                         <p class="card-text">100 proyectos<br>Sugerencias ilimitadas<br>Soporte por chat<br>Soporte por teléfono<br>Acceso a la API</p>
                     </div>
                     <div class="card-footer text-center">
-                        <button type="button" class="btn btn-outline-primary">Comenzar</button>
+                        <a href="/login">
+                            <button type="button" class="btn btn-outline-primary">Comenzar</button>
+                        </a>
                     </div>
                 </div>
             </div>

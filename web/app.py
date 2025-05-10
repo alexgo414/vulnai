@@ -22,6 +22,8 @@ app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
 db.init_app(app)  # inicializa SQLAlchemy con la app principal
 login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = None
 guard.init_app(app, Usuario)
 
 # Crear el user loader

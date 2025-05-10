@@ -20,8 +20,7 @@ CORS(api_blueprint)
 # Configurar Flask-Login
 login_manager = LoginManager()
 login_manager.login_view = 'login'
-login_manager.login_message = 'Debes iniciar sesión para acceder a esta página.'
-login_manager.login_message_category = 'info'
+login_manager.login_message = None
 
 # Modelos
 class Proyecto(db.Model):

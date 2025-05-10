@@ -360,7 +360,7 @@ async function obtenerUsuarioPorId(usuarioId) {
 }
 
 // Función para eliminar un proyecto
-async function eliminarProyecto(proyectoId) {
+async function eliminarProyecto(proyectoId, elementoDOM) {
     if (!confirm("¿Estás seguro de que deseas eliminar este proyecto?")) {
         return;
     }
@@ -377,7 +377,9 @@ async function eliminarProyecto(proyectoId) {
         }
         const resultado = await response.json();
         mostrarAlerta("Proyecto eliminado con éxito", "success");
-        obtenerProyectos(); // Actualizar la lista de proyectos
+        if (elementoDOM) {
+            elementoDOM.remove(); // Eliminar el elemento del DOM
+        }
     } catch (error) {
         console.error(error);
         alert("Hubo un error al eliminar el proyecto");
@@ -482,7 +484,7 @@ function renderizarProyectos(proyectos, usuarios) {
                 </div>
                 <div class="card-footer d-flex justify-content-between">
                     <button class="btn btn-primary" onclick="window.location.href='/perfil/proyecto_editar/${proyecto.id}'">Editar</button>
-                    <button class="btn btn-danger" onclick="eliminarProyecto('${proyecto.id}')">Eliminar</button>
+                    <button class="btn btn-danger" onclick="eliminarProyecto('${proyecto.id}', this.closest('.col-md-6'))">Eliminar</button>
                 </div>
             </div>
         `;
@@ -969,6 +971,63 @@ function configurarLogout() {
     }
 }
 
+async function renderizarNombresProyectosSidebarChat() {
+    const sidebarChat = document.getElementById("proyectos-sidebar");
+    if (!sidebarChat) return;
+
+    const token = sessionStorage.getItem("token");
+    if (!token) {
+        window.location.href = "/login";
+        return;
+    }
+
+    console.log("Token encontrado:", token);
+
+    // Obtener proyectos a la API
+    const proyectosRes = await fetch(`${API_BASE_URL}/proyectos`, {
+        headers: { "Authorization": "Bearer " + token }
+    });
+
+    const proyectosText = await proyectosRes.text();
+
+    if (proyectosText.includes("Token has expired")) {
+        sessionStorage.clear();
+        window.location.href = "/login";
+        return;
+    }
+
+    console.log("Respuesta de proyectos:", proyectosText);
+
+    const proyectos = JSON.parse(proyectosText);
+
+    console.log("Proyectos:", proyectos);
+
+    sidebarChat.innerHTML = ""; // Limpiar el contenido previo
+    proyectos.forEach((proyecto) => {
+        const proyectoDiv = document.createElement("div");
+        proyectoDiv.classList.add("proyecto-chat");
+        proyectoDiv.innerHTML = `
+            <div class="d-flex align-items-center justify-content-between list-group-item list-group-item-action project-item mb-2">
+                <span>${proyecto.nombre}</span>
+                <button type="button" class="btn btn-sm btn-danger delete-button" title="Eliminar" data-id="${proyecto.id}">
+                    <svg class="trash-svg" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16">
+                        <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
+                    </svg>
+                </button>
+            </div>
+        `;
+        sidebarChat.appendChild(proyectoDiv);
+    });
+
+    // Añadir listeners a los botones de borrar
+    sidebarChat.querySelectorAll('.delete-button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const proyectoId = this.getAttribute('data-id');
+            eliminarProyecto(proyectoId, this.closest('.proyecto-chat'));
+        });
+    });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
 
     configurarLogout(); // Configurar el evento de logout
@@ -984,6 +1043,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const { chatMensajes, messageInput, sendButton } = inicializarChat();
         configurarChat(chatMensajes, messageInput, sendButton);
         configurarEnvioConEnter(messageInput, sendButton);
+        renderizarNombresProyectosSidebarChat();
     }
     
     if (document.getElementById("crear-proyecto-form")) {
