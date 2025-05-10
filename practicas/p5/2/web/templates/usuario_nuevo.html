@@ -1,0 +1,94 @@
+{% extends "layout.html" %}
+{% block title %}Crear nuevo usuario{% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/perfil.css') }}">
+{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Crear nuevo usuario</h1>
+    <div class="card shadow-sm mx-auto" style="max-width: 600px;">
+        <div class="card-body">
+            <form action="{{ url_for('usuario_nuevo') }}" method="post" id="usuario-nuevo-form">
+                <div class="mb-3">
+                    <label for="username" class="form-label"><strong>Nombre de usuario:</strong></label>
+                    <input type="text" id="username" name="username" class="form-control" required placeholder="Ingresa el nombre de usuario">
+                </div>
+                <div class="mb-3">
+                    <label for="nombre" class="form-label"><strong>Nombre:</strong></label>
+                    <input type="text" id="nombre" name="nombre" class="form-control" required placeholder="Ingresa el nombre">
+                </div>
+                <div class="mb-3">
+                    <label for="apellidos" class="form-label"><strong>Apellidos:</strong></label>
+                    <input type="text" id="apellidos" name="apellidos" class="form-control" required placeholder="Ingresa los apellidos">
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label"><strong>Email:</strong></label>
+                    <input type="email" id="email" name="email" class="form-control" required placeholder="Ingresa el email">
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label"><strong>Contraseña:</strong></label>
+                    <input type="password" id="password" name="password" class="form-control" required placeholder="Ingresa la contraseña">
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary">Crear</button>
+                    <a href="{{ url_for('perfil') }}" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Función para crear un nuevo usuario
+async function crearUsuario(usuario) {
+    console.log("Creando usuario:", usuario);
+    try {
+        const token = sessionStorage.getItem("token");
+        const response = await fetch(`${API_BASE_URL}/usuarios`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify(usuario),
+        });
+        if (!response.ok) {
+            throw new Error(`Error al crear usuario: ${response.statusText}`);
+        }
+        const resultado = await response.json();
+        console.log("Usuario creado:", resultado);
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// Manejar el envío del formulario de creación de usuario
+async function cargarFormularioCrearUsuario() {
+    const form = document.getElementById("crear-usuario-form");
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault(); // Evitar el envío clásico
+
+        const username = document.getElementById("username").value;
+        const nombre = document.getElementById("nombre").value;
+        const apellidos = document.getElementById("apellidos").value;
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        const nuevoUsuario = {
+            username,
+            nombre,
+            apellidos,
+            email,
+            password,
+        };
+
+    });
+}
+
+// Llamar a la función al cargar
+document.addEventListener("DOMContentLoaded", cargarFormularioCrearUsuario);
+
+</script>
+
+{% endblock %}

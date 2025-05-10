@@ -1,0 +1,53 @@
+{% extends "layout.html" %}
+{% block title %}Chat{% endblock %}
+{% block content %}
+<div class="container" id="container-path">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Chat</li>
+        </ol>
+    </nav>
+</div>
+<!-- Alerta
+    <div class="container" id="container-alert">
+        <div class="alert alert-dismissible alert-warning mt-3">
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <h4 class="alert-heading">Atención!</h4>
+            <p class="mb-0">Mensaje de alerta para indicar que se ha podido producir un error (<a href="#" class="alert-link">ver detalles</a>).</p>
+        </div>
+    </div>
+    -->
+<div class="container" id="container-chat">
+    <div class="row flex-column flex-lg-row ps-lg-5 mt-3 mb-5">
+        <!-- Sidebar con orden 1 en pantallas pequeñas -->
+        <div class="col-12 col-lg-3 me-4 order-1 mb-lg-0 mb-4" id="sidebar">
+            <div class="d-flex justify-content-end">
+                <a href="/perfil/proyecto_nuevo" class="btn btn-primary" id="create-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
+                    </svg>
+                </a>
+            </div>
+            <div class="list-group mt-1 mb-2" id="proyectos-sidebar">
+                <!-- Proyectos se inyectarán aquí -->
+            </div>
+        </div>
+        <!-- Chat con orden 2 en pantallas pequeñas -->
+        <div class="col-12 col-lg-8 order-2" id="chat">
+            <div class="row" id="row-superior">
+                <div class="chat-mensajes">
+                    
+                </div>
+            </div>
+        
+            <div class="row" id="row-inferior">
+                <div class="col-12 d-flex align-items-center" id="escribir-mensaje">
+                    <input  id="messageInput" type="text" class="form-control flex-grow-1" placeholder="Escribe tu mensaje...">
+                    <button id="sendButton" class="btn btn-primary ms-0">Enviar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

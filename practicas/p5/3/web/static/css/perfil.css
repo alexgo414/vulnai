@@ -1,0 +1,81 @@
+/* PERFIL.CSS - Estilos exclusivos para la página de perfil */
+
+/* Títulos */
+#usuarios-container h1, #proyectos-container h1, #informacion-personal-container h1 {
+    font-size: 2.2rem;
+    color: #22313f;
+    text-align: center;
+    margin-bottom: 28px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+/* Tarjetas elegantes solo en perfil */
+#usuarios-container .card, #proyectos-container .card {
+    background: linear-gradient(135deg, #ffffff 80%, #eaf6f6 100%);
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 6px 24px rgba(44, 62, 80, 0.10);
+    transition: transform 0.25s cubic-bezier(.4,2,.6,1), box-shadow 0.25s;
+    margin-bottom: 24px;
+    color: #22313f;
+    opacity: 1 !important;
+    max-width: 100%;
+}
+
+/* Card body y títulos */
+#usuarios-container .card-body, #proyectos-container .card-body {
+    padding: 24px 20px 20px 20px;
+}
+
+#usuarios-container .card-title, #proyectos-container .card-title {
+    font-size: 1.3rem;
+    color: #18bc9c;
+    font-weight: 600;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+}
+
+#usuarios-container .card-text, #proyectos-container .card-text {
+    font-size: 1.05rem;
+    color: #5c6e7a;
+    margin-bottom: 10px;
+    line-height: 1.6;
+}
+
+/* Botones personalizados solo en perfil */
+#usuarios-container .btn, #proyectos-container .btn {
+    font-size: 1rem;
+    padding: 10px 20px;
+    border-radius: 6px;
+    margin-right: 8px;
+    margin-bottom: 6px;
+    box-shadow: 0 2px 8px rgba(24, 188, 156, 0.08);
+}
+
+#usuarios-container .btn-success, #proyectos-container .btn-success {
+    border: none;
+    color: #fff;
+}
+
+#usuarios-container .btn-danger, #proyectos-container .btn-danger {
+    border: none;
+    color: #fff;
+}
+
+#informacion-personal-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 250px;
+}
+
+#informacion-personal-container .card {
+    min-width: 400px;
+    max-width: 600px;
+    width: 100%;
+    margin: 0 auto;
+    font-size: 1.15rem;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(44, 62, 80, 0.18);
+}
