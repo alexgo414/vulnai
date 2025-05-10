@@ -19,12 +19,10 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("SQLALCHEMY_DATABASE_URI")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS") == "true"
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
-# ejercicio 3, añadir JWT autenticacion
-app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
-jwt = JWTManager(app)
-
 login_manager = LoginManager()
 login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = None
 
 def check(password, hash): # verificar contraseña
     return check_password_hash(hash, password)

@@ -24,7 +24,7 @@
     
 }
 
-#user-icon {
+#user-icon, #bot-icon {
     width: 20px;
     height: auto;
     color: white;
@@ -354,7 +354,7 @@
     border: #c5c5c5 1px solid;
     border-radius: 5px;
     background-color: white;
-    height: 200px;
+    min-height: 200px;
 }
 
 #create-button {
@@ -389,10 +389,6 @@
     padding: 3px 8px;
     border-radius: 4px;
     display: none;
-}
-
-.project-item:hover {
-    padding: 12px;
 }
 
 .project-item:hover .delete-button {

@@ -18,10 +18,13 @@ CORS(app)
 
 # Configura la API key
 genai.configure(api_key=os.getenv("api_key"))
-# Crea una instancia del modelo (por ejemplo, Gemini 1.5 Flash)
-model = genai.GenerativeModel("gemini-1.5-flash")
+# Crea una instancia del modelo (por ejemplo, Gemini 2.0 Flash)
+model = genai.GenerativeModel("gemini-2.0-flash")
+
+historial_conversaciones = {}
 
 @app.route('/chat/mensajes', methods=['POST'])
+@flask_praetorian.auth_required
 def chat_mensajes():
     mensajes = [
         "¡Hola! ¿En qué puedo ayudarte hoy?",
@@ -30,13 +33,21 @@ def chat_mensajes():
         "¡Estoy aquí para ayudarte!",
         "¿Quieres saber más sobre tus tareas?"
     ]
-    # Puedes usar el mensaje recibido si lo necesitas:
     data = request.get_json()
     message_text = data.get('message', '')
     print(f"Mensaje recibido: {message_text}")
 
-    # Genera la descripción
-    response = model.generate_content([message_text])
-    response_text = response.text  # Extraer el texto generado
-    
+    # Si el usuario está autenticado, usa su id; si no, usa una cookie o IP (no recomendado para producción)
+    user = flask_praetorian.current_user()
+    user_id = str(user.id)
+
+    historial = historial_conversaciones.get(user_id, [])
+    historial.append(message_text)
+
+    response = model.generate_content(historial)
+    response_text = response.text
+
+    historial.append(response_text)
+    historial_conversaciones[user_id] = historial
+
     return jsonify({"message": response_text})
