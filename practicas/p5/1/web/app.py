@@ -31,11 +31,6 @@ def check(password, hash): # verificar contraseña
 def load_user(user_id):
     return None
 
-@app.route('/vuln')
-def vuln():
-    query = request.args.get('q')
-    return f"Endpoint vulnerable {query}"
-
 # Ruta para la página inicial
 @app.route('/')
 def index():
