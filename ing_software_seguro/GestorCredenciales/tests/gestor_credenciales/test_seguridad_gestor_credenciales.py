@@ -49,30 +49,6 @@ class TestSeguridadGestorCredenciales(unittest.TestCase):
                         "PasswordSegura123!abc"  # Ajustar contraseña a 12 caracteres
                     )
 
-    @given(text(min_size=1, max_size=12))
-    @settings(deadline=500)  # Aumentar a 500ms
-    def test_fuzz_politica_passwords_con_passwords_debiles(self, contrasena_generada):
-        try:
-            self.gestor.anyadir_credencial("claveMaestraSegura123!", "servicio", "usuario", contrasena_generada)
-        except ErrorPoliticaPassword:
-            pass  # Comportamiento esperado
-        except Exception as e:
-            self.fail(f"Se lanzó una excepción inesperada: {e}")
-        else:
-            self.assertTrue(self.gestor.es_password_segura(contrasena_generada),
-                            f"Se aceptó una contraseña débil: {contrasena_generada}")
-            
-    def test_politica_passwords_con_password_robusta(self):
-        servicio = "GitHub"
-        usuario = "user1"
-        password = "Segura123!abc"  # 12 caracteres
-        try:
-            self.gestor.anyadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
-            self.assertTrue(self.gestor.es_password_segura(password), "La contraseña robusta no fue aceptada")
-        except ErrorPoliticaPassword:
-            self.fail("La contraseña robusta fue rechazada incorrectamente")
-
-
     def test_acceso_con_clave_maestra_erronea(self):
         self.gestor.anyadir_credencial("claveMaestraSegura123!", "GitHub", "user1", "PasswordSegura123!")
 

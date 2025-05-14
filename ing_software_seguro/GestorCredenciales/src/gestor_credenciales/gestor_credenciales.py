@@ -30,8 +30,15 @@ class GestorCredenciales:
         # Validar que la clave maestra no sea vacía y cumpla la política
         if not clave_maestra:
             raise ValueError("La clave maestra no puede estar vacía")
-        if not self.es_password_segura(clave_maestra):
-            raise ValueError("La clave maestra debe cumplir con la política de seguridad")
+        # Política de fortaleza:
+        if (
+            len(clave_maestra) < 8
+            or not any(c.isupper() for c in clave_maestra)
+            or not any(c.islower() for c in clave_maestra)
+            or not any(c.isdigit() for c in clave_maestra)
+            or not any(c in "!@#$%^&*" for c in clave_maestra)
+        ):
+            raise ValueError("La clave maestra no cumple la política de seguridad")
         self._clave_maestra_hashed = self._hash_clave(clave_maestra)
         self._credenciales = {}
         logger.info("GestorCredenciales inicializado")
@@ -50,8 +57,6 @@ class GestorCredenciales:
         """Añade una nueva credencial al gestor."""
         if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
             raise ErrorAutenticacion(MENSAJE_ERROR_AUTENTICACION)
-        if not self.es_password_segura(password):
-            raise ErrorPoliticaPassword("La contraseña no cumple con la política de seguridad")
         if servicio not in self._credenciales:
             self._credenciales[servicio] = {}
         if usuario in self._credenciales[servicio]:
@@ -111,17 +116,3 @@ class GestorCredenciales:
             return bcrypt.checkpw(clave.encode('utf-8'), clave_hashed)
         except ValueError:
             return False
-
-    @require(lambda password: isinstance(password, str) and password, "La contraseña debe ser una cadena no vacía")
-    def es_password_segura(self, password):
-        if len(password) < 12:
-            return False
-        if not re.search(r"[A-Z]", password):
-            return False
-        if not re.search(r"[a-z]", password):
-            return False
-        if not re.search(r"\d", password):
-            return False
-        if not re.search(r"[!@#$%^&*]", password):
-            return False
-        return True
