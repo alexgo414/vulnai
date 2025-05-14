@@ -56,6 +56,7 @@ class GestorCredenciales:
     def anyadir_credencial(self, clave_maestra: str, servicio: str, usuario: str, password: str) -> None:
         """Añade una nueva credencial al gestor."""
         if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
+            logger.warning("Intento de autenticación fallido")
             raise ErrorAutenticacion(MENSAJE_ERROR_AUTENTICACION)
         if servicio not in self._credenciales:
             self._credenciales[servicio] = {}
@@ -71,8 +72,10 @@ class GestorCredenciales:
     @ensure(lambda servicio, result: result is not None)
     def obtener_password(self, clave_maestra: str, servicio: str, usuario: str) -> str:
             if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
+                logger.warning("Intento de autenticación fallido")
                 raise ErrorAutenticacion(MENSAJE_ERROR_AUTENTICACION)
             if servicio not in self._credenciales or usuario not in self._credenciales[servicio]:
+                logger.warning("Servicio o usuario no encontrado")
                 raise ErrorServicioNoEncontrado("Servicio o usuario no encontrado")
             credencial = self._credenciales[servicio][usuario]
             # Verificar que credencial es un diccionario y tiene un hash válido
@@ -90,8 +93,10 @@ class GestorCredenciales:
     def eliminar_credencial(self, clave_maestra: str, servicio: str, usuario: str) -> None:
         """Elimina una credencial existente."""
         if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
+            logger.warning("Intento de autenticación fallido")
             raise ErrorAutenticacion(MENSAJE_ERROR_AUTENTICACION)
         if servicio not in self._credenciales or usuario not in self._credenciales[servicio]:
+            logger.warning("Servicio o usuario no encontrado")
             raise ErrorServicioNoEncontrado("Servicio o usuario no encontrado")
         del self._credenciales[servicio][usuario]
         if not self._credenciales[servicio]:
@@ -102,6 +107,7 @@ class GestorCredenciales:
     def listar_servicios(self, clave_maestra: str) -> list:
         """Lista todos los servicios almacenados."""
         if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
+            logger.warning("Intento de autenticación fallido")
             raise ErrorAutenticacion(MENSAJE_ERROR_AUTENTICACION)
         logger.info("listar_servicios ejecutado")
         return list(self._credenciales.keys())
