@@ -24,15 +24,15 @@ class TestSeguridadGestorCredenciales(unittest.TestCase):
         usuario = "user1"
         password = "PasswordSegura123!"
 
-        self.gestor.añadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
+        self.gestor.anyadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
 
         # Verificar que el almacenamiento no contiene el password en plano
         stored_password = self.gestor._credenciales[servicio][usuario]
         self.assertNotEqual(stored_password, password, "La contraseña se almacenó en texto plano")
         
         # Chequeo adicional: Verificar que el valor almacenado no contiene el password original
-        self.assertFalse(password in str(stored_password), "El password aparece en el almacenamiento")
-        
+        self.assertNotIn(password, str(stored_password), "El password aparece en el almacenamiento")
+
         # Chequeo adicional: Verificar que el formato parece cifrado (ejemplo: longitud diferente)
         self.assertNotEqual(len(stored_password), len(password), "El formato no parece cifrado")
 
@@ -42,7 +42,7 @@ class TestSeguridadGestorCredenciales(unittest.TestCase):
         for servicio in casos_inyeccion:
             with self.subTest(servicio=servicio):
                 with self.assertRaises(ErrorPoliticaPassword):  # Cambiar a ErrorPoliticaPassword
-                    self.gestor.añadir_credencial(
+                    self.gestor.anyadir_credencial(
                         "claveMaestraSegura123!",  # Corregir clave maestra
                         servicio,
                         "usuario_test",
@@ -53,7 +53,7 @@ class TestSeguridadGestorCredenciales(unittest.TestCase):
     @settings(deadline=500)  # Aumentar a 500ms
     def test_fuzz_politica_passwords_con_passwords_debiles(self, contrasena_generada):
         try:
-            self.gestor.añadir_credencial("claveMaestraSegura123!", "servicio", "usuario", contrasena_generada)
+            self.gestor.anyadir_credencial("claveMaestraSegura123!", "servicio", "usuario", contrasena_generada)
         except ErrorPoliticaPassword:
             pass  # Comportamiento esperado
         except Exception as e:
@@ -67,14 +67,14 @@ class TestSeguridadGestorCredenciales(unittest.TestCase):
         usuario = "user1"
         password = "Segura123!abc"  # 12 caracteres
         try:
-            self.gestor.añadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
+            self.gestor.anyadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
             self.assertTrue(self.gestor.es_password_segura(password), "La contraseña robusta no fue aceptada")
         except ErrorPoliticaPassword:
             self.fail("La contraseña robusta fue rechazada incorrectamente")
 
 
     def test_acceso_con_clave_maestra_erronea(self):
-        self.gestor.añadir_credencial("claveMaestraSegura123!", "GitHub", "user1", "PasswordSegura123!")
+        self.gestor.anyadir_credencial("claveMaestraSegura123!", "GitHub", "user1", "PasswordSegura123!")
 
         with self.assertRaises(ErrorAutenticacion):
             self.gestor.obtener_password("claveIncorrecta", "GitHub", "user1")
@@ -92,9 +92,9 @@ class TestSeguridadGestorCredenciales(unittest.TestCase):
         logging.getLogger().addHandler(handler)
         
         try:
-            self.gestor.añadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
+            self.gestor.anyadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
             log_output = log_stream.getvalue()
-            self.assertFalse(password in log_output, "La contraseña aparece en los logs")
+            self.assertNotIn(password, log_output, "La contraseña aparece en los logs")
         finally:
             logging.getLogger().removeHandler(handler)
     
@@ -103,10 +103,9 @@ class TestSeguridadGestorCredenciales(unittest.TestCase):
         usuario = "user1"
         password = "PasswordSegura123!"
         
-        self.gestor.añadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
+        self.gestor.anyadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
         
         # Intentar modificar directamente el almacenamiento interno
-        original_credencial = self.gestor._credenciales[servicio][usuario]
         self.gestor._credenciales[servicio][usuario] = "contraseña_modificada"
         
         # Verificar que el sistema detecta la modificación
@@ -114,8 +113,8 @@ class TestSeguridadGestorCredenciales(unittest.TestCase):
             self.gestor.obtener_password("claveMaestraSegura123!", servicio, usuario)
 
     def test_clave_maestra_debil(self):
-        claves_débiles = ["123", "password", "abc", ""]
-        for clave in claves_débiles:
+        claves_debiles = ["123", "password", "abc", ""]
+        for clave in claves_debiles:
             with self.subTest(clave=clave):
                 with self.assertRaises(ValueError):
                     GestorCredenciales(clave)
@@ -133,15 +132,15 @@ class TestSeguridadGestorCredenciales(unittest.TestCase):
         logging.getLogger().addHandler(handler)
         
         try:
-            self.gestor.añadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
+            self.gestor.anyadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
             self.gestor.obtener_password("claveMaestraSegura123!", servicio, usuario)
             self.gestor.eliminar_credencial("claveMaestraSegura123!", servicio, usuario)
             
             log_output = log_stream.getvalue()
-            self.assertIn("añadir_credencial", log_output, "No se registró la acción de añadir")
+            self.assertIn("anyadir_credencial", log_output, "No se registró la acción de añadir")
             self.assertIn("obtener_password", log_output, "No se registró la acción de obtener")
             self.assertIn("eliminar_credencial", log_output, "No se registró la acción de eliminar")
-            self.assertFalse(password in log_output, "La contraseña aparece en el log de auditoría")
+            self.assertNotIn(password, log_output, "La contraseña aparece en el log de auditoría")
         finally:
             logging.getLogger().removeHandler(handler)
 
@@ -150,7 +149,7 @@ class TestSeguridadGestorCredenciales(unittest.TestCase):
         for usuario in casos_inyeccion:
             with self.subTest(usuario=usuario):
                 with self.assertRaises(ErrorPoliticaPassword):  # Cambiar a ErrorPoliticaPassword
-                    self.gestor.añadir_credencial(
+                    self.gestor.anyadir_credencial(
                         "claveMaestraSegura123!",
                         "GitHub",
                         usuario,
@@ -161,7 +160,7 @@ class TestSeguridadGestorCredenciales(unittest.TestCase):
         servicio = "GitHub"
         usuario = "user1"
         password = "PasswordSegura123!"
-        self.gestor.añadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
+        self.gestor.anyadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
         gestor2 = GestorCredenciales("otraClaveMaestra123!")
         with self.assertRaises(ErrorServicioNoEncontrado):  # Cambiar a ErrorServicioNoEncontrado
             gestor2.obtener_password("otraClaveMaestra123!", servicio, usuario)

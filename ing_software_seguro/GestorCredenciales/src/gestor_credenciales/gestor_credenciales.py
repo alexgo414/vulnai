@@ -6,6 +6,8 @@ import re
 import logging
 from io import StringIO
 
+MENSAJE_ERROR_AUTENTICACION = "Clave maestra incorrecta"
+
 # Configuración de logging seguro
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -44,10 +46,10 @@ class GestorCredenciales:
     @require(lambda usuario: all(c not in ";&|'--" for c in usuario), error=ErrorPoliticaPassword("El usuario no puede contener caracteres especiales como ; & | ' --"))
     @ensure(lambda servicio, usuario, result: result is None, error=ErrorCredencialExistente("La credencial ya existe"))
     @require(lambda servicio: all(c not in ";&|'--" for c in servicio), error=ErrorPoliticaPassword("El servicio no puede contener caracteres especiales como ; & | ' --"))
-    def añadir_credencial(self, clave_maestra: str, servicio: str, usuario: str, password: str) -> None:
+    def anyadir_credencial(self, clave_maestra: str, servicio: str, usuario: str, password: str) -> None:
         """Añade una nueva credencial al gestor."""
         if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
-            raise ErrorAutenticacion("Clave maestra incorrecta")
+            raise ErrorAutenticacion(MENSAJE_ERROR_AUTENTICACION)
         if not self.es_password_segura(password):
             raise ErrorPoliticaPassword("La contraseña no cumple con la política de seguridad")
         if servicio not in self._credenciales:
@@ -58,13 +60,13 @@ class GestorCredenciales:
             'usuario': usuario,
             'password': self._hash_clave(password)
         }
-        logger.info(f"añadir_credencial: servicio={servicio}, usuario={usuario}")
+        logger.info(f"anyadir_credencial: servicio={servicio}, usuario={usuario}")
 
     @require(lambda servicio: servicio)
     @ensure(lambda servicio, result: result is not None)
     def obtener_password(self, clave_maestra: str, servicio: str, usuario: str) -> str:
             if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
-                raise ErrorAutenticacion("Clave maestra incorrecta")
+                raise ErrorAutenticacion(MENSAJE_ERROR_AUTENTICACION)
             if servicio not in self._credenciales or usuario not in self._credenciales[servicio]:
                 raise ErrorServicioNoEncontrado("Servicio o usuario no encontrado")
             credencial = self._credenciales[servicio][usuario]
@@ -83,7 +85,7 @@ class GestorCredenciales:
     def eliminar_credencial(self, clave_maestra: str, servicio: str, usuario: str) -> None:
         """Elimina una credencial existente."""
         if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
-            raise ErrorAutenticacion("Clave maestra incorrecta")
+            raise ErrorAutenticacion(MENSAJE_ERROR_AUTENTICACION)
         if servicio not in self._credenciales or usuario not in self._credenciales[servicio]:
             raise ErrorServicioNoEncontrado("Servicio o usuario no encontrado")
         del self._credenciales[servicio][usuario]
@@ -95,7 +97,7 @@ class GestorCredenciales:
     def listar_servicios(self, clave_maestra: str) -> list:
         """Lista todos los servicios almacenados."""
         if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
-            raise ErrorAutenticacion("Clave maestra incorrecta")
+            raise ErrorAutenticacion(MENSAJE_ERROR_AUTENTICACION)
         logger.info("listar_servicios ejecutado")
         return list(self._credenciales.keys())
 

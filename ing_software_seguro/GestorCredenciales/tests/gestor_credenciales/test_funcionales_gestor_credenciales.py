@@ -9,43 +9,43 @@ class TestFuncionalesGestorCredenciales(unittest.TestCase):
         self.gestor = GestorCredenciales("claveMaestraSegura123!")
 
     # Tests funcionales
-    def test_añadir_credencial(self):
+    def test_anyadir_credencial(self):
         # Implementar según TDD
         clave_maestra = "claveMaestraSegura123!"
         # Test 1 - contraseña segura
-        self.gestor.añadir_credencial(clave_maestra, "servicio1", "usuario1", "Password123!")
+        self.gestor.anyadir_credencial(clave_maestra, "servicio1", "usuario1", "Password123!")
         self.assertIn("servicio1", self.gestor._credenciales)
         self.assertEqual(self.gestor._credenciales["servicio1"]['usuario1']['usuario'], "usuario1")
         self.assertNotEqual(self.gestor._credenciales["servicio1"]['usuario1']['password'], "Password123!")
         # Test 2 - contraseña insegura
         with self.assertRaises(ErrorPoliticaPassword):
-            self.gestor.añadir_credencial(clave_maestra, "servicio1", "usuario1", "password")
+            self.gestor.anyadir_credencial(clave_maestra, "servicio1", "usuario1", "password")
         # Test 3 - credencial existente
         with self.assertRaises(ErrorCredencialExistente):
-            self.gestor.añadir_credencial(clave_maestra, "servicio1", "usuario1", "Password123!")
+            self.gestor.anyadir_credencial(clave_maestra, "servicio1", "usuario1", "Password123!")
         # Test 4 - clave maestra incorrecta
         with self.assertRaises(ErrorAutenticacion):
-            self.gestor.añadir_credencial("claveIncorrecta", "servicio1", "usuario1", "Password123!")
+            self.gestor.anyadir_credencial("claveIncorrecta", "servicio1", "usuario1", "Password123!")
         # Test 5 - servicio vacío
         with self.assertRaises(ErrorPoliticaPassword):
-            self.gestor.añadir_credencial(clave_maestra, "", "usuario1", "Password123!")
+            self.gestor.anyadir_credencial(clave_maestra, "", "usuario1", "Password123!")
         # Test 6 - usuario vacío
         with self.assertRaises(ErrorPoliticaPassword):
-            self.gestor.añadir_credencial(clave_maestra, "servicio1", "", "Password123!")
+            self.gestor.anyadir_credencial(clave_maestra, "servicio1", "", "Password123!")
         # Test 7 - contraseña vacía
         with self.assertRaises(ErrorPoliticaPassword):
-            self.gestor.añadir_credencial(clave_maestra, "servicio1", "usuario1", "")
+            self.gestor.anyadir_credencial(clave_maestra, "servicio1", "usuario1", "")
         # Test 8 - servicio con caracteres no permitidos
         with self.assertRaises(ErrorPoliticaPassword):
-            self.gestor.añadir_credencial(clave_maestra, "servicio1&", "usuario1", "Password123!")
+            self.gestor.anyadir_credencial(clave_maestra, "servicio1&", "usuario1", "Password123!")
         # Test 9 - usuario con caracteres no permitidos
         with self.assertRaises(ErrorPoliticaPassword):
-            self.gestor.añadir_credencial(clave_maestra, "servicio1", "usuario1|", "Password123!")
+            self.gestor.anyadir_credencial(clave_maestra, "servicio1", "usuario1|", "Password123!")
 
     def test_recuperar_credencial(self):
         # Implementar según TDD
         clave_maestra = "claveMaestraSegura123!"
-        self.gestor.añadir_credencial(clave_maestra, "servicio2", "usuario2", "Password123!")
+        self.gestor.anyadir_credencial(clave_maestra, "servicio2", "usuario2", "Password123!")
         password_recuperada = self.gestor.obtener_password(clave_maestra, "servicio2", "usuario2")
         self.assertNotEqual(password_recuperada, "Password123!")
         self.assertEqual(password_recuperada, self.gestor._credenciales["servicio2"]['usuario2']['password'])
@@ -53,7 +53,7 @@ class TestFuncionalesGestorCredenciales(unittest.TestCase):
     def test_listar_servicios(self):
         # Implementar según TDD
         clave_maestra = "claveMaestraSegura123!"
-        self.gestor.añadir_credencial(clave_maestra, "servicio3", "usuario3", "Password123!")
+        self.gestor.anyadir_credencial(clave_maestra, "servicio3", "usuario3", "Password123!")
         servicios = self.gestor.listar_servicios(clave_maestra)
         self.assertIn("servicio3", servicios)
 
