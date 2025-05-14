@@ -7,6 +7,8 @@ import logging
 from io import StringIO
 
 MENSAJE_ERROR_AUTENTICACION = "Clave maestra incorrecta"
+MENSAJE_ERROR_AUTENTICACION_FALLIDO = "Intento de autenticación fallido"
+MENSAJE_ERROR_SERVICIO_NO_ENCONTRADO = "Servicio o usuario no encontrado"
 
 # Configuración de logging seguro
 logging.basicConfig(level=logging.INFO)
@@ -56,8 +58,8 @@ class GestorCredenciales:
     def anyadir_credencial(self, clave_maestra: str, servicio: str, usuario: str, password: str) -> None:
         """Añade una nueva credencial al gestor."""
         if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
-            logger.warning("Intento de autenticación fallido")
-            raise ErrorAutenticacion(MENSAJE_ERROR_AUTENTICACION)
+            logger.warning(MENSAJE_ERROR_AUTENTICACION_FALLIDO)
+            raise ErrorAutenticacion(MENSAJE_ERROR_AUTENTICACION_FALLIDO)
         if servicio not in self._credenciales:
             self._credenciales[servicio] = {}
         if usuario in self._credenciales[servicio]:
@@ -72,17 +74,17 @@ class GestorCredenciales:
     @ensure(lambda servicio, result: result is not None)
     def obtener_password(self, clave_maestra: str, servicio: str, usuario: str) -> str:
             if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
-                logger.warning("Intento de autenticación fallido")
-                raise ErrorAutenticacion(MENSAJE_ERROR_AUTENTICACION)
+                logger.warning(MENSAJE_ERROR_AUTENTICACION_FALLIDO)
+                raise ErrorAutenticacion(MENSAJE_ERROR_AUTENTICACION_FALLIDO)
             if servicio not in self._credenciales or usuario not in self._credenciales[servicio]:
-                logger.warning("Servicio o usuario no encontrado")
-                raise ErrorServicioNoEncontrado("Servicio o usuario no encontrado")
+                logger.warning(MENSAJE_ERROR_SERVICIO_NO_ENCONTRADO)
+                raise ErrorServicioNoEncontrado(MENSAJE_ERROR_SERVICIO_NO_ENCONTRADO)
             credencial = self._credenciales[servicio][usuario]
             # Verificar que credencial es un diccionario y tiene un hash válido
             if not isinstance(credencial, dict) or 'password' not in credencial:
                 raise ValueError("Credencial corrupta o modificada")
             try:
-                bcrypt.checkpw(b"dummy", credencial['password'])
+               self._es_hash_bcrypt_valido(credencial['password'])
             except ValueError:
                 raise ValueError("Credencial corrupta o modificada")
             logger.info(f"obtener_password: servicio={servicio}, usuario={usuario}")
@@ -93,11 +95,11 @@ class GestorCredenciales:
     def eliminar_credencial(self, clave_maestra: str, servicio: str, usuario: str) -> None:
         """Elimina una credencial existente."""
         if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
-            logger.warning("Intento de autenticación fallido")
+            logger.warning(MENSAJE_ERROR_AUTENTICACION_FALLIDO)
             raise ErrorAutenticacion(MENSAJE_ERROR_AUTENTICACION)
         if servicio not in self._credenciales or usuario not in self._credenciales[servicio]:
-            logger.warning("Servicio o usuario no encontrado")
-            raise ErrorServicioNoEncontrado("Servicio o usuario no encontrado")
+            logger.warning(MENSAJE_ERROR_SERVICIO_NO_ENCONTRADO)
+            raise ErrorServicioNoEncontrado(MENSAJE_ERROR_SERVICIO_NO_ENCONTRADO)
         del self._credenciales[servicio][usuario]
         if not self._credenciales[servicio]:
             del self._credenciales[servicio]
@@ -107,7 +109,7 @@ class GestorCredenciales:
     def listar_servicios(self, clave_maestra: str) -> list:
         """Lista todos los servicios almacenados."""
         if not self._verificar_clave(clave_maestra, self._clave_maestra_hashed):
-            logger.warning("Intento de autenticación fallido")
+            logger.warning(MENSAJE_ERROR_AUTENTICACION_FALLIDO)
             raise ErrorAutenticacion(MENSAJE_ERROR_AUTENTICACION)
         logger.info("listar_servicios ejecutado")
         return list(self._credenciales.keys())
@@ -122,3 +124,10 @@ class GestorCredenciales:
             return bcrypt.checkpw(clave.encode('utf-8'), clave_hashed)
         except ValueError:
             return False
+        
+    def _es_hash_bcrypt_valido(self, valor):
+        return (
+            isinstance(valor, bytes)
+            and (valor.startswith(b"$2b$") or valor.startswith(b"$2a$"))
+            and len(valor) == 60
+        )
