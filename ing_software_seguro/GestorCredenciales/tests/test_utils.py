@@ -1,5 +1,5 @@
 import unittest
-from src.gestor_credenciales.utils import saludar
+from src.utils import saludar
 
 class TestUtils(unittest.TestCase):
 

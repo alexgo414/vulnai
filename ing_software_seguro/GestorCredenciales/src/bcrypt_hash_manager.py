@@ -8,5 +8,5 @@ class BcryptHashManager(IHashManager):
     def verify(self, clave: str, clave_hashed: bytes) -> bool:
         try:
             return bcrypt.checkpw(clave.encode('utf-8'), clave_hashed)
-        except ValueError:
+        except TypeError:
             return False

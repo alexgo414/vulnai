@@ -1,7 +1,7 @@
 import unittest
-from src.gestor_credenciales.gestor_credenciales import GestorCredenciales
-from src.gestor_credenciales.errores import ErrorPoliticaPassword, ErrorAutenticacion, ErrorServicioNoEncontrado, ErrorCredencialExistente
-from src.gestor_credenciales.secure_strategy_factory import SecureStrategyFactory
+from src.gestor_credenciales import GestorCredenciales
+from src.errores import ErrorPoliticaPassword, ErrorAutenticacion, ErrorServicioNoEncontrado, ErrorCredencialExistente
+from src.secure_strategy_factory import SecureStrategyFactory
 
 class TestFuncionalesGestorCredenciales(unittest.TestCase):
     def setUp(self):

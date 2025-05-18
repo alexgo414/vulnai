@@ -10,6 +10,10 @@ from .errores import (
     ErrorCredencialExistente
 )
 
+MENSAJE_NO_ENCONTRADO = "Servicio o usuario no encontrado"
+MENSAJE_CLAVE_MAESTRA_INCORRECTA = "Clave maestra incorrecta"
+MENSAJE_AUTENTICACION_FALLIDA = "Intento de autenticación fallido"
+
 class GestorCredenciales:
     def __init__(self, clave_maestra: str, hash_manager: IHashManager = None, auditor: Auditor = None):
         """
@@ -49,8 +53,8 @@ class GestorCredenciales:
         validar_password(password)
 
         if not self.hash_manager.verify(clave_maestra, self._clave_maestra_hashed):
-            self.auditor.warning("Intento de autenticación fallido")
-            raise ErrorAutenticacion("Clave maestra incorrecta")
+            self.auditor.warning(MENSAJE_AUTENTICACION_FALLIDA)
+            raise ErrorAutenticacion(MENSAJE_CLAVE_MAESTRA_INCORRECTA)
         if servicio not in self._credenciales:
             self._credenciales[servicio] = {}
         if usuario in self._credenciales[servicio]:
@@ -76,11 +80,11 @@ class GestorCredenciales:
         :raises ValueError: Si la credencial está corrupta.
         """
         if not self.hash_manager.verify(clave_maestra, self._clave_maestra_hashed):
-            self.auditor.warning("Intento de autenticación fallido")
-            raise ErrorAutenticacion("Clave maestra incorrecta")
+            self.auditor.warning(MENSAJE_AUTENTICACION_FALLIDA)
+            raise ErrorAutenticacion(MENSAJE_CLAVE_MAESTRA_INCORRECTA)
         if servicio not in self._credenciales or usuario not in self._credenciales[servicio]:
-            self.auditor.warning("Servicio o usuario no encontrado")
-            raise ErrorServicioNoEncontrado("Servicio o usuario no encontrado")
+            self.auditor.warning(MENSAJE_NO_ENCONTRADO)
+            raise ErrorServicioNoEncontrado(MENSAJE_NO_ENCONTRADO)
         credencial = self._credenciales[servicio][usuario]
         if not isinstance(credencial, dict) or 'password' not in credencial:
             raise ValueError("Credencial corrupta o modificada")
@@ -100,11 +104,11 @@ class GestorCredenciales:
         :raises ErrorServicioNoEncontrado: Si el servicio o usuario no existen.
         """
         if not self.hash_manager.verify(clave_maestra, self._clave_maestra_hashed):
-            self.auditor.warning("Intento de autenticación fallido")
-            raise ErrorAutenticacion("Clave maestra incorrecta")
+            self.auditor.warning(MENSAJE_AUTENTICACION_FALLIDA)
+            raise ErrorAutenticacion(MENSAJE_CLAVE_MAESTRA_INCORRECTA)
         if servicio not in self._credenciales or usuario not in self._credenciales[servicio]:
-            self.auditor.warning("Servicio o usuario no encontrado")
-            raise ErrorServicioNoEncontrado("Servicio o usuario no encontrado")
+            self.auditor.warning(MENSAJE_NO_ENCONTRADO)
+            raise ErrorServicioNoEncontrado(MENSAJE_NO_ENCONTRADO)
         del self._credenciales[servicio][usuario]
         if not self._credenciales[servicio]:
             del self._credenciales[servicio]
@@ -119,7 +123,7 @@ class GestorCredenciales:
         :raises ErrorAutenticacion: Si la clave maestra es incorrecta.
         """
         if not self.hash_manager.verify(clave_maestra, self._clave_maestra_hashed):
-            self.auditor.warning("Intento de autenticación fallido")
-            raise ErrorAutenticacion("Clave maestra incorrecta")
+            self.auditor.warning(MENSAJE_AUTENTICACION_FALLIDA)
+            raise ErrorAutenticacion(MENSAJE_CLAVE_MAESTRA_INCORRECTA)
         self.auditor.info("listar_servicios ejecutado")
         return list(self._credenciales.keys())

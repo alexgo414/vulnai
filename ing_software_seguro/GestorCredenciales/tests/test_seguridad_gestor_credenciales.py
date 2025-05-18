@@ -1,9 +1,11 @@
 import unittest
-from src.gestor_credenciales.gestor_credenciales import GestorCredenciales
-from src.gestor_credenciales.errores import ErrorPoliticaPassword, ErrorAutenticacion, ErrorServicioNoEncontrado
+from src.gestor_credenciales import GestorCredenciales
+from src.errores import ErrorPoliticaPassword, ErrorAutenticacion, ErrorServicioNoEncontrado
 import logging
 from io import StringIO
-from src.gestor_credenciales.secure_strategy_factory import SecureStrategyFactory
+from src.secure_strategy_factory import SecureStrategyFactory
+
+logger = logging.getLogger()
 
 class TestSeguridadGestorCredenciales(unittest.TestCase):
     def setUp(self):
@@ -114,17 +116,18 @@ class TestSeguridadGestorCredenciales(unittest.TestCase):
         
         log_stream = StringIO()
         handler = logging.StreamHandler(log_stream)
-        logging.getLogger().addHandler(handler)
+        logger = logging.getLogger("GestorCredencialesAuditor")
+        logger.setLevel(logging.INFO)
+        logger.addHandler(handler)
         
         try:
             self.gestor.anyadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
             self.gestor.obtener_password("claveMaestraSegura123!", servicio, usuario)
             self.gestor.eliminar_credencial("claveMaestraSegura123!", servicio, usuario)
-            
             log_output = log_stream.getvalue()
-            self.assertIn("anyadir_credencial", log_output, "No se registró la acción de añadir")
-            self.assertIn("obtener_password", log_output, "No se registró la acción de obtener")
-            self.assertIn("eliminar_credencial", log_output, "No se registró la acción de eliminar")
+            self.assertIn("anyadir_credencial: servicio=GitHub, usuario=user1", log_output, "No se registró la acción de añadir")
+            self.assertIn("obtener_password: servicio=GitHub, usuario=user1", log_output, "No se registró la acción de obtener")
+            self.assertIn("eliminar_credencial: servicio=GitHub, usuario=user1", log_output, "No se registró la acción de eliminar")
             self.assertNotIn(password, log_output, "La contraseña aparece en el log de auditoría")
         finally:
             logging.getLogger().removeHandler(handler)
@@ -155,6 +158,48 @@ class TestSeguridadGestorCredenciales(unittest.TestCase):
         gestor2 = GestorCredenciales("otraClaveMaestra123!")
         with self.assertRaises(ErrorServicioNoEncontrado):
             gestor2.obtener_password("otraClaveMaestra123!", servicio, usuario)
+    
+    def test_verify_invalid_hashed_value(self):
+        """
+        Verifica que el método verify no acepte valores hasheados inválidos.
+        """
+        hash_manager = SecureStrategyFactory.get_hash_manager("user")
+        clave = "clave123"
+        clave_hashed = "valor_invalido"  # No es un bytes válido
+        self.assertFalse(hash_manager.verify(clave, clave_hashed))
+    
+    def test_eliminar_credencial_clave_incorrecta(self):
+        """
+        Verifica que no se pueda eliminar una credencial con una clave maestra incorrecta.
+        """
+        servicio = "GitHub"
+        usuario = "user1"
+        password = "PasswordSegura123!"
+        self.gestor.anyadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
+        with self.assertRaises(ErrorAutenticacion):
+            self.gestor.eliminar_credencial("claveIncorrecta", servicio, usuario)
+    
+    def test_eliminar_credencial_servicio_no_encontrado(self):
+        """
+        Verifica que no se pueda eliminar una credencial de un servicio inexistente.
+        """
+        servicio = "GitHub"
+        usuario = "user1"
+        password = "PasswordSegura123!"
+        self.gestor.anyadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
+        with self.assertRaises(ErrorServicioNoEncontrado):
+            self.gestor.eliminar_credencial("claveMaestraSegura123!", "ServicioInexistente", usuario)
+
+    def test_listar_servicios_clave_incorrecta(self):
+        """
+        Verifica que no se puedan listar los servicios con una clave maestra incorrecta.
+        """
+        servicio = "GitHub"
+        usuario = "user1"
+        password = "PasswordSegura123!"
+        self.gestor.anyadir_credencial("claveMaestraSegura123!", servicio, usuario, password)
+        with self.assertRaises(ErrorAutenticacion):
+            self.gestor.listar_servicios("claveIncorrecta")
 
 if __name__ == "__main__":
     unittest.main()

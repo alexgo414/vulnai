@@ -3,8 +3,8 @@ from abc import ABC, abstractmethod
 class IHashManager(ABC):
     @abstractmethod
     def hash(self, clave: str) -> bytes:
-        pass
+        pass # pragma: no cover
 
     @abstractmethod
     def verify(self, clave: str, clave_hashed: bytes) -> bool:
-        pass
+        pass # pragma: no cover
