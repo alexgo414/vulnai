@@ -1,28 +1,7 @@
-https://campusvirtual.cv.uma.es: Apache
-https://catalogoinfraestructuras.uma.es: No se ha podido determinar
-https://ceca.uma.es: Apache/2.4.29 (Ubuntu)
-https://duma.uma.es: No se ha podido determinar
-https://eca.uma.es: No se ha podido determinar
-https://factor-e.uma.es: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips PHP/7.4.33
-https://flashsession.uma.es: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips PHP/7.4.33
-https://gp.uma.es: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips PHP/5.4.16 mod_wsgi/4.7.1 Python/3.6
-https://grado.automatricula.uma.es: No se ha podido determinar
-https://jabega.uma.es: No se ha podido determinar
-https://ofertaidi.uma.es: Apache/2.4.6 (CentOS) PHP/5.5.38 OpenSSL/1.0.2k-fips mod_wsgi/3.4 Python/2.7.5
-https://piwik.uma.es: No se ha podido determinar
-https://publicacionesydivulgacion.uma.es: No se ha podido determinar
-https://revistas.uma.es: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips PHP/7.3.33
-https://riuma.uma.es: Apache/2.4.62 (Rocky Linux) OpenSSL/3.2.2 mod_jk/1.2.50
-https://sara.uma.es: No se ha podido determinar
-https://sede.uma.es: OpenCms/11.0.1
-https://servilab.uma.es: Microsoft-IIS/7.5
-https://umapatent.uma.es: Apache/2.4.6 (CentOS) PHP/5.5.38 OpenSSL/1.0.2k-fips mod_wsgi/3.4 Python/2.7.5
-https://www.cti.uma.es: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips PHP/5.4.45
-https://www.evlt.uma.es: Apache
-https://www.jardinbotanico.uma.es: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips PHP/7.4.26
-https://www.link.uma.es: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips PHP/7.4.33
-https://www.scai.uma.es: Apache/2.4.62 (Rocky Linux) OpenSSL/3.0.7
-https://www.scbi.uma.es: No se ha podido determinar
-https://www.sga.uma.es: No se ha podido determinar
-https://www.uma.es: No se ha podido determinar
-https://www.umadivulga.uma.es: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips PHP/7.4.12
+https://blog.google.com: Google Frontend
+https://m.google.com: sffe
+https://mail.google.com: ESF
+https://mobile.google.com: sffe
+https://ns1.google.com: No se ha podido determinar
+https://ns2.google.com: No se ha podido determinar
+https://www.google.com: gws

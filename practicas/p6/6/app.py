@@ -37,4 +37,4 @@ def get_server_info(subdomains_file):
         print(f"Error inesperado: {e}")
 
 if __name__ == "__main__":
-    get_server_info("subdominios.txt")
+    get_server_info("../5/subdominios.txt")

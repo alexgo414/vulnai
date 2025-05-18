@@ -1,1 +1,7 @@
-www.uma.es
+blog.google.com
+m.google.com
+mail.google.com
+mobile.google.com
+ns1.google.com
+ns2.google.com
+www.google.com
