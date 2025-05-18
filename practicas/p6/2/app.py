@@ -26,7 +26,7 @@ def versionFinder():
     # eliminar duplicados en version_tags
     version_tags = list(set(version_tags))
 
-    with open('versions.txt', 'w', encoding='utf-8') as file:
+    with open('versiones.txt', 'w', encoding='utf-8') as file:
         file.write('')
         for version in version_tags:
             file.write(version + '\n')

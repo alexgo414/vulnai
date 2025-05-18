@@ -4,7 +4,7 @@ import sys
 
 def obtener_subdominios(dominio, num_resultados=50):
     consulta = f"site:{dominio}"
-    urls = search(consulta, num_results=num_resultados)
+    urls = search(consulta, num=num_resultados, stop=num_resultados, pause=2)
     subdominios = set()
 
     for url in urls:
