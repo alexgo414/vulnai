@@ -2,5 +2,5 @@ projectKey=svaia
 serverUrl=http://localhost:9000
 serverVersion=25.5.0.107428
 dashboardUrl=http://localhost:9000/dashboard?id=svaia
-ceTaskId=bec79fb4-a9d5-4dd1-ae0b-b7111c03b90e
-ceTaskUrl=http://localhost:9000/api/ce/task?id=bec79fb4-a9d5-4dd1-ae0b-b7111c03b90e
+ceTaskId=5debd407-0733-4c8e-a674-7b662b41a7d8
+ceTaskUrl=http://localhost:9000/api/ce/task?id=5debd407-0733-4c8e-a674-7b662b41a7d8
