@@ -6,3 +6,4 @@
 2025-05-19 18:09:02: WARNING | eve | '0e75c4818bc249bdacb62dd1dfd9917c77f943353c41d2f4b604ae68efc9109a': Llamada a la función 'accion_confidencial' con parámetros: tipo='confidencial' -> Resultado: eve accedió a datos de tipo confidencial |
 2025-05-19 18:09:05: INFO | eve | 'd8474a746c37002f147dd55ee0b075e14474275494f9d5e423ef9b9bed54e388': Llamada a la función 'ver_reporte' con parámetros:  -> Resultado: eve accedió al reporte... |
 2025-05-19 18:09:10: WARNING | eve | '3f2674de6d4b62402aafdaeb6ca1ff3325e7c7ab915103900c75f7ff6c89d3db': Llamada a la función 'editar_usuario' con parámetros: nombre='nuevo_usuario', rol='normal_user' -> Resultado: eve editó el usuario nuevo_usuario con rol normal_user |
+2025-05-19 18:11:40: WARNING | eve | 'c0eee34682785c96c8ce5938f6ebb788daa4feb6020b81644e997259d2f2ddf1': Llamada a la función 'accion_confidencial' con parámetros: tipo='confidencial' -> Resultado: eve accedió a datos de tipo confidencial |
