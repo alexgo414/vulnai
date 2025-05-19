@@ -1,0 +1,8 @@
+2025-05-19 18:07:23: INFO | 'ebbcf5439645526314727aad16bbbefede34c2c739fbdc01e23037863782e24a': Inicialización del log en el tiempo 2025-05-19 18:07:23 UTC |
+2025-05-19 18:07:25: INFO | alice | '6c68610549ef902e6480163971549c5f8432be7a162c7d6fae696f88bca5d9ed': Llamada a la función 'ver_reporte' con parámetros:  -> Resultado: alice accedió al reporte... |
+2025-05-19 18:07:30: WARNING | alice | 'd7c2df4fe92b7641742f1e687336d69a51182dec22fc42a980ecc41c0d324ca6': Llamada a la función 'accion_confidencial' con parámetros: tipo='confidencial' -> Resultado: alice accedió a datos de tipo confidencial |
+2025-05-19 18:07:43: INFO | bob | '66d9ea87d3849bb3c8045bf4418289b08c42cbd0bdcaba55fa4b04adf40e0bb1': Llamada a la función 'ver_reporte' con parámetros:  -> Resultado: bob accedió al reporte... |
+2025-05-19 18:08:02: INFO | bob | '6bc46ffc3f699ee6bc9640dce0231dabe5d7dce8e34e1d51af03a3a0eb30daa6': Llamada a la función 'ver_reporte' con parámetros:  -> Resultado: bob accedió al reporte... |
+2025-05-19 18:09:02: WARNING | eve | '0e75c4818bc249bdacb62dd1dfd9917c77f943353c41d2f4b604ae68efc9109a': Llamada a la función 'accion_confidencial' con parámetros: tipo='confidencial' -> Resultado: eve accedió a datos de tipo confidencial |
+2025-05-19 18:09:05: INFO | eve | 'd8474a746c37002f147dd55ee0b075e14474275494f9d5e423ef9b9bed54e388': Llamada a la función 'ver_reporte' con parámetros:  -> Resultado: eve accedió al reporte... |
+2025-05-19 18:09:10: WARNING | eve | '3f2674de6d4b62402aafdaeb6ca1ff3325e7c7ab915103900c75f7ff6c89d3db': Llamada a la función 'editar_usuario' con parámetros: nombre='nuevo_usuario', rol='normal_user' -> Resultado: eve editó el usuario nuevo_usuario con rol normal_user |
