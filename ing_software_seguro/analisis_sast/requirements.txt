@@ -1,0 +1,23 @@
+from flask import Flask, request, Response
+
+app = Flask(__name__)
+
+@app.route("/search")
+def search():
+    # Obtener parámetro 'q' de la URL
+    query = request.args.get("q", "")
+
+    # ¡Vulnerabilidad XSS!
+    return f"<h1>Resultados para: {query}</h1>"
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+# requirements.txt con paquetes vulnerables (ejemplo para pruebas)
+flask==0.12.1  # CVE-2018-1000656 - Vulnerabilidad de DoS
+django==1.11.3  # CVE-2017-7233 y CVE-2017-7234 - XSS e inyección SQL
+pyyaml==5.1  # CVE-2020-14343 - Ejecución remota de código (RCE)
+requests==2.20.0  # CVE-2018-18074 - Exposición de credenciales
+urllib3==1.24.1  # CVE-2019-11324 - Validación de certificados SSL insegura
+pillow==5.0.0  # CVE-2020-10379 - Overflow en procesamiento de imágenes
+boto3==1.9.0  # CVE-2019-10103 - Configuración insegura en AWS

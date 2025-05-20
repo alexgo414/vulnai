@@ -1,0 +1,67 @@
+[
+    {
+        "type": "convention",
+        "module": "insecure_code",
+        "obj": "",
+        "line": 10,
+        "column": 0,
+        "endLine": null,
+        "endColumn": null,
+        "path": "insecure_code.py",
+        "symbol": "missing-final-newline",
+        "message": "Final newline missing",
+        "message-id": "C0304"
+    },
+    {
+        "type": "convention",
+        "module": "insecure_code",
+        "obj": "",
+        "line": 1,
+        "column": 0,
+        "endLine": null,
+        "endColumn": null,
+        "path": "insecure_code.py",
+        "symbol": "missing-module-docstring",
+        "message": "Missing module docstring",
+        "message-id": "C0114"
+    },
+    {
+        "type": "convention",
+        "module": "insecure_code",
+        "obj": "insecure_deserialization",
+        "line": 4,
+        "column": 0,
+        "endLine": 4,
+        "endColumn": 28,
+        "path": "insecure_code.py",
+        "symbol": "missing-function-docstring",
+        "message": "Missing function or method docstring",
+        "message-id": "C0116"
+    },
+    {
+        "type": "convention",
+        "module": "insecure_code",
+        "obj": "command_injection",
+        "line": 7,
+        "column": 0,
+        "endLine": 7,
+        "endColumn": 21,
+        "path": "insecure_code.py",
+        "symbol": "missing-function-docstring",
+        "message": "Missing function or method docstring",
+        "message-id": "C0116"
+    },
+    {
+        "type": "convention",
+        "module": "insecure_code",
+        "obj": "",
+        "line": 10,
+        "column": 0,
+        "endLine": 10,
+        "endColumn": 8,
+        "path": "insecure_code.py",
+        "symbol": "invalid-name",
+        "message": "Constant name \"password\" doesn't conform to UPPER_CASE naming style",
+        "message-id": "C0103"
+    }
+]
