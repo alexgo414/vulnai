@@ -332,6 +332,14 @@ class ProyectoResource(Resource):
         db.session.commit()
         return {"message": "Proyecto eliminado con éxito"}
 
+@app.route("/reflejar")
+def reflejar():
+    """
+    Endpoint de prueba para permitir ataques Reflected XSS.
+    """
+    mensaje = request.args.get("mensaje", "")
+    return f"<h1>{mensaje}</h1>"
+
 # Rutas de la API
 api.add_resource(UsuarioResource, '/usuarios', '/usuarios/<string:user_id>')
 api.add_resource(ProyectoResource, '/proyectos', '/proyectos/<string:proyecto_id>')

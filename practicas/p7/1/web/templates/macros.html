@@ -1,0 +1,25 @@
+{% macro imprimir_lista(elementos) %}
+    <ul>
+    {% for elemento in elementos %}
+        <li>{{ elemento }}</li>
+    {% endfor %}
+    </ul>
+{% endmacro %}
+
+{# https://flask-sqlalchemy.readthedocs.io/en/3.1.x/pagination/ #}
+{% macro render_pagination(pagination, endpoint) %}
+  <div>{{ pagination.first }} - {{ pagination.last }} de {{ pagination.total }}</div>
+  <div>
+    {% for page in pagination.iter_pages() %}
+      {% if page %}
+        {% if page != pagination.page %}
+          <a href="{{ url_for(endpoint, page=page) }}">{{ page }}</a>
+        {% else %}
+          <strong>{{ page }}</strong>
+        {% endif %}
+      {% else %}
+        <span>...</span>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endmacro %}
