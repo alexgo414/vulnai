@@ -1,27 +1,99 @@
 {% extends "layout.html" %}
-{% block title %}Crear nuevo proyecto{% endblock %}
+{% block title %}Crear Proyecto - SVAIA{% endblock %}
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/perfil.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 {% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <h1 class="text-center mb-4">Crear nuevo proyecto</h1>
-    <div class="card shadow-sm mx-auto" style="max-width: 600px;">
-        <div class="card-body">
-            <form id="crear-proyecto-form">
-                <div class="mb-3">
-                    <label for="nombre" class="form-label"><strong>Nombre del proyecto:</strong></label>
-                    <input type="text" id="nombre" name="nombre" class="form-control" required placeholder="Ingresa el nombre del proyecto">
+<div class="form-container">
+    <!-- Header elegante -->
+    <div class="form-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="form-title">
+                        <i class="fas fa-plus-circle me-3"></i>Crear Nuevo Proyecto
+                    </h1>
+                    <p class="form-subtitle">Define tu proyecto y comienza a trabajar con la IA</p>
                 </div>
-                <div class="mb-3">
-                    <label for="descripcion" class="form-label"><strong>Descripción:</strong></label>
-                    <textarea id="descripcion" name="descripcion" class="form-control" rows="4" placeholder="Describe brevemente el proyecto"></textarea>
+                <div class="col-md-4 text-end">
+                    <a href="/perfil" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
+                    </a>
                 </div>
-                <div class="text-center">
-                    <button type="submit" class="btn btn-primary">Crear</button>
-                    <a href="{{ url_for('perfil') }}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-xl-6">
+                <div class="form-card">
+                    <div class="form-card-header">
+                        <div class="form-icon">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <h3>Información del Proyecto</h3>
+                        <p class="text-muted">Completa los detalles para crear tu nuevo proyecto</p>
+                    </div>
+                    
+                    <div class="form-card-body">
+                        <form id="crear-proyecto-form">
+                            <div class="form-group">
+                                <label for="nombre" class="form-label">
+                                    <i class="fas fa-tag me-2"></i>Nombre del Proyecto
+                                </label>
+                                <input type="text" id="nombre" name="nombre" class="form-control" required 
+                                       placeholder="Ej. Sistema de Gestión Web">
+                                <div class="form-help">Elige un nombre descriptivo para tu proyecto</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="descripcion" class="form-label">
+                                    <i class="fas fa-align-left me-2"></i>Descripción
+                                </label>
+                                <textarea id="descripcion" name="descripcion" class="form-control" rows="4" 
+                                          placeholder="Describe los objetivos y características principales de tu proyecto..."></textarea>
+                                <div class="form-help">Proporciona detalles que ayuden a la IA a entender mejor tu proyecto</div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-rocket me-2"></i>Crear Proyecto
+                                </button>
+                                <a href="/perfil" class="btn btn-secondary btn-lg">
+                                    <i class="fas fa-times me-2"></i>Cancelar
+                                </a>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-            </form>
+                
+                <!-- Card de beneficios -->
+                <div class="benefits-card">
+                    <h5><i class="fas fa-lightbulb me-2"></i>¿Por qué crear un proyecto?</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="benefit-item">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Análisis de seguridad personalizado</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="benefit-item">
+                                <i class="fas fa-history"></i>
+                                <span>Historial de conversaciones</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="benefit-item">
+                                <i class="fas fa-brain"></i>
+                                <span>IA especializada</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

@@ -51,7 +51,7 @@
                             </a>
                         </li> -->
                         <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center {% if request.path == '/chat' %}active text-success{% endif %}" href=# id="chat-link">
+                            <a class="nav-link d-flex align-items-center {% if request.path == '/chat' %}active text-success{% endif %}" href=/chat id="chat-link">
                                 <svg id="bot-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-person-fill d-none d-lg-block {% if request.path == '/chat' %}text-success{% endif %}" viewBox="0 0 16 16">
                                       <path d="M6 12.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5M3 8.062C3 6.76 4.235 5.765 5.53 5.886a26.6 26.6 0 0 0 4.94 0C11.765 5.765 13 6.76 13 8.062v1.157a.93.93 0 0 1-.765.935c-.845.147-2.34.346-4.235.346s-3.39-.2-4.235-.346A.93.93 0 0 1 3 9.219zm4.542-.827a.25.25 0 0 0-.217.068l-.92.9a25 25 0 0 1-1.871-.183.25.25 0 0 0-.068.495c.55.076 1.232.149 2.02.193a.25.25 0 0 0 .189-.071l.754-.736.847 1.71a.25.25 0 0 0 .404.062l.932-.97a25 25 0 0 0 1.922-.188.25.25 0 0 0-.068-.495c-.538.074-1.207.145-1.98.189a.25.25 0 0 0-.166.076l-.754.785-.842-1.7a.25.25 0 0 0-.182-.135"/>
                                         <path d="M8.5 1.866a1 1 0 1 0-1 0V3h-2A4.5 4.5 0 0 0 1 7.5V8a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1v-.5A4.5 4.5 0 0 0 10.5 3h-2zM14 7.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7.5A3.5 3.5 0 0 1 5.5 4h5A3.5 3.5 0 0 1 14 7.5"/>
@@ -60,7 +60,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center {% if request.path == '/perfil' %}active text-success{% endif %}" href=# id="perfil-link">
+                            <a class="nav-link d-flex align-items-center {% if request.path == '/perfil' %}active text-success{% endif %}" href=/perfil id="perfil-link">
                                 <svg id="user-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-person-fill d-none d-lg-block {% if request.path == '/perfil' %}text-success{% endif %}" viewBox="0 0 16 16">
                                     <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
                                 </svg>
@@ -68,10 +68,6 @@
                             </a>
                         </li>
                     </ul>
-                    <form class="d-flex">
-                        <input id="describe-form" class="form-control me-sm-2" type="search" placeholder="Describe tu proyecto...">
-                        <button class="btn btn-secondary my-2 my-sm-0" type="submit">Comenzar</button>
-                    </form>
                 </div>
             </div>
         </nav>
@@ -184,30 +180,82 @@
     {% block scripts %}{% endblock %}
 </body>
 
-
 <script>
-    document.getElementById("perfil-link").addEventListener("click", function (e) {
-      e.preventDefault();
-      const token = sessionStorage.getItem("token");
-  
-      if (token) {
-        window.location.href = "/perfil";
-      } else {
-        window.location.href = "/login";
-      }
+    // Función para ir a Mi Cuenta con verificación
+    async function irAMiCuenta() {
+        try {
+            const response = await fetch('http://localhost:5001/perfil/datos', {
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                window.location.href = "/perfil";
+            } else {
+                // Si no está autenticado, limpiar y ir a login
+                sessionStorage.clear();
+                localStorage.clear();
+                window.location.href = "/login";
+            }
+        } catch (error) {
+            console.error("Error verificando autenticación:", error);
+            sessionStorage.clear();
+            localStorage.clear();
+            window.location.href = "/login";
+        }
+    }
+
+    // Aplicar SOLO a enlaces específicos de "Mi Cuenta"
+    document.addEventListener('DOMContentLoaded', function() {
+        // Solo capturar enlaces que sean exactamente /perfil (no subpáginas)
+        const enlacesPerfil = document.querySelectorAll('a[href="/perfil"]');
+        enlacesPerfil.forEach(enlace => {
+            enlace.addEventListener('click', function(e) {
+                e.preventDefault();
+                irAMiCuenta();
+            });
+        });
+        
+        // Para enlaces de subpáginas de perfil, verificar autenticación pero permitir navegación
+        const enlacesSubperfil = document.querySelectorAll('a[href*="/perfil/"]:not([href="/perfil"])');
+        enlacesSubperfil.forEach(enlace => {
+            enlace.addEventListener('click', async function(e) {
+                e.preventDefault();
+                
+                try {
+                    const response = await fetch('http://localhost:5001/perfil/datos', {
+                        credentials: 'include'
+                    });
+                    
+                    if (response.ok) {
+                        // Si está autenticado, permitir navegación a la subpágina
+                        window.location.href = this.getAttribute('href');
+                    } else {
+                        // Si no está autenticado, ir a login
+                        sessionStorage.clear();
+                        localStorage.clear();
+                        window.location.href = "/login";
+                    }
+                } catch (error) {
+                    console.error("Error verificando autenticación:", error);
+                    sessionStorage.clear();
+                    localStorage.clear();
+                    window.location.href = "/login";
+                }
+            });
+        });
+        
+        // También para el chat
+        const chatLink = document.getElementById("chat-link");
+        if (chatLink) {
+            chatLink.addEventListener("click", function (e) {
+                e.preventDefault();
+                irAMiCuenta().then(() => {
+                    if (window.location.pathname === '/perfil') {
+                        window.location.href = '/chat';
+                    }
+                });
+            });
+        }
     });
-
-    document.getElementById("chat-link").addEventListener("click", function (e) {
-      e.preventDefault();
-      const token = sessionStorage.getItem("token");
-  
-      if (token) {
-        window.location.href = "/chat";
-      } else {
-        window.location.href = "/login";
-      }
-    });
-  </script>
-
-
+</script>
 </html>

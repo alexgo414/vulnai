@@ -1,6 +1,6 @@
 import os
 import uuid
-from datetime import date
+from datetime import date, datetime
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify, render_template, flash, redirect, url_for, abort, make_response
 from flask_sqlalchemy import SQLAlchemy
@@ -26,7 +26,7 @@ app.config["JWT_REFRESH_LIFESPAN"] = {"days": 30}
 db = SQLAlchemy(app)
 api = Api(app)
 guard = flask_praetorian.Praetorian()
-CORS(app)
+CORS(app, supports_credentials=True, origins=["http://localhost:5003"])
 
 login_manager = LoginManager()
 login_manager.init_app(app) 
@@ -39,8 +39,8 @@ class Proyecto(db.Model):
     id = db.Column(db.String(36), primary_key=True)
     nombre = db.Column(db.String(20), nullable=False)
     descripcion = db.Column(db.Text, nullable=True)
-    fecha_creacion = db.Column(db.Date, nullable=False)
-    fecha_modificacion = db.Column(db.Date, nullable=False)
+    fecha_creacion = db.Column(db.DateTime, nullable=False)
+    fecha_modificacion = db.Column(db.DateTime, nullable=False)
     usuario_id = db.Column(db.String(36), db.ForeignKey('usuarios.id'), nullable=False)
 
 class Usuario(UserMixin, db.Model):
@@ -150,31 +150,94 @@ with app.app_context():
 
 @app.route("/login", methods=["POST"])
 def login():
-    """
-    Logs a user in by parsing a POST request containing user credentials and
-    issuing a JWT token.
-    .. example::
-       $ curl http://localhost:5000/login -X POST \
-         -d '{"username":"Walter","password":"calmerthanyouare"}'
-    """
-    req = request.get_json(force=True)
-    username = req.get("username", None)
-    password = req.get("password", None)
-    user = guard.authenticate(username, password)
-    ret = {"access_token": guard.encode_jwt_token(user)}
-    return (jsonify(ret), 200)
+    try:
+        data = request.json
+        username = data.get("username")
+        password = data.get("password")
 
-@app.route("/usuarios/rol", methods=["GET"])
+        user = guard.authenticate(username, password)
+        if user:
+            access_token = guard.encode_jwt_token(user)
+            response = make_response(jsonify({"message": "Inicio de sesión exitoso"}), 200)
+            response.set_cookie("access_token", access_token, httponly=True, samesite='Lax')
+            print("Inicio de sesión exitoso para el usuario:", username)
+            return response
+        else:
+            return jsonify({"message": "Credenciales inválidas"}), 401
+    except Exception as e:
+        # Esto te ayudará a ver el error real en el frontend y en el log
+        print("Error en /login:", str(e))
+        return jsonify({"error": str(e)}), 500
+
+# Agregar esta ruta si no existe
+@app.route("/logout", methods=["GET", "POST"])
+def logout():
+    try:
+        # Limpiar la sesión
+        response = make_response(redirect("/login"))
+        
+        # Eliminar todas las cookies relacionadas con la sesión
+        response.set_cookie('session', '', expires=0)
+        response.set_cookie('access_token', '', expires=0)
+        response.set_cookie('refresh_token', '', expires=0)
+        
+        # Si usas Flask-Login
+        if hasattr(current_user, 'is_authenticated'):
+            logout_user()
+        
+        flash("Sesión cerrada correctamente", "success")
+        return response
+        
+    except Exception as e:
+        print(f"Error en logout: {e}")
+        response = make_response(redirect("/login"))
+        response.set_cookie('session', '', expires=0)
+        return response
+    
+@app.route("/perfil/datos", methods=["GET"])
 @flask_praetorian.auth_required
-def get_user_role():
+def get_perfil_datos():
     """
-    Endpoint para obtener el rol del usuario autenticado.
+    Endpoint para obtener los datos del perfil del usuario actual.
+    Devuelve los proyectos y usuarios si el usuario es admin.
     """
     user = flask_praetorian.current_user()
-    if user:
-        return jsonify({"rol": user.rolenames}), 200
-    else:
-        return jsonify({"message": "Usuario no autenticado"}), 401
+    
+    # Obtener proyectos
+    proyectos = [{
+        "id": p.id,
+        "nombre": p.nombre,
+        "descripcion": p.descripcion,
+        "fecha_creacion": p.fecha_creacion.isoformat() if p.fecha_creacion else None,
+        "fecha_modificacion": p.fecha_modificacion.isoformat() if p.fecha_modificacion else None,
+        "usuario_id": p.usuario_id
+    } for p in Proyecto.query.all()]
+    
+    # Obtener usuarios solo si es admin
+    usuarios = []
+    if "admin" in user.rolenames:
+        usuarios = [{
+            "id": u.id,
+            "username": u.username,
+            "nombre": u.nombre,
+            "apellidos": u.apellidos,
+            "email": u.email,
+            "roles": u.roles
+        } for u in Usuario.query.all()]
+    
+    return jsonify({
+        "rol": user.rolenames,
+        "proyectos": proyectos,
+        "usuarios": usuarios,
+        "usuario_actual": {
+            "id": user.id,
+            "username": user.username,
+            "nombre": user.nombre,
+            "apellidos": user.apellidos,
+            "email": user.email,
+            "roles": user.roles
+        }
+    }), 200
 
 # Recursos RESTful
 class UsuarioResource(Resource):
@@ -265,8 +328,8 @@ class ProyectoResource(Resource):
                     "id": proyecto.id,
                     "nombre": proyecto.nombre,
                     "descripcion": proyecto.descripcion,
-                    "fecha_creacion": proyecto.fecha_creacion.isoformat(),
-                    "fecha_modificacion": proyecto.fecha_modificacion.isoformat(),
+                    "fecha_creacion": proyecto.fecha_creacion.isoformat() if proyecto.fecha_creacion else None,
+                    "fecha_modificacion": proyecto.fecha_modificacion.isoformat() if proyecto.fecha_modificacion else None,
                     "usuario_id": proyecto.usuario_id
                 }
             else:
@@ -300,8 +363,8 @@ class ProyectoResource(Resource):
                 id=str(uuid.uuid4()),
                 nombre=data["nombre"],
                 descripcion=data["descripcion"],
-                fecha_creacion=date.today(),
-                fecha_modificacion=date.today(),
+                fecha_creacion=datetime.now(),
+                fecha_modificacion=datetime.now(),
                 usuario_id=flask_praetorian.current_user().id
             )
             db.session.add(new_proyecto)
@@ -319,7 +382,7 @@ class ProyectoResource(Resource):
         data = request.json
         proyecto.nombre = data.get("nombre", proyecto.nombre)
         proyecto.descripcion = data.get("descripcion", proyecto.descripcion)
-        proyecto.fecha_modificacion = date.today()
+        proyecto.fecha_modificacion = datetime.now()
         db.session.commit()
         return {"message": "Proyecto actualizado con éxito"}
 

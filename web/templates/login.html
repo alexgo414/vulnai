@@ -1,28 +1,108 @@
 {% extends "layout.html" %}
-{% block title %}Login{% endblock %}
+{% block title %}Iniciar Sesión - SVAIA{% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/perfil.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
 {% block content %}
-
-<div class="container mt-5 mb-5">
-
-    <form id="login-form">
-        <div id="error-msg" class="text-danger mt-2"></div>
-
-        <div class="form-group mb-3">
-            <label for="username">Nombre de usuario</label>
-            <input type="text" class="form-control" id="username" name="username" placeholder="Ingresa tu nombre de usuario" required>
+<div class="login-container">
+    <!-- Fondo con animación -->
+    <div class="login-background">
+        <div class="login-particles"></div>
+    </div>
+    
+    <div class="container">
+        <div class="row justify-content-center align-items-center min-vh-100">
+            <div class="col-lg-5 col-md-7 col-sm-9">
+                <div class="login-card">
+                    <!-- Header de login -->
+                    <div class="login-header">
+                        <div class="login-logo">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h2>Bienvenido a SVAIA</h2>
+                        <p>Inicia sesión para acceder a tu dashboard</p>
+                    </div>
+                    
+                    <!-- Formulario de login -->
+                    <div class="login-body">
+                        <form id="login-form">
+                            <div class="login-field">
+                                <label for="username" class="login-label">
+                                    <i class="fas fa-user me-2"></i>Usuario
+                                </label>
+                                <input type="text" id="username" name="username" class="login-input" required 
+                                       placeholder="Ingresa tu nombre de usuario">
+                                <div class="input-focus-line"></div>
+                            </div>
+                            
+                            <div class="login-field">
+                                <label for="password" class="login-label">
+                                    <i class="fas fa-lock me-2"></i>Contraseña
+                                </label>
+                                <div class="password-container">
+                                    <input type="password" id="password" name="password" class="login-input" required 
+                                           placeholder="Ingresa tu contraseña">
+                                    <button type="button" class="password-toggle-login" onclick="togglePasswordLogin()">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="input-focus-line"></div>
+                            </div>
+                            
+                            <div class="login-options">
+                                <label class="remember-me">
+                                    <input type="checkbox" id="remember">
+                                    <span class="checkmark"></span>
+                                    Recordarme
+                                </label>
+                                <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+                            </div>
+                            
+                            <button type="submit" class="login-btn">
+                                <span class="btn-text">Iniciar Sesión</span>
+                                <i class="fas fa-arrow-right btn-icon"></i>
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Footer de login -->
+                    <div class="login-footer">
+                        <p>¿No tienes una cuenta? <a href="/registro">Regístrate aquí</a></p>
+                        <div class="login-divider">
+                            <span>o</span>
+                        </div>
+                        <a href="/" class="back-home">
+                            <i class="fas fa-home me-2"></i>Volver al inicio
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Info cards -->
+                <div class="login-features">
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="feature-mini">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Seguro</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="feature-mini">
+                                <i class="fas fa-robot"></i>
+                                <span>IA Avanzada</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="feature-mini">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Analytics</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="form-group mb-3">
-            <label for="password">Contraseña</label>
-            <input type="password" class="form-control" id="password" name="password" placeholder="Ingresa tu contraseña" required>
-        </div>
-        <!-- Recuerdame
-        <div class="form-group form-check mb-3">
-            <input type="checkbox" class="form-check-input" id="exampleCheck1">
-            <label class="form-check-label" for="exampleCheck1">Recordarme</label>
-        </div>
-        -->
-        <button type="submit" class="btn btn-primary">Iniciar sesión</button>
-    </form>
+    </div>
 </div>
-
 {% endblock %}

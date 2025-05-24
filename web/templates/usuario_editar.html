@@ -1,13 +1,39 @@
+Desktop\Seguridad Aplicaciones\practicas\svaia\web\templates\usuario_editar.html -->
 {% extends "layout.html" %}
-{% block title %}Editar Usuario{% endblock %}
+{% block title %}Editar Usuario - SVAIA{% endblock %}
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/perfil.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 {% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <h1 class="text-center mb-4">Editar Usuario</h1>
-    <div class="card shadow-sm mx-auto" id="usuario-editar-container">
-        <!-- Formulario para editar el usuario -->
+<div class="form-container">
+    <!-- Header elegante -->
+    <div class="form-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="form-title">
+                        <i class="fas fa-user-edit me-3"></i>Editar Usuario
+                    </h1>
+                    <p class="form-subtitle">Actualiza la información del usuario</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="/perfil" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-xl-6">
+                <div class="form-card" id="usuario-editar-container">
+                    <!-- El formulario se generará dinámicamente aquí -->
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
