@@ -1,0 +1,12 @@
+cryptography
+flask
+flask_sqlalchemy
+Flask-Login
+PyMySQL
+sqlalchemy
+python-dotenv
+flask_restful
+flask_jwt_extended
+flask-cors
+flask-praetorian
+google-generativeai

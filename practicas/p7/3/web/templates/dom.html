@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DOM-based XSS</title>
+</head>
+<body>
+    <h1>Página vulnerable a DOM-based XSS</h1>
+    <p>Parámetro recibido: <span id="query"></span></p>
+    <p>Prueba a añadir un parámetro en la URL, por ejemplo: ?q=HolaMundo</p>
+    <script>
+        // Extrae el parámetro 'q' de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const query = urlParams.get('q') || 'Ninguno';
+        // Inserta directamente en el DOM sin sanitización
+        document.getElementById('query').innerHTML = query;
+    </script>
+</body>
+</html>

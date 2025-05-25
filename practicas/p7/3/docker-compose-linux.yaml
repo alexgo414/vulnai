@@ -1,0 +1,83 @@
+version: '3.8'
+services:
+  vulnai:
+    container_name: vulnai
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    ports:
+      - "5003:5000"
+    volumes:
+      - ./web:/app:z
+    environment:
+      TZ: Europe/Madrid
+      FLASK_ENV: development
+      FLASK_APP: app.py
+    depends_on:
+      - mysql
+    command: ["flask", "run", "--host=0.0.0.0", "--debug"]
+
+  api:
+    container_name: api
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./api:/app:z
+    environment:
+      TZ: Europe/Madrid
+      FLASK_ENV: development
+      FLASK_APP: app.py
+    depends_on:
+      - mysql
+    command: ["flask", "run", "--host=0.0.0.0", "--debug"]
+
+  mysql:
+    image: mysql:8.0
+    restart: always
+    user: "999:999"
+    environment:
+      TZ: Europe/Madrid
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: vulnai_db
+      MYSQL_USER: vulnai
+      MYSQL_PASSWORD: xmw1pW9CPyI4xKSN
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    command: ["mysqld", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: vulnai
+      PMA_PASSWORD: xmw1pW9CPyI4xKSN
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+
+  chat:
+    container_name: chat
+    build:
+      context: ./chat
+      dockerfile: Dockerfile
+    ports:
+      - "5002:5000"
+    volumes:
+      - ./chat:/app:z
+    environment:
+      TZ: Europe/Madrid
+      FLASK_ENV: development
+      FLASK_APP: app.py
+    depends_on:
+      - vulnai
+    command: ["flask", "run", "--host=0.0.0.0", "--debug"]
+
+volumes:
+  mysql-data:
