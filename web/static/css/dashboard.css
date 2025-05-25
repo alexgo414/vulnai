@@ -1,0 +1,562 @@
+/* DASHBOARD.CSS - Estilos para el dashboard completo (proyectos, usuarios, perfil) */
+
+/* ==================== VARIABLES PARA DASHBOARD ==================== */
+:root {
+    --dashboard-primary: #18bc9c;
+    --dashboard-secondary: #2c3e50;
+    --dashboard-accent: #3498db;
+    --dashboard-success: #27ae60;
+    --dashboard-warning: #f39c12;
+    --dashboard-danger: #e74c3c;
+    --dashboard-light: #f8f9fa;
+    --dashboard-shadow: 0 6px 24px rgba(44, 62, 80, 0.10);
+    --dashboard-shadow-hover: 0 8px 32px rgba(44, 62, 80, 0.15);
+    --dashboard-border-radius: 16px;
+    --dashboard-transition: transform 0.25s cubic-bezier(.4,2,.6,1), box-shadow 0.25s;
+}
+
+/* ==================== TÍTULOS GENERALES ==================== */
+#usuarios-container h1, 
+#proyectos-container h1, 
+#informacion-personal-container h1,
+.panel-header h3 {
+    font-size: 2.2rem;
+    color: var(--dashboard-secondary);
+    text-align: center;
+    margin-bottom: 28px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, 
+        rgba(24, 188, 156, 0.1), 
+        rgba(52, 152, 219, 0.05)
+    );
+    border-radius: var(--dashboard-border-radius);
+    border: 1px solid rgba(24, 188, 156, 0.2);
+}
+
+.panel-header h3 {
+    margin: 0;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ==================== TARJETAS GENERALES ==================== */
+#usuarios-container .card, 
+#proyectos-container .card,
+.user-card,
+.project-card {
+    background: linear-gradient(135deg, #ffffff 80%, #eaf6f6 100%);
+    border: none;
+    border-radius: var(--dashboard-border-radius);
+    box-shadow: var(--dashboard-shadow);
+    transition: var(--dashboard-transition);
+    margin-bottom: 24px;
+    color: var(--dashboard-secondary);
+    opacity: 1 !important;
+    overflow: hidden;
+    position: relative;
+}
+
+#usuarios-container .card:hover, 
+#proyectos-container .card:hover,
+.user-card:hover,
+.project-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: var(--dashboard-shadow-hover);
+    background: linear-gradient(135deg, #ffffff 70%, #e8f6f3 100%);
+}
+
+/* ==================== HEADERS DE TARJETAS ==================== */
+.card-header.user-header,
+.card-header.project-header {
+    background: linear-gradient(135deg, var(--dashboard-primary), var(--dashboard-secondary));
+    color: white;
+    padding: 1rem 1.5rem;
+    border-bottom: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-icon,
+.project-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.user-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.user-status.active i {
+    color: #2ecc71;
+    animation: pulse 2s infinite;
+}
+
+.user-status.inactive i {
+    color: #e74c3c;
+}
+
+/* ==================== CUERPO DE TARJETAS ==================== */
+#usuarios-container .card-body, 
+#proyectos-container .card-body {
+    padding: 24px 20px 20px 20px;
+}
+
+#usuarios-container .card-title, 
+#proyectos-container .card-title,
+.user-title,
+.project-title {
+    font-size: 1.3rem;
+    color: var(--dashboard-primary);
+    font-weight: 600;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#usuarios-container .card-text, 
+#proyectos-container .card-text {
+    font-size: 1.05rem;
+    color: #5c6e7a;
+    margin-bottom: 10px;
+    line-height: 1.6;
+}
+
+/* ==================== INFORMACIÓN DE USUARIOS ==================== */
+.user-info {
+    margin: 1rem 0;
+}
+
+.user-info .info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    background: rgba(248, 249, 250, 0.7);
+    border-radius: 8px;
+    border-left: 3px solid var(--dashboard-primary);
+}
+
+.user-info .info-item i {
+    color: var(--dashboard-primary);
+    width: 20px;
+    text-align: center;
+}
+
+.user-info .info-item span {
+    flex: 1;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+/* ==================== METADATA ==================== */
+.user-meta,
+.project-meta {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.meta-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.meta-item i {
+    color: var(--dashboard-accent);
+    margin-top: 0.1rem;
+    width: 16px;
+}
+
+.fecha-info {
+    margin-left: auto;
+    font-weight: 500;
+}
+
+/* ==================== BOTONES EN DASHBOARD ==================== */
+#usuarios-container .btn, 
+#proyectos-container .btn {
+    font-size: 1rem;
+    padding: 10px 20px;
+    border-radius: 6px;
+    margin-right: 8px;
+    margin-bottom: 6px;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0.3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#usuarios-container .btn:hover, 
+#proyectos-container .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(24, 188, 156, 0.08);
+}
+
+#usuarios-container .btn-primary, 
+#proyectos-container .btn-primary {
+    background: linear-gradient(135deg, var(--dashboard-primary), var(--dashboard-accent));
+    border: none;
+    color: #fff;
+}
+
+#usuarios-container .btn-primary:hover, 
+#proyectos-container .btn-primary:hover {
+    background: linear-gradient(135deg, var(--dashboard-accent), var(--dashboard-primary));
+    box-shadow: 0 4px 15px rgba(24, 188, 156, 0.3);
+}
+
+#usuarios-container .btn-success, 
+#proyectos-container .btn-success {
+    background: linear-gradient(135deg, var(--dashboard-success), #229954);
+    border: none;
+    color: #fff;
+}
+
+#usuarios-container .btn-success:hover, 
+#proyectos-container .btn-success:hover {
+    background: linear-gradient(135deg, #229954, var(--dashboard-success));
+    box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+}
+
+#usuarios-container .btn-danger, 
+#proyectos-container .btn-danger {
+    background: linear-gradient(135deg, var(--dashboard-danger), #c0392b);
+    border: none;
+    color: #fff;
+}
+
+#usuarios-container .btn-danger:hover, 
+#proyectos-container .btn-danger:hover {
+    background: linear-gradient(135deg, #c0392b, var(--dashboard-danger));
+    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+}
+
+/* ==================== FOOTER DE TARJETAS ==================== */
+.card-footer.user-footer,
+.card-footer.project-footer {
+    background: rgba(248, 249, 250, 0.8);
+    border-top: 1px solid rgba(226, 232, 240, 0.8);
+    padding: 1rem 1.5rem;
+}
+
+.user-actions,
+.project-actions,
+.project-actions-footer {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+/* ==================== INFORMACIÓN PERSONAL ==================== */
+#informacion-personal-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 250px;
+}
+
+.personal-info-card {
+    min-width: 400px;
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+    font-size: 1.15rem;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(44, 62, 80, 0.18);
+    background: linear-gradient(135deg, #ffffff 90%, #f8fafc 100%);
+    border: 1px solid rgba(24, 188, 156, 0.1);
+}
+
+.personal-info-header {
+    background: linear-gradient(135deg, var(--dashboard-primary), var(--dashboard-secondary));
+    color: white;
+    padding: 2rem;
+    border-bottom: none;
+    text-align: center;
+}
+
+.user-avatar {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    margin: 0 auto 1rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.personal-info-header h5 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+/* ==================== GRUPOS DE INFORMACIÓN ==================== */
+.info-group {
+    margin-bottom: 1.5rem;
+}
+
+.info-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--dashboard-secondary);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-label i {
+    color: var(--dashboard-primary);
+    width: 20px;
+    text-align: center;
+}
+
+.info-value {
+    font-size: 1.1rem;
+    color: var(--dashboard-secondary);
+    font-weight: 500;
+    padding: 0.75rem;
+    background: rgba(248, 249, 250, 0.8);
+    border-radius: 8px;
+    border-left: 3px solid var(--dashboard-primary);
+}
+
+/* ==================== ESTADÍSTICAS DE CUENTA ==================== */
+.account-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    background: rgba(248, 249, 250, 0.5);
+    border-radius: 12px;
+    flex: 1;
+    margin: 0 0.5rem;
+    border: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+.stat-item i {
+    font-size: 2rem;
+    color: var(--dashboard-primary);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.stat-number {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--dashboard-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* ==================== ESTADO VACÍO ==================== */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, 
+        rgba(248, 249, 250, 0.8), 
+        rgba(241, 245, 249, 0.8)
+    );
+    border-radius: var(--dashboard-border-radius);
+    border: 2px dashed rgba(24, 188, 156, 0.3);
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: var(--dashboard-primary);
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+.empty-state-title {
+    font-size: 1.8rem;
+    color: var(--dashboard-secondary);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.empty-state-description {
+    font-size: 1.1rem;
+    color: #6c757d;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.empty-state-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* ==================== ANIMACIONES ==================== */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+    .panel-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .panel-header h3 {
+        font-size: 1.5rem;
+    }
+    
+    #informacion-personal-container {
+        padding: 0 1rem;
+    }
+    
+    .personal-info-card {
+        min-width: auto;
+        margin: 0;
+    }
+    
+    .personal-info-header {
+        padding: 1.5rem 1rem;
+    }
+    
+    .user-avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
+    }
+    
+    .account-stats {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .stat-item {
+        margin: 0;
+    }
+    
+    .empty-state {
+        padding: 2rem 1rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+    }
+    
+    .empty-state-title {
+        font-size: 1.5rem;
+    }
+    
+    .empty-state-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .user-actions,
+    .project-actions,
+    .project-actions-footer {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    #usuarios-container .btn, 
+    #proyectos-container .btn {
+        width: 100%;
+        justify-content: center;
+        margin-right: 0;
+    }
+}
+
+@media (max-width: 576px) {
+    #usuarios-container h1, 
+    #proyectos-container h1, 
+    #informacion-personal-container h1 {
+        font-size: 1.8rem;
+    }
+    
+    .panel-header h3 {
+        font-size: 1.3rem;
+    }
+    
+    #usuarios-container .card-body, 
+    #proyectos-container .card-body {
+        padding: 1rem;
+    }
+    
+    #usuarios-container .card-title, 
+    #proyectos-container .card-title {
+        font-size: 1.1rem;
+    }
+    
+    .user-info .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+    
+    .meta-item {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .fecha-info {
+        margin-left: 0;
+    }
+}
