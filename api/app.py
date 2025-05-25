@@ -37,7 +37,7 @@ login_manager.login_message = None
 class Proyecto(db.Model):
     __tablename__ = 'proyectos'
     id = db.Column(db.String(36), primary_key=True)
-    nombre = db.Column(db.String(20), nullable=False)
+    nombre = db.Column(db.String(40), nullable=False)
     descripcion = db.Column(db.Text, nullable=True)
     fecha_creacion = db.Column(db.Date, nullable=False)
     fecha_modificacion = db.Column(db.Date, nullable=False)
@@ -47,7 +47,7 @@ class Usuario(UserMixin, db.Model):
     __tablename__ = 'usuarios'
     id = db.Column(db.String(36), primary_key=True)
     username = db.Column(db.String(20), nullable=False, unique=True)
-    nombre = db.Column(db.String(20), nullable=False)
+    nombre = db.Column(db.String(40), nullable=False)
     apellidos = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(50), nullable=False, unique=True)
     password = db.Column(db.String(200), nullable=False)
