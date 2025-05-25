@@ -1,6 +1,6 @@
 import os
 import uuid
-from datetime import date
+from datetime import date, timedelta
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify, render_template, flash, redirect, url_for, abort, make_response
 from flask_sqlalchemy import SQLAlchemy
@@ -23,10 +23,23 @@ app.config["PRAETORIAN_HASH_SCHEMES"] = ["pbkdf2_sha256"]
 app.config["JWT_ACCESS_LIFESPAN"] = {"hours": 24}
 app.config["JWT_REFRESH_LIFESPAN"] = {"days": 30}
 
+# ✅ CONFIGURACIÓN PARA JWT COOKIES
+app.config["JWT_ACCESS_COOKIE_NAME"] = "access_token"
+app.config["JWT_COOKIE_SECURE"] = False  # True en producción con HTTPS
+app.config["JWT_COOKIE_CSRF_PROTECT"] = False  # Simplificado para desarrollo
+app.config["JWT_COOKIE_SAMESITE"] = "Lax"
+
 db = SQLAlchemy(app)
 api = Api(app)
 guard = flask_praetorian.Praetorian()
-CORS(app)
+
+# ✅ CONFIGURAR CORS PARA COOKIES
+CORS(app, 
+     origins=["http://localhost:5003"], 
+     supports_credentials=True,
+     allow_headers=["Content-Type", "Authorization"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+)
 
 login_manager = LoginManager()
 login_manager.init_app(app) 
@@ -148,21 +161,54 @@ with app.app_context():
     db.session.commit()
 
 
+# ✅ ENDPOINT DE LOGIN MODIFICADO PARA COOKIES
 @app.route("/login", methods=["POST"])
 def login():
     """
-    Logs a user in by parsing a POST request containing user credentials and
-    issuing a JWT token.
-    .. example::
-       $ curl http://localhost:5000/login -X POST \
-         -d '{"username":"Walter","password":"calmerthanyouare"}'
+    Login con JWT cookie en lugar de token en respuesta JSON
     """
     req = request.get_json(force=True)
     username = req.get("username", None)
     password = req.get("password", None)
-    user = guard.authenticate(username, password)
-    ret = {"access_token": guard.encode_jwt_token(user)}
-    return (jsonify(ret), 200)
+    
+    try:
+        user = guard.authenticate(username, password)
+        token = guard.encode_jwt_token(user)
+        
+        # ✅ CREAR RESPUESTA CON COOKIE
+        response = make_response(jsonify({
+            "message": "Login exitoso",
+            "user": {
+                "username": user.username,
+                "roles": user.rolenames
+            }
+        }))
+        
+        # ✅ CONFIGURAR COOKIE JWT
+        response.set_cookie(
+            'access_token',
+            token,
+            max_age=timedelta(hours=24),
+            httponly=True,  # Más seguro - no accesible desde JS
+            secure=False,   # True en producción con HTTPS
+            samesite='Lax'
+        )
+        
+        return response, 200
+        
+    except Exception as e:
+        return jsonify({"message": "Credenciales inválidas"}), 401
+
+# ✅ ENDPOINT DE LOGOUT PARA LIMPIAR COOKIE
+@app.route("/logout", methods=["POST"])
+def logout():
+    """
+    Logout limpiando la cookie JWT
+    """
+    response = make_response(jsonify({"message": "Logout exitoso"}))
+    response.set_cookie('access_token', '', expires=0)
+    return response, 200
+
 
 @app.route("/usuarios/rol", methods=["GET"])
 @flask_praetorian.auth_required

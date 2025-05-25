@@ -1,0 +1,6 @@
+# To Do
+db_data/
+__pycache__/
+*.pyc
+.hypo*
+.env

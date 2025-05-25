@@ -1,4 +1,5 @@
 console.log("¡script.js cargado!");
+
 function scrollToBottom(container) {
     const lastChild = container.lastElementChild;
     if (lastChild) {
@@ -83,7 +84,6 @@ function animateSteps() {
     });
 };
 
-
 function inicializarChat() {
     // Seleccionar elementos del chat
     const chatMensajes = document.querySelector('.chat-mensajes');
@@ -150,36 +150,75 @@ const API_BASE_URL_CHAT = "http://localhost:5002";
 // Base URL de la API
 const API_BASE_URL = "http://localhost:5001";
 
-// Función para enviar el mensaje al servidor y mostrar la respuesta (Ejercicio 3)
+// ✅ CONFIGURACIÓN ESTÁNDAR PARA FETCH CON COOKIES
+const fetchConfig = {
+    credentials: 'include',  // ¡IMPORTANTE! Incluir cookies
+    headers: {
+        'Content-Type': 'application/json'
+    }
+};
+
+// ✅ FUNCIÓN HELPER PARA FETCH CON COOKIES
+async function fetchWithCredentials(url, options = {}) {
+    const config = {
+        ...fetchConfig,
+        ...options,
+        headers: {
+            ...fetchConfig.headers,
+            ...(options.headers || {})
+        }
+    };
+    
+    return fetch(url, config);
+}
+
+// ✅ CHAT CON DEBUG DETALLADO
 async function sendMessageToServer(messageText, chatMensajes) {
     try {
-        // Realizar la petición POST al servidor
-        const token = sessionStorage.getItem("token");
-        console.log("Token encontrado:", token);
-        const response = await fetch(`${API_BASE_URL_CHAT}/chat/mensajes`, {
+        console.log("🚀 Enviando mensaje autenticado:", messageText);
+        
+        // ✅ DEBUG: Verificar cookies antes del envío
+        console.log("🍪 Cookies disponibles:", document.cookie);
+        
+        // ✅ DEBUG: Verificar autenticación previa
+        console.log("🔍 Verificando autenticación previa...");
+        const authTest = await fetchWithCredentials(`${API_BASE_URL}/usuarios/rol`);
+        console.log("🔐 Test de autenticación:", authTest.status, authTest.ok ? "✅ OK" : "❌ FAIL");
+        
+        if (!authTest.ok) {
+            console.log("❌ Falló test de autenticación previo");
+            alert("Tu sesión ha expirado. Serás redirigido al login.");
+            sessionStorage.clear();
+            window.location.href = "/login";
+            return;
+        }
+        
+        console.log("📡 Enviando mensaje al chat...");
+        const response = await fetchWithCredentials(`${API_BASE_URL_CHAT}/chat/mensajes`, {
             method: 'POST',
-            headers: {
-                "Authorization": "Bearer " + token,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ message: messageText }),
+            body: JSON.stringify({ message: messageText })
         });
 
-        // Si el usuario no está autenticado, redirige al login
+        console.log("📡 Respuesta del chat:", response.status, response.statusText);
+        
         if (response.status === 401) {
+            console.log("❌ No autorizado - sesión expirada en chat");
+            alert("Tu sesión ha expirado. Serás redirigido al login.");
+            sessionStorage.clear();
             window.location.href = "/login";
             return;
         }
 
-        // Verificar si la respuesta es exitosa
         if (!response.ok) {
-            throw new Error('Error al conectar con el servidor');
+            const errorData = await response.json();
+            console.log("❌ Error del chat:", errorData);
+            throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
         }
 
-        // Obtener la respuesta del servidor como JSON
         const data = await response.json();
+        console.log("✅ Respuesta del chat recibida:", data);
 
-        // Mostrar la respuesta del bot
+        // Mostrar respuesta del bot
         const botMessage = document.createElement('div');
         botMessage.classList.add('campo-bot');
         botMessage.innerHTML = `
@@ -187,15 +226,15 @@ async function sendMessageToServer(messageText, chatMensajes) {
                 <i class="fas fa-robot icono-bot"></i>
             </div>
             <div class="mensaje-bot">
-                <p class="my-2">${data.message || 'No se recibió respuesta del servidor'}</p>
+                <p class="my-2">${data.message}</p>
             </div>
         `;
         chatMensajes.appendChild(botMessage);
-
         scrollToBottom(chatMensajes);
-        //chatMensajes.scrollTop = chatMensajes.scrollHeight;
+        
     } catch (error) {
-        // Mostrar mensaje de error si falla la conexión
+        console.error("❌ Error en el chat:", error);
+        
         const errorMessage = document.createElement('div');
         errorMessage.classList.add('campo-bot');
         errorMessage.innerHTML = `
@@ -203,28 +242,32 @@ async function sendMessageToServer(messageText, chatMensajes) {
                 <i class="fas fa-robot icono-bot"></i>
             </div>
             <div class="mensaje-bot">
-                <p class="my-2">Error: No se pudo conectar con el servidor</p>
+                <p class="my-2">🚫 Error: ${error.message}</p>
+                <small class="text-muted">Verifica tu conexión y autenticación</small>
             </div>
         `;
         chatMensajes.appendChild(errorMessage);
-
-        // Hacer scroll al final
         scrollToBottom(chatMensajes);
     }
 }
 
-// Funciones para la api
+// ✅ FUNCIÓN DE VERIFICACIÓN DE AUTENTICACIÓN
+async function verificarAutenticacion() {
+    try {
+        const response = await fetchWithCredentials(`${API_BASE_URL}/usuarios/rol`);
+        return response.ok;
+    } catch (error) {
+        return false;
+    }
+}
 
-// Función para obtener y renderizar usuarios
+// ✅ FUNCIONES DE API ACTUALIZADAS CON COOKIES
+
 async function obtenerUsuarios() {
     console.log("Obteniendo usuarios...");
     try {
-        const token = sessionStorage.getItem("token");
-        const response = await fetch(`${API_BASE_URL}/usuarios`, {
-            headers: {
-                "Authorization": "Bearer " + token
-            }
-        });
+        const response = await fetchWithCredentials(`${API_BASE_URL}/usuarios`);
+        
         if (!response.ok) {
             throw new Error(`Error al obtener usuarios: ${response.statusText}`);
         }
@@ -235,24 +278,19 @@ async function obtenerUsuarios() {
     }
 }
 
-// Función para crear un nuevo usuario
 async function crearUsuario(usuario) {
     try {
-        const token = sessionStorage.getItem("token");
-        const response = await fetch(`${API_BASE_URL}/usuarios`, {
+        const response = await fetchWithCredentials(`${API_BASE_URL}/usuarios`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + token
-            },
-            body: JSON.stringify(usuario),
+            body: JSON.stringify(usuario)
         });
+        
         if (!response.ok) {
             throw new Error(`Error al crear usuario: ${response.statusText}`);
         }
         const resultado = await response.json();
         console.log("Usuario creado:", resultado);
-        obtenerUsuarios(); // Actualizar la lista de usuarios
+        obtenerUsuarios();
     } catch (error) {
         console.error(error);
     }
@@ -281,20 +319,17 @@ function mostrarAlerta(mensaje, tipo = "info") {
     `;
 }
 
-// Función para eliminar un usuario
+// ✅ ACTUALIZAR ELIMINAR USUARIO PARA USAR COOKIES
 async function eliminarUsuario(userId) {
     if (!confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
         return;
     }
     console.log("Eliminando usuario con ID:", userId);
     try {
-        const token = sessionStorage.getItem("token");
-        const response = await fetch(`${API_BASE_URL}/usuarios/${userId}`, {
-            method: "DELETE",
-            headers: {
-                "Authorization": "Bearer " + token
-            }
+        const response = await fetchWithCredentials(`${API_BASE_URL}/usuarios/${userId}`, {
+            method: "DELETE"
         });
+        
         const resultado = await response.json();
         if (!response.ok) {
             // Mostrar mensaje claro si tiene proyectos asociados
@@ -315,15 +350,11 @@ async function eliminarUsuario(userId) {
     }
 }
 
-// Función para obtener un proyecto por ID
+// ✅ ACTUALIZAR OBTENER PROYECTO POR ID
 async function obtenerProyectoPorId(proyectoId) {
     try {
-        const token = sessionStorage.getItem("token");
-        const response = await fetch(`${API_BASE_URL}/proyectos/${proyectoId}`, {
-            headers: {
-                "Authorization": "Bearer " + token
-            }
-        });
+        const response = await fetchWithCredentials(`${API_BASE_URL}/proyectos/${proyectoId}`);
+        
         if (!response.ok) {
             throw new Error(`Error al obtener el proyecto: ${response.statusText}`);
         }
@@ -339,14 +370,11 @@ async function obtenerProyectoPorId(proyectoId) {
     }
 }
 
+// ✅ ACTUALIZAR OBTENER USUARIO POR ID
 async function obtenerUsuarioPorId(usuarioId) {
     try {
-        const token = sessionStorage.getItem("token");
-        const response = await fetch(`${API_BASE_URL}/usuarios/${usuarioId}`, {
-            headers: {
-                "Authorization": "Bearer " + token
-            }
-        });
+        const response = await fetchWithCredentials(`${API_BASE_URL}/usuarios/${usuarioId}`);
+        
         if (!response.ok) {
             throw new Error(`Error al obtener el usuario: ${response.statusText}`);
         }
@@ -359,19 +387,16 @@ async function obtenerUsuarioPorId(usuarioId) {
     }
 }
 
-// Función para eliminar un proyecto
+// ✅ ACTUALIZAR ELIMINAR PROYECTO
 async function eliminarProyecto(proyectoId, elementoDOM) {
     if (!confirm("¿Estás seguro de que deseas eliminar este proyecto?")) {
         return;
     }
     try {
-        const token = sessionStorage.getItem("token");
-        const response = await fetch(`${API_BASE_URL}/proyectos/${proyectoId}`, {
-            method: "DELETE",
-            headers: {
-                "Authorization": "Bearer " + token
-            }
+        const response = await fetchWithCredentials(`${API_BASE_URL}/proyectos/${proyectoId}`, {
+            method: "DELETE"
         });
+        
         if (!response.ok) {
             throw new Error(`Error al eliminar proyecto: ${response.statusText}`);
         }
@@ -386,40 +411,26 @@ async function eliminarProyecto(proyectoId, elementoDOM) {
     }
 }
 
-// Función para obtener y renderizar proyectos
 async function obtenerProyectos() {
+    console.log("Obteniendo proyectos...");
     try {
-        const token = sessionStorage.getItem("token");
-        const proyectosresponse = await fetch(`${API_BASE_URL}/proyectos`, {
-            headers: {
-                "Authorization": "Bearer " + token
-            }
-        });
-        const usuariosresponse = await fetch(`${API_BASE_URL}/usuarios`, {
-            headers: {
-                "Authorization": "Bearer " + token
-            }
-        });
-        if (!proyectosresponse.ok) {
+        const response = await fetchWithCredentials(`${API_BASE_URL}/proyectos`);
+        
+        if (!response.ok) {
             throw new Error(`Error al obtener proyectos: ${response.statusText}`);
         }
-        if (!usuariosresponse.ok) {
-            throw new Error(`Error al obtener usuarios: ${response.statusText}`);
-        }
-        const proyectos = await proyectosresponse.json();
-        const usuarios = await usuariosresponse.json();
-        console.log("Proyectos obtenidos:", proyectos);
-        console.log("Usuarios obtenidos:", usuarios);
-        renderizarProyectos(proyectos, usuarios); // Renderizar proyectos con usuarios
+        const proyectos = await response.json();
+        return proyectos;
     } catch (error) {
         console.error(error);
+        return [];
     }
 }
 
 // Función para renderizar usuarios en el HTML
 function renderizarUsuarios(usuarios) {
-    const usuariosContainer = document.getElementById("usuarios-container"); // Selecciona el contenedor de usuarios
-    usuariosContainer.innerHTML = ""; // Limpia el contenido previo
+    const usuariosContainer = document.getElementById("usuarios-container");
+    usuariosContainer.innerHTML = "";
     usuariosContainer.innerHTML = `
         <h1 class="text-center mb-4">Usuarios</h1>
         <div class="text-center mb-3">
@@ -524,13 +535,12 @@ function renderizarInformacionPersonal(usuario) {
     informacionPersonalContainer.appendChild(informacionPersonalDiv);
 }
 
-// Función para manejar la edición del proyecto
+// ✅ ACTUALIZAR EDITAR PROYECTO
 async function editarProyecto(proyectoId) {
     console.log("Editando proyecto con ID:", proyectoId);
     const proyecto = await obtenerProyectoPorId(proyectoId);
     console.log("Proyecto a editar:", proyecto);
     if (proyecto) {
-        // Almacenar el proyecto en localStorage
         localStorage.setItem("proyectoEditar", proyecto.id);
     }
     if (!proyecto) {
@@ -566,15 +576,10 @@ async function editarProyecto(proyectoId) {
 
         const nombre = document.getElementById("nombre").value;
         const descripcion = document.getElementById("descripcion").value;
-        const token = sessionStorage.getItem("token");
 
         try {
-            const response = await fetch(`${API_BASE_URL}/proyectos/${proyecto.id}`, {
+            const response = await fetchWithCredentials(`${API_BASE_URL}/proyectos/${proyecto.id}`, {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer " + token
-                },
                 body: JSON.stringify({ nombre, descripcion })
             });
 
@@ -583,7 +588,7 @@ async function editarProyecto(proyectoId) {
             }
 
             alert("Proyecto actualizado con éxito");
-            window.location.href = "/perfil"; // Redirige al perfil o donde quieras
+            window.location.href = "/perfil";
         } catch (error) {
             alert("Hubo un error al actualizar el proyecto");
             console.error(error);
@@ -591,13 +596,12 @@ async function editarProyecto(proyectoId) {
     });
 }
 
-// Función para manejar la edición del usuario
+// ✅ ACTUALIZAR EDITAR USUARIO
 async function editarUsuario(usuarioId) {
     console.log("Editando usuario con ID:", usuarioId);
     const usuario = await obtenerUsuarioPorId(usuarioId);
     console.log("Usuario a editar:", usuario);
     if (usuario) {
-        // Almacenar el usuario en localStorage
         localStorage.setItem("usuarioEditar", usuario.id);
     }
     if (!usuario) {
@@ -614,6 +618,7 @@ async function editarUsuario(usuarioId) {
             <div class="mb-3">
                 <label for="username" class="form-label"><strong>Nombre de usuario:</strong></label>
                 <input type="text" id="username" name="username" class="form-control" required value="${usuario.username}">
+            </div>
             <div class="mb-3">
                 <label for="nombre" class="form-label"><strong>Nombre:</strong></label>
                 <input type="text" id="nombre" name="nombre" class="form-control" required value="${usuario.nombre}">
@@ -646,40 +651,25 @@ async function editarUsuario(usuarioId) {
         const nombre = document.getElementById("nombre").value;
         const apellidos = document.getElementById("apellidos").value;
         const email = document.getElementById("email").value;
-        let password;
-        // Si la contraseña está vacía, no se envía al servidor
-        if (document.getElementById("password").value) {
-            password = document.getElementById("password").value;
-        }
-        const token = sessionStorage.getItem("token");
+        const password = document.getElementById("password").value;
 
         try {
-            let response;
+            const body = { username, nombre, apellidos, email };
             if (password) {
-                response = await fetch(`${API_BASE_URL}/usuarios/${usuario.id}`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": "Bearer " + token
-                    },
-                    body: JSON.stringify({ username, nombre, apellidos, email, password })
-                });
-            } else {
-                response = await fetch(`${API_BASE_URL}/usuarios/${usuario.id}`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": "Bearer " + token
-                    },
-                    body: JSON.stringify({ username, nombre, apellidos, email })
-                });   
+                body.password = password;
             }
+
+            const response = await fetchWithCredentials(`${API_BASE_URL}/usuarios/${usuario.id}`, {
+                method: "PUT",
+                body: JSON.stringify(body)
+            });
+
             if (!response.ok) {
                 throw new Error("Error al actualizar el usuario");
             }
 
             alert("Usuario actualizado con éxito");
-            window.location.href = "/perfil"; // Redirige al perfil o donde quieras
+            window.location.href = "/perfil";
         } catch (error) {
             alert("Hubo un error al actualizar el usuario");
             console.error(error);
@@ -687,75 +677,47 @@ async function editarUsuario(usuarioId) {
     });
 }
 
-// Función para crear un nuevo proyecto
-async function crearProyecto(proyecto) {
-    console.log("Creando proyecto:", proyecto);
-    try {
-        const token = sessionStorage.getItem("token");
-        const response = await fetch(`${API_BASE_URL}/proyectos`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + token
-            },
-            body: JSON.stringify(proyecto),
-        });
-        if (!response.ok) {
-            throw new Error(`Error al crear proyecto: ${response.statusText}`);
-        }
-        const resultado = await response.json();
-        console.log("Proyecto creado:", resultado);
-    } catch (error) {
-        console.error(error);
-    }
-}
-
-// Manejar el envío del formulario al cargar la página
 async function cargarFormularioCrearProyecto() {
     const form = document.getElementById("crear-proyecto-form");
+    if (!form) return;
 
-    // Manejar el envío del formulario
     form.addEventListener("submit", async (event) => {
-        event.preventDefault(); // Evitar el envío tradicional del formulario
+        event.preventDefault();
 
-        // Obtener los datos del formulario
         const nombre = document.getElementById("nombre").value;
         const descripcion = document.getElementById("descripcion").value;
 
-        // Crear el objeto del proyecto
-        const nuevoProyecto = {
-            nombre: nombre,
-            descripcion: descripcion,
-        };
-
-        // Llamar a la función crearProyecto
         try {
-            await crearProyecto(nuevoProyecto); // Reutilizar la función crearProyecto
+            const response = await fetchWithCredentials(`${API_BASE_URL}/proyectos`, {
+                method: "POST",
+                body: JSON.stringify({ nombre, descripcion })
+            });
+
+            if (!response.ok) {
+                throw new Error("Error al crear el proyecto");
+            }
+
             alert("Proyecto creado con éxito");
-            window.location.href = "/perfil"; // Redirigir al perfil después de crear el proyecto
+            window.location.href = "/perfil";
         } catch (error) {
             console.error("Error al crear el proyecto:", error);
             alert("Hubo un error al crear el proyecto");
         }
     });
-};
+}
 
-// Manejar el envío del formulario al cargar la página
 async function cargarFormularioCrearUsuario() {
     const form = document.getElementById("usuario-nuevo-form");
 
-    // Manejar el envío del formulario
     form.addEventListener("submit", async (event) => {
-        event.preventDefault(); // Evitar el envío tradicional del formulario
+        event.preventDefault();
 
-        // Obtener los datos del formulario
         const username = document.getElementById("username").value;
         const nombre = document.getElementById("nombre").value;
         const apellidos = document.getElementById("apellidos").value;
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
 
-        // Crear el objeto del usuario
         const nuevoUsuario = {
             username: username,
             nombre: nombre,
@@ -764,11 +726,10 @@ async function cargarFormularioCrearUsuario() {
             password: password,
         };
 
-        // Llamar a la función crearUsuario
         try {
-            await crearUsuario(nuevoUsuario); // Reutilizar la función crearUsuario
+            await crearUsuario(nuevoUsuario);
             alert("Usuario creado con éxito");
-            window.location.href = "/perfil"; // Redirigir al perfil después de crear el usuario
+            window.location.href = "/perfil";
         }
         catch (error) {
             console.error("Error al crear el usuario:", error);
@@ -779,56 +740,32 @@ async function cargarFormularioCrearUsuario() {
 
 async function cargarDatosAdmin() {
     console.log("Cargando datos...");
-    // Verificar si el token existe en sessionStorage
-    const token = sessionStorage.getItem("token");
-    if (!token) {
-        window.location.href = "/login";
-        return;
-    }
-
-    console.log("Token encontrado:", token);
+    
     try {
         const [proyectosRes, usuariosRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/proyectos`, {
-            headers: { "Authorization": "Bearer " + token }
-        }),
-        fetch(`${API_BASE_URL}/usuarios`, {
-            headers: { "Authorization": "Bearer " + token }
-        })
+            fetchWithCredentials(`${API_BASE_URL}/proyectos`),
+            fetchWithCredentials(`${API_BASE_URL}/usuarios`)
         ]);
 
-        const proyectosText = await proyectosRes.text();
-        const usuariosText = await usuariosRes.text();
-
-        if (proyectosText.includes("Token has expired") || usuariosText.includes("Token has expired")) {
-        sessionStorage.clear();
-        window.location.href = "/login";
-        return;
+        if (!proyectosRes.ok || !usuariosRes.ok) {
+            throw new Error("Error al cargar datos");
         }
 
-        console.log("Respuesta de proyectos:", proyectosText);
-        console.log("Respuesta de usuarios:", usuariosText);
-
-        const proyectos = JSON.parse(proyectosText);
-        const usuarios = JSON.parse(usuariosText);
+        const proyectos = await proyectosRes.json();
+        const usuarios = await usuariosRes.json();
 
         console.log("Proyectos:", proyectos);
         console.log("Usuarios:", usuarios);
 
-        // Renderizar proyectos
         renderizarProyectos(proyectos, usuarios);
-        // Renderizar usuarios
         renderizarUsuarios(usuarios);
-        // Renderizar el usuario actual a partir de usuarios
+        
+        // Renderizar usuario actual
         const usernameActual = sessionStorage.getItem("username");
-        console.log("Username actual:", usernameActual);
         const usuarioActual = usuarios.find(usuario => usuario.username === usernameActual);
-        console.log("Usuario actual:", usuarioActual);
 
         if (usuarioActual) {
             renderizarInformacionPersonal(usuarioActual);
-        } else {
-            console.error("Usuario actual no encontrado en la lista de usuarios.");
         }
 
         console.log("Datos cargados correctamente.");
@@ -838,56 +775,36 @@ async function cargarDatosAdmin() {
         sessionStorage.clear();
         window.location.href = "/login";
     }
-};
+}
 
+// ✅ ACTUALIZAR CARGAR DATOS USUARIOS PARA USAR COOKIES
 async function cargarDatosUsuarios() {
-    console.log("Cargando datos...");
-    // Verificar si el token existe en sessionStorage
-    const token = sessionStorage.getItem("token");
-    if (!token) {
-        window.location.href = "/login";
-        return;
-    }
-
-    console.log("Token encontrado:", token);
+    console.log("Cargando datos de usuarios...");
+    
     try {
-        const proyectosRes = await fetch(`${API_BASE_URL}/proyectos`, {
-            headers: { "Authorization": "Bearer " + token }
-        });
-        const usuariosRes = await fetch(`${API_BASE_URL}/usuarios`, {
-            headers: { "Authorization": "Bearer " + token }
-        });
+        const [proyectosRes, usuariosRes] = await Promise.all([
+            fetchWithCredentials(`${API_BASE_URL}/proyectos`),
+            fetchWithCredentials(`${API_BASE_URL}/usuarios`)
+        ]);
 
-        const proyectosText = await proyectosRes.text();
-        const usuariosText = await usuariosRes.text();
-
-        if (proyectosText.includes("Token has expired")) {
-        sessionStorage.clear();
-        window.location.href = "/login";
-        return;
+        if (!proyectosRes.ok || !usuariosRes.ok) {
+            throw new Error("Error al cargar datos");
         }
 
-        console.log("Respuesta de proyectos:", proyectosText);
-
-        const proyectos = JSON.parse(proyectosText);
-        const usuarios = JSON.parse(usuariosText);
-
+        const proyectos = await proyectosRes.json();
+        const usuarios = await usuariosRes.json();
 
         console.log("Proyectos:", proyectos);
-
-        // Renderizar proyectos
-        renderizarProyectos(proyectos, usuarios);
         console.log("Usuarios:", usuarios);
-        // Renderizar el usuario actual a partir de usuarios
+
+        renderizarProyectos(proyectos, usuarios);
+        
+        // Renderizar usuario actual
         const usernameActual = sessionStorage.getItem("username");
-        console.log("Username actual:", usernameActual);
         const usuarioActual = usuarios.find(usuario => usuario.username === usernameActual);
-        console.log("Usuario actual:", usuarioActual);
 
         if (usuarioActual) {
             renderizarInformacionPersonal(usuarioActual);
-        } else {
-            console.error("Usuario actual no encontrado en la lista de usuarios.");
         }
 
         console.log("Datos cargados correctamente.");
@@ -897,13 +814,14 @@ async function cargarDatosUsuarios() {
         sessionStorage.clear();
         window.location.href = "/login";
     }
-};
+}
 
+// ✅ LOGIN ACTUALIZADO PARA COOKIES
 async function logearUsuario() {
     console.log("Iniciando sesión...");
     const form = document.getElementById("login-form");
     form.addEventListener("submit", async (event) => {
-        event.preventDefault(); // Evitar el envío tradicional del formulario
+        event.preventDefault();
         console.log("Formulario de inicio de sesión enviado.");
 
         const username = document.getElementById("username").value;
@@ -911,11 +829,12 @@ async function logearUsuario() {
 
         try {
             console.log("Datos de inicio de sesión:", { username, password });
-            const response = await fetch(`${API_BASE_URL}/login`, {
+            
+            const response = await fetchWithCredentials(`${API_BASE_URL}/login`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, password })
             });
+            
             console.log("Respuesta del servidor:", response);
 
             if (!response.ok) {
@@ -924,16 +843,11 @@ async function logearUsuario() {
             }
             
             const data = await response.json();
-            if (!data.access_token) {
-                alert("Error al iniciar sesión. Token no recibido.");
-                return;
-            }
-
             console.log("Datos de inicio de sesión recibidos:", data);
+            
+            // ✅ Solo guardamos el username para referencia
             sessionStorage.setItem("username", username);
             console.log("Username guardado:", username);
-            sessionStorage.setItem("token", data.access_token);
-            console.log("Token guardado:", data.access_token);
 
             window.location.href = "/perfil";
         } catch (error) {
@@ -943,20 +857,31 @@ async function logearUsuario() {
     });
 }
 
+// ✅ LOGOUT ACTUALIZADO
+async function cerrarSesion() {
+    try {
+        await fetchWithCredentials(`${API_BASE_URL}/logout`, {
+            method: "POST"
+        });
+        
+        sessionStorage.clear();
+        window.location.href = "/login";
+    } catch (error) {
+        console.error("Error al cerrar sesión:", error);
+        sessionStorage.clear();
+        window.location.href = "/login";
+    }
+}
+
 async function obtenerRolUsuario() {
     try {
-        const token = sessionStorage.getItem("token");
-        const response = await fetch(`${API_BASE_URL}/usuarios/rol`, {
-            headers: {
-                "Authorization": "Bearer " + token
-            }
-        });
+        const response = await fetchWithCredentials(`${API_BASE_URL}/usuarios/rol`);
+        
         if (!response.ok) {
             throw new Error(`Error al obtener el rol del usuario: ${response.statusText}`);
         }
         const rol = await response.json();
         console.log("Rol del usuario obtenido:", rol);
-        console.log("Rol del usuario:", rol.rol[0]);
         return rol.rol[0];
     } catch (error) {
         console.error("Error al obtener el rol del usuario:", error);
@@ -968,72 +893,183 @@ function configurarLogout() {
     const logoutLink = document.getElementById("logout-link");
     if (logoutLink) {
         logoutLink.addEventListener("click", function() {
-            sessionStorage.clear(); // Limpiar el token del sessionStorage
-            console.log("Sesión cerrada. Token eliminado.");
+            cerrarSesion(); // ✅ Usar la función de logout con cookies
         });
     }
 }
 
+// ✅ ACTUALIZAR SIDEBAR CHAT PARA USAR COOKIES
 async function renderizarNombresProyectosSidebarChat() {
     const sidebarChat = document.getElementById("proyectos-sidebar");
     if (!sidebarChat) return;
 
-    const token = sessionStorage.getItem("token");
-    if (!token) {
-        window.location.href = "/login";
-        return;
-    }
+    try {
+        const response = await fetchWithCredentials(`${API_BASE_URL}/proyectos`);
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = "/login";
+                return;
+            }
+            throw new Error("Error al obtener proyectos");
+        }
 
-    console.log("Token encontrado:", token);
+        const proyectos = await response.json();
+        console.log("Proyectos para sidebar:", proyectos);
 
-    // Obtener proyectos a la API
-    const proyectosRes = await fetch(`${API_BASE_URL}/proyectos`, {
-        headers: { "Authorization": "Bearer " + token }
-    });
-
-    const proyectosText = await proyectosRes.text();
-
-    if (proyectosText.includes("Token has expired")) {
-        sessionStorage.clear();
-        window.location.href = "/login";
-        return;
-    }
-
-    console.log("Respuesta de proyectos:", proyectosText);
-
-    const proyectos = JSON.parse(proyectosText);
-
-    console.log("Proyectos:", proyectos);
-
-    sidebarChat.innerHTML = ""; // Limpiar el contenido previo
-    proyectos.forEach((proyecto) => {
-        const proyectoDiv = document.createElement("div");
-        proyectoDiv.classList.add("proyecto-chat");
-        proyectoDiv.innerHTML = `
-            <div class="d-flex align-items-center justify-content-between list-group-item list-group-item-action project-item mb-2">
-                <span>${proyecto.nombre}</span>
-                <button type="button" class="btn btn-sm btn-danger delete-button" title="Eliminar" data-id="${proyecto.id}">
-                    <svg class="trash-svg" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16">
-                        <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
-                    </svg>
-                </button>
-            </div>
-        `;
-        sidebarChat.appendChild(proyectoDiv);
-    });
-
-    // Añadir listeners a los botones de borrar
-    sidebarChat.querySelectorAll('.delete-button').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const proyectoId = this.getAttribute('data-id');
-            eliminarProyecto(proyectoId, this.closest('.proyecto-chat'));
+        sidebarChat.innerHTML = "";
+        proyectos.forEach((proyecto) => {
+            const proyectoDiv = document.createElement("div");
+            proyectoDiv.classList.add("proyecto-chat");
+            proyectoDiv.innerHTML = `
+                <div class="d-flex align-items-center justify-content-between list-group-item list-group-item-action project-item mb-2">
+                    <span>${proyecto.nombre}</span>
+                    <button type="button" class="btn btn-sm btn-danger delete-button" title="Eliminar" data-id="${proyecto.id}">
+                        <svg class="trash-svg" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16">
+                            <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            sidebarChat.appendChild(proyectoDiv);
         });
-    });
+
+        // Añadir listeners a los botones de borrar
+        sidebarChat.querySelectorAll('.delete-button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const proyectoId = this.getAttribute('data-id');
+                eliminarProyecto(proyectoId, this.closest('.proyecto-chat'));
+            });
+        });
+    } catch (error) {
+        console.error("Error al cargar proyectos del sidebar:", error);
+    }
+}
+
+// ✅ FUNCIÓN DE DEBUG PARA EL CHAT
+async function debugChat() {
+    console.log("🔍 Debugeando servidor de chat...");
+    
+    // Test 1: Verificar si el servidor responde
+    try {
+        const healthResponse = await fetch("http://localhost:5002/health");
+        const healthData = await healthResponse.json();
+        console.log("✅ Health check:", healthData);
+    } catch (error) {
+        console.log("❌ Servidor de chat no responde:", error);
+        return;
+    }
+    
+    // Test 2: Verificar autenticación
+    try {
+        const authResponse = await fetchWithCredentials("http://localhost:5001/usuarios/rol");
+        console.log("✅ Autenticación:", authResponse.ok ? "OK" : "FAIL");
+    } catch (error) {
+        console.log("❌ Error de autenticación:", error);
+    }
+}
+
+// ✅ FUNCIÓN DE DEBUG MEJORADA
+async function debugChat() {
+    console.log("🔍 Debugeando servidor de chat...");
+    
+    // Test 1: Verificar si el servidor responde (sin CORS)
+    try {
+        console.log("📡 Probando conexión directa al chat...");
+        const response = await fetch("http://localhost:5002/health", {
+            method: "GET",
+            mode: "cors",
+            credentials: "include"
+        });
+        console.log("✅ Respuesta del servidor:", response.status);
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log("✅ Health check exitoso:", data);
+        } else {
+            console.log("❌ Health check falló:", response.status);
+        }
+    } catch (error) {
+        console.log("❌ Error conectando al chat:", error);
+    }
+    
+    // Test 2: Probar endpoint de chat
+    try {
+        console.log("📡 Probando endpoint de chat...");
+        const response = await fetch("http://localhost:5002/chat/mensajes", {
+            method: "POST",
+            mode: "cors",
+            credentials: "include",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: "test" })
+        });
+        console.log("✅ Test de chat:", response.status);
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log("✅ Respuesta de chat:", data);
+        }
+    } catch (error) {
+        console.log("❌ Error en test de chat:", error);
+    }
+}
+
+// ✅ FUNCIÓN ESPECÍFICA PARA DEBUG DE AUTENTICACIÓN
+async function debugAutenticacion() {
+    console.log("🔍 Debugeando autenticación completa...");
+    
+    // 1. Ver cookies
+    console.log("🍪 document.cookie:", document.cookie);
+    
+    // 2. Test endpoint API principal
+    try {
+        const apiResponse = await fetchWithCredentials(`${API_BASE_URL}/usuarios/rol`);
+        console.log("📡 API principal (/usuarios/rol):", apiResponse.status);
+        if (apiResponse.ok) {
+            const apiData = await apiResponse.json();
+            console.log("✅ Datos del usuario:", apiData);
+        } else {
+            console.log("❌ Error en API principal:", apiResponse.statusText);
+        }
+    } catch (error) {
+        console.log("❌ Error conectando a API principal:", error);
+    }
+    
+    // 3. Test endpoint chat
+    try {
+        const chatResponse = await fetchWithCredentials(`${API_BASE_URL_CHAT}/health`);
+        console.log("📡 Chat (/health):", chatResponse.status);
+        if (chatResponse.ok) {
+            const chatData = await chatResponse.json();
+            console.log("✅ Estado del chat:", chatData);
+        }
+    } catch (error) {
+        console.log("❌ Error conectando a chat:", error);
+    }
+    
+    // 4. Test mensaje chat
+    try {
+        const messageResponse = await fetchWithCredentials(`${API_BASE_URL_CHAT}/chat/mensajes`, {
+            method: 'POST',
+            body: JSON.stringify({ message: "test de debug" })
+        });
+        console.log("📡 Chat (/chat/mensajes):", messageResponse.status);
+        if (messageResponse.ok) {
+            const messageData = await messageResponse.json();
+            console.log("✅ Respuesta del chat:", messageData);
+        } else {
+            console.log("❌ Error en chat:", messageResponse.statusText);
+        }
+    } catch (error) {
+        console.log("❌ Error en mensaje de chat:", error);
+    }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
 
-    configurarLogout(); // Configurar el evento de logout
+    configurarLogout();
     console.log("Configuración de logout completada.");
 
     console.log("DOM completamente cargado y analizado.");
@@ -1057,7 +1093,6 @@ document.addEventListener("DOMContentLoaded", () => {
         cargarFormularioCrearUsuario();
     }
 
-    
     if (
         document.getElementById("proyectos-container") ||
         document.getElementById("usuarios-container")
@@ -1076,14 +1111,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (document.getElementById("proyecto-editar-container")) {
-        // Extraer el ID de la URL
         const pathParts = window.location.pathname.split("/");
         const proyectoId = pathParts[pathParts.length - 1];
         editarProyecto(proyectoId);
     }
 
     if (document.getElementById("usuario-editar-container")) {
-        // Extraer el ID de la URL
         const pathParts = window.location.pathname.split("/");
         const usuarioId = pathParts[pathParts.length - 1];
         editarUsuario(usuarioId);

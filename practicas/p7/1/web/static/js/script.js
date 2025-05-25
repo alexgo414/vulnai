@@ -146,9 +146,9 @@ function configurarEnvioConEnter(messageInput, sendButton) {
 }
 
 // Base URL del chat
-const API_BASE_URL_CHAT = "https://vulnaimicro.pythonanywhere.com";
+const API_BASE_URL_CHAT = "http://localhost:5002";
 // Base URL de la API
-const API_BASE_URL = "https://vulnaimicro.pythonanywhere.com/api";
+const API_BASE_URL = "http://localhost:5001";
 
 // Función para enviar el mensaje al servidor y mostrar la respuesta (Ejercicio 3)
 async function sendMessageToServer(messageText, chatMensajes) {
