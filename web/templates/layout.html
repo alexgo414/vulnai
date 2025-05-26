@@ -43,15 +43,8 @@
                         </li>
                     </ul>
                     <ul class="navbar-nav ms-auto">
-                        <!-- <li class="nav-item">
-                            <a class="nav-link" href="/">
-                                <svg id="envelope-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-envelope-fill d-none d-lg-block" viewBox="0 0 16 16">
-                                    <path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414zM0 4.697v7.104l5.803-3.558zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586zm3.436-.586L16 11.801V4.697z"/>
-                                </svg>
-                            </a>
-                        </li> -->
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center {% if request.path == '/chat' %}active text-success{% endif %}" href=# id="chat-link">
+                        <li class="nav-item user-only" style="display: none;">
+                            <a class="nav-link d-flex align-items-center {% if request.path == '/chat' %}active text-success{% endif %}" href="#" id="chat-link">
                                 <svg id="bot-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-person-fill d-none d-lg-block {% if request.path == '/chat' %}text-success{% endif %}" viewBox="0 0 16 16">
                                       <path d="M6 12.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5M3 8.062C3 6.76 4.235 5.765 5.53 5.886a26.6 26.6 0 0 0 4.94 0C11.765 5.765 13 6.76 13 8.062v1.157a.93.93 0 0 1-.765.935c-.845.147-2.34.346-4.235.346s-3.39-.2-4.235-.346A.93.93 0 0 1 3 9.219zm4.542-.827a.25.25 0 0 0-.217.068l-.92.9a25 25 0 0 1-1.871-.183.25.25 0 0 0-.068.495c.55.076 1.232.149 2.02.193a.25.25 0 0 0 .189-.071l.754-.736.847 1.71a.25.25 0 0 0 .404.062l.932-.97a25 25 0 0 0 1.922-.188.25.25 0 0 0-.068-.495c-.538.074-1.207.145-1.98.189a.25.25 0 0 0-.166.076l-.754.785-.842-1.7a.25.25 0 0 0-.182-.135"/>
                                         <path d="M8.5 1.866a1 1 0 1 0-1 0V3h-2A4.5 4.5 0 0 0 1 7.5V8a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1v-.5A4.5 4.5 0 0 0 10.5 3h-2zM14 7.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7.5A3.5 3.5 0 0 1 5.5 4h5A3.5 3.5 0 0 1 14 7.5"/>
@@ -59,19 +52,34 @@
                                 <p class="mb-0 ms-1">Chat</p>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center {% if request.path == '/perfil' %}active text-success{% endif %}" href=# id="perfil-link">
+                        <li class="nav-item user-only" style="display: none;">
+                            <a class="nav-link d-flex align-items-center {% if request.path == '/perfil' %}active text-success{% endif %}" href="#" id="perfil-link">
                                 <svg id="user-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-person-fill d-none d-lg-block {% if request.path == '/perfil' %}text-success{% endif %}" viewBox="0 0 16 16">
                                     <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
                                 </svg>
                                 <p class="mb-0 ms-1">Mi cuenta</p>
                             </a>
                         </li>
+                        <!-- Agregar botón de login/logout -->
+                        <li class="nav-item guest-only">
+                            <a class="nav-link d-flex align-items-center" href="/login" id="login-link">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-in-right d-none d-lg-block" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0z"/>
+                                    <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/>
+                                </svg>
+                                <p class="mb-0 ms-1">Iniciar sesión</p>
+                            </a>
+                        </li>
+                        <li class="nav-item user-only" style="display: none;">
+                            <a class="nav-link d-flex align-items-center" href="#" id="logout-link">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-right d-none d-lg-block" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 1 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z"/>
+                                    <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/>
+                                </svg>
+                                <p class="mb-0 ms-1">Cerrar sesión</p>
+                            </a>
+                        </li>
                     </ul>
-                    <form class="d-flex">
-                        <input id="describe-form" class="form-control me-sm-2" type="search" placeholder="Describe tu proyecto...">
-                        <button class="btn btn-secondary my-2 my-sm-0" type="submit">Comenzar</button>
-                    </form>
                 </div>
             </div>
         </nav>
@@ -184,30 +192,28 @@
     {% block scripts %}{% endblock %}
 </body>
 <script>
-    async function navegarConAutenticacion(url) {
-        try {
-            const response = await fetch('http://localhost:5001/usuarios/rol', {
-                credentials: 'include'
+    // ✅ CONFIGURAR NAVEGACIÓN CONDICIONAL AL CARGAR LA PÁGINA
+    document.addEventListener("DOMContentLoaded", async () => {
+        // Verificar autenticación y actualizar navegación
+        await verificarYActualizarNavegacion();
+        
+        // Configurar event listeners
+        const perfilLink = document.getElementById("perfil-link");
+        const chatLink = document.getElementById("chat-link");
+        
+        if (perfilLink) {
+            perfilLink.addEventListener("click", function (e) {
+                e.preventDefault();
+                navegarConAutenticacion("/perfil");
             });
-            
-            if (response.ok) {
-                window.location.href = url;
-            } else {
-                window.location.href = "/login";
-            }
-        } catch (error) {
-            window.location.href = "/login";
         }
-    }
 
-    document.getElementById("perfil-link").addEventListener("click", function (e) {
-        e.preventDefault();
-        navegarConAutenticacion("/perfil");
-    });
-
-    document.getElementById("chat-link").addEventListener("click", function (e) {
-        e.preventDefault();
-        navegarConAutenticacion("/chat");
+        if (chatLink) {
+            chatLink.addEventListener("click", function (e) {
+                e.preventDefault();
+                navegarConAutenticacion("/chat");
+            });
+        }
     });
 </script>
 </html>

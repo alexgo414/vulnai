@@ -1,28 +1,138 @@
 {% extends "layout.html" %}
-{% block title %}Perfil{% endblock %}
+{% block title %}Panel de Control - SVAIA{% endblock %}
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/perfil.css') }}">
 {% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <!-- Sección de Proyectos -->
-    <div class="row mb-5" id="proyectos-container">
-        <!-- Proyectos se inyectarán aquí -->
+
+<!-- Contenedor de alertas -->
+<div id="container-alert" class="container-fluid"></div>
+
+<div class="dashboard-container">
+    <!-- Header Principal -->
+    <div class="dashboard-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="dashboard-title">Panel de Control</h1>
+                    <p class="dashboard-subtitle">Gestiona tus proyectos y configuración</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="header-actions">
+                        <a href="/perfil/proyecto_nuevo" class="btn btn-primary me-2">
+                            <i class="fas fa-plus me-1"></i>Nuevo Proyecto
+                        </a>
+                        <div class="dropdown d-inline-block">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-cog me-1"></i>Opciones
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="/perfil/usuario_nuevo"><i class="fas fa-user-plus me-2"></i>Nuevo Usuario</a></li>
+                                <li><a class="dropdown-item" href="/chat"><i class="fas fa-comments me-2"></i>Ir al Chat</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <button class="dropdown-item text-danger" onclick="cerrarSesion()" type="button">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Sección de Usuarios -->
-    <div class="row mb-5" id="usuarios-container">
-        <!-- Usuarios se inyectarán aquí -->
-    </div>
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Sidebar de información personal -->
+            <div class="col-lg-3 mb-4">
+                <div class="profile-sidebar">
+                    <div class="profile-card">
+                        <div class="profile-header">
+                            <div class="profile-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div id="profile-info">
+                                <!-- Se carga dinámicamente -->
+                                <div class="placeholder-content">
+                                    <div class="skeleton skeleton-text"></div>
+                                    <div class="skeleton skeleton-text small"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="profile-stats">
+                            <div class="stat-item">
+                                <span class="stat-number" id="total-proyectos">-</span>
+                                <span class="stat-label">Proyectos</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number" id="rol-usuario">-</span>
+                                <span class="stat-label">Rol</span>
+                            </div>
+                        </div>
+                        <!-- ✅ BOTÓN DE CERRAR SESIÓN EN EL SIDEBAR -->
+                        <div class="profile-footer">
+                            <button class="btn btn-logout w-100" onclick="cerrarSesion()" type="button">
+                                <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    <!-- Sección información personal del usuario -->
-    <div class="row mb-5" id="informacion-personal-container">
-        <!-- Información personal se inyectarán aquí -->
-    </div>
+            <!-- Contenido principal -->
+            <div class="col-lg-9">
+                <!-- Proyectos -->
+                <div class="content-section mb-4">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <i class="fas fa-folder me-2"></i>Mis Proyectos
+                        </h2>
+                        <a href="/perfil/proyecto_nuevo" class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus me-1"></i>Nuevo
+                        </a>
+                    </div>
+                    <div class="section-content">
+                        <div class="row" id="proyectos-container">
+                            <!-- Skeleton loading -->
+                            <div class="col-md-6 col-xl-4 mb-3">
+                                <div class="project-card skeleton-card">
+                                    <div class="skeleton skeleton-title"></div>
+                                    <div class="skeleton skeleton-text"></div>
+                                    <div class="skeleton skeleton-text small"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-xl-4 mb-3">
+                                <div class="project-card skeleton-card">
+                                    <div class="skeleton skeleton-title"></div>
+                                    <div class="skeleton skeleton-text"></div>
+                                    <div class="skeleton skeleton-text small"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-    <!-- Botón de Cerrar Sesión -->
-    <div class="text-center mb-3">
-        <a onclick="cerrarSesion()" class="btn btn-danger" id="logout-link">Cerrar sesión</a>
+                <!-- Usuarios (solo para admin) -->
+                <div class="content-section" id="usuarios-section" style="display: none;">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <i class="fas fa-users me-2"></i>Gestión de Usuarios
+                        </h2>
+                        <a href="/perfil/usuario_nuevo" class="btn btn-sm btn-success">
+                            <i class="fas fa-user-plus me-1"></i>Nuevo
+                        </a>
+                    </div>
+                    <div class="section-content">
+                        <div class="row" id="usuarios-container">
+                            <!-- Se carga dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
 {% endblock %}

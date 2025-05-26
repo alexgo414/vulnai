@@ -84,29 +84,6 @@ function animateSteps() {
     });
 };
 
-function inicializarChat() {
-    // Seleccionar elementos del chat
-    const chatMensajes = document.querySelector('.chat-mensajes');
-    const messageInput = document.getElementById('messageInput');
-    const sendButton = document.getElementById('sendButton');
-
-    // Mostrar mensaje de bienvenida (Ejercicio 1)
-    const mensajeBienvenida = document.createElement('div');
-    mensajeBienvenida.classList.add('campo-bot');
-    mensajeBienvenida.innerHTML = `
-        <div class="icono-bot">
-            <i class="fas fa-robot icono-bot"></i>
-        </div>
-        <div class="mensaje-bot">
-            <p class="my-2">¡Hola! Bienvenido, ¿en qué puedo ayudarte?</p>
-        </div>
-    `;
-    chatMensajes.prepend(mensajeBienvenida);
-    scrollToBottom(chatMensajes);
-
-    return { chatMensajes, messageInput, sendButton };
-}
-
 function configurarChat(chatMensajes, messageInput, sendButton) {
     sendButton.addEventListener('click', () => {
         const messageText = messageInput.value.trim();
@@ -187,7 +164,7 @@ async function sendMessageToServer(messageText, chatMensajes) {
         
         if (!authTest.ok) {
             console.log("❌ Falló test de autenticación previo");
-            alert("Tu sesión ha expirado. Serás redirigido al login.");
+            mostrarAlerta("Tu sesión ha expirado. Serás redirigido al login.", "danger");
             sessionStorage.clear();
             window.location.href = "/login";
             return;
@@ -203,7 +180,7 @@ async function sendMessageToServer(messageText, chatMensajes) {
         
         if (response.status === 401) {
             console.log("❌ No autorizado - sesión expirada en chat");
-            alert("Tu sesión ha expirado. Serás redirigido al login.");
+            mostrarAlerta("Tu sesión ha expirado. Serás redirigido al login.", "danger");
             sessionStorage.clear();
             window.location.href = "/login";
             return;
@@ -296,10 +273,35 @@ async function crearUsuario(usuario) {
     }
 }
 
+// ✅ FUNCIONES DE ALMACENAMIENTO DE ALERTAS PARA REDIRECCIONES
+function guardarAlertaParaSiguientePagina(mensaje, tipo = "info") {
+    sessionStorage.setItem("alertMessage", mensaje);
+    sessionStorage.setItem("alertType", tipo);
+}
+
+function mostrarAlertaGuardada() {
+    const mensaje = sessionStorage.getItem("alertMessage");
+    const tipo = sessionStorage.getItem("alertType");
+    
+    if (mensaje && tipo) {
+        // Mostrar como toast flotante
+        mostrarToast(mensaje, tipo);
+        
+        // Limpiar del storage para que no se muestre de nuevo
+        sessionStorage.removeItem("alertMessage");
+        sessionStorage.removeItem("alertType");
+    }
+}
+
+// ✅ FUNCIÓN MEJORADA DE ALERTA (FALLBACK AL CONTENEDOR)
 function mostrarAlerta(mensaje, tipo = "info") {
-    // tipo: 'success', 'danger', 'warning', 'info'
     const container = document.getElementById("container-alert");
-    if (!container) return;
+    
+    // Si no hay contenedor o estamos en transición, usar toast
+    if (!container || window.location.hash === '#redirect') {
+        mostrarToast(mensaje, tipo);
+        return;
+    }
 
     // Mapeo de títulos por tipo
     const categoryMap = {
@@ -319,6 +321,126 @@ function mostrarAlerta(mensaje, tipo = "info") {
     `;
 }
 
+// ✅ SISTEMA DE TOAST FLOTANTE PROFESIONAL
+function mostrarToast(mensaje, tipo = "info", duracion = 5000) {
+    // Crear contenedor de toasts si no existe
+    let toastContainer = document.getElementById("toast-container");
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = "toast-container";
+        toastContainer.className = "toast-container";
+        document.body.appendChild(toastContainer);
+    }
+
+    // Configuración de iconos y colores por tipo
+    const toastConfig = {
+        success: { 
+            icon: "fas fa-check-circle", 
+            bgClass: "toast-success",
+            title: "Éxito" 
+        },
+        danger: { 
+            icon: "fas fa-exclamation-circle", 
+            bgClass: "toast-danger",
+            title: "Error" 
+        },
+        warning: { 
+            icon: "fas fa-exclamation-triangle", 
+            bgClass: "toast-warning",
+            title: "Advertencia" 
+        },
+        info: { 
+            icon: "fas fa-info-circle", 
+            bgClass: "toast-info",
+            title: "Información" 
+        }
+    };
+    
+    const config = toastConfig[tipo] || toastConfig.info;
+
+    // Crear el toast
+    const toast = document.createElement('div');
+    toast.className = `toast-item ${config.bgClass}`;
+    
+    toast.innerHTML = `
+        <div class="toast-content">
+            <div class="toast-icon">
+                <i class="${config.icon}"></i>
+            </div>
+            <div class="toast-body">
+                <div class="toast-title">${config.title}</div>
+                <div class="toast-message">${mensaje}</div>
+            </div>
+            <button class="toast-close" type="button" aria-label="Cerrar">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="toast-progress">
+            <div class="toast-progress-bar"></div>
+        </div>
+    `;
+
+    // Añadir al contenedor
+    toastContainer.appendChild(toast);
+
+    // Animar entrada
+    setTimeout(() => {
+        toast.classList.add('toast-show');
+    }, 10);
+
+    // Configurar barra de progreso
+    const progressBar = toast.querySelector('.toast-progress-bar');
+    if (progressBar) {
+        progressBar.style.animationDuration = `${duracion}ms`;
+        progressBar.classList.add('toast-progress-active');
+    }
+
+    // Función para cerrar toast
+    const cerrarToast = () => {
+        toast.classList.add('toast-hide');
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+            // Limpiar contenedor si está vacío
+            if (toastContainer.children.length === 0) {
+                toastContainer.remove();
+            }
+        }, 300);
+    };
+
+    // Auto-cerrar después de la duración especificada
+    const timeoutId = setTimeout(cerrarToast, duracion);
+
+    // Cerrar al hacer click en el botón X
+    const closeBtn = toast.querySelector('.toast-close');
+    closeBtn.addEventListener('click', () => {
+        clearTimeout(timeoutId);
+        cerrarToast();
+    });
+
+    // Pausar auto-cierre al hacer hover
+    toast.addEventListener('mouseenter', () => {
+        clearTimeout(timeoutId);
+        progressBar.style.animationPlayState = 'paused';
+    });
+
+    // Reanudar auto-cierre al quitar hover
+    toast.addEventListener('mouseleave', () => {
+        const remainingTime = 2000; // 2 segundos adicionales
+        progressBar.style.animationPlayState = 'running';
+        setTimeout(cerrarToast, remainingTime);
+    });
+
+    // Cerrar al hacer click en el toast (opcional)
+    toast.addEventListener('click', (e) => {
+        if (!e.target.closest('.toast-close')) {
+            clearTimeout(timeoutId);
+            cerrarToast();
+        }
+    });
+}
+
 // ✅ ACTUALIZAR ELIMINAR USUARIO PARA USAR COOKIES
 async function eliminarUsuario(userId) {
     if (!confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
@@ -334,16 +456,20 @@ async function eliminarUsuario(userId) {
         if (!response.ok) {
             // Mostrar mensaje claro si tiene proyectos asociados
             if (resultado.message && resultado.message.includes("proyectos asociados")) {
-                mostrarAlerta("No se puede eliminar el usuario porque tiene proyectos asociados. Elimine primero los proyectos de este usuario.", "danger");
+                mostrarToast("No se puede eliminar el usuario porque tiene proyectos asociados. Elimine primero los proyectos de este usuario.", "danger");
             } else if (resultado.message && resultado.message.includes("administrador")) {
-                mostrarAlerta("No se puede eliminar el usuario administrador.", "danger");
+                mostrarToast("No se puede eliminar el usuario administrador.", "danger");
             } else {
-                mostrarAlerta(resultado.message || response.statusText, "danger");
+                mostrarToast(resultado.message || response.statusText, "danger");
             }
             throw new Error(resultado.message || response.statusText);
         }
         console.log("Usuario eliminado:", resultado);
-        mostrarAlerta("Usuario eliminado con éxito", "success");
+        mostrarToast("Usuario eliminado con éxito", "success");
+        // Recargar después de un breve delay
+        setTimeout(() => {
+            window.location.reload();
+        }, 1500);
         obtenerUsuarios(); // Actualizar la lista de usuarios
     } catch (error) {
         console.error(error);
@@ -366,7 +492,7 @@ async function obtenerProyectoPorId(proyectoId) {
         return proyecto;
     } catch (error) {
         console.error(error);
-        alert("Hubo un error al obtener el proyecto.");
+        mostrarAlerta("Hubo un error al obtener el proyecto.", "danger");
     }
 }
 
@@ -382,7 +508,7 @@ async function obtenerUsuarioPorId(usuarioId) {
         return usuario;
     } catch (error) {
         console.error(error);
-        alert("Hubo un error al obtener el usuario.");
+        mostrarAlerta("Hubo un error al obtener el usuario.", "danger");
         return null;
     }
 }
@@ -400,14 +526,16 @@ async function eliminarProyecto(proyectoId, elementoDOM) {
         if (!response.ok) {
             throw new Error(`Error al eliminar proyecto: ${response.statusText}`);
         }
-        const resultado = await response.json();
-        mostrarAlerta("Proyecto eliminado con éxito", "success");
+        
+        // ✅ Toast inmediato
+        mostrarToast("Proyecto eliminado con éxito", "success");
+
         if (elementoDOM) {
             elementoDOM.remove(); // Elimina el proyecto del DOM
         }
     } catch (error) {
         console.error(error);
-        alert("Hubo un error al eliminar el proyecto");
+        mostrarToast("Hubo un error al eliminar el proyecto.", "danger");
     }
 }
 
@@ -427,112 +555,147 @@ async function obtenerProyectos() {
     }
 }
 
-// Función para renderizar usuarios en el HTML
-function renderizarUsuarios(usuarios) {
-    const usuariosContainer = document.getElementById("usuarios-container");
-    usuariosContainer.innerHTML = "";
-    usuariosContainer.innerHTML = `
-        <h1 class="text-center mb-4">Usuarios</h1>
-        <div class="text-center mb-3">
-            <a href="/perfil/usuario_nuevo" class="btn btn-success">Crear usuario</a>
-        </div>
-    `
-    usuarios.forEach((usuario) => {
-        const usuarioDiv = document.createElement("div");
-        usuarioDiv.classList.add("col-md-6", "col-lg-4", "mb-4");
-        usuarioDiv.innerHTML = `
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title text-primary">${usuario.username}</h5>
-                    <p class="card-text">
-                        <strong>Nombre:</strong> ${usuario.nombre} <br>
-                        <strong>Apellidos:</strong> ${usuario.apellidos} <br>
-                        <strong>Email:</strong> ${usuario.email}
-                    </p>
-                </div>
-                <div class="card-footer d-flex justify-content-between">
-                    <button class="btn btn-primary btn-editar">Editar</button>
-                    <button class="btn btn-danger btn-eliminar">Eliminar</button>
-                </div>
-            </div>
-        `;
-        // Añadir listeners después de insertar el HTML
-        usuarioDiv.querySelector('.btn-editar').addEventListener('click', () => {
-            window.location.href = `/perfil/usuario_editar/${usuario.id}`;
-        });
-        usuarioDiv.querySelector('.btn-eliminar').addEventListener('click', () => {
-            eliminarUsuario(usuario.id);
-        });
-        usuariosContainer.appendChild(usuarioDiv);
-    });
-}
-
-// Función para renderizar proyectos en el HTML
+// ✅ FUNCIÓN MEJORADA PARA RENDERIZAR PROYECTOS
 function renderizarProyectos(proyectos, usuarios) {
     const proyectosContainer = document.getElementById("proyectos-container");
     if (!proyectosContainer) return;
-    proyectosContainer.innerHTML = `
-        <h1 class="text-center mb-4">Proyectos</h1>
-        <div class="text-center mb-3">
-            <a href="/perfil/proyecto_nuevo" class="btn btn-success">Crear proyecto</a>
-        </div>
-    `;
-    proyectos.forEach((proyecto) => {
-        const propietario = usuarios.find(usuario => usuario.id === proyecto.usuario_id);
-        const propietarioNombre = propietario ? propietario.username : "Desconocido";
-        const proyectoDiv = document.createElement("div");
-        proyectoDiv.classList.add("col-md-6", "col-lg-4", "mb-4");
-        proyectoDiv.innerHTML = `
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title text-primary">${proyecto.nombre}</h5>
-                    <p class="card-text">${proyecto.descripcion}</p>
-                    <p class="text-muted">
-                        <strong>Propietario:</strong> ${propietarioNombre} <br>
-                        <strong>Fecha de creación:</strong> ${proyecto.fecha_creacion} <br>
-                        <strong>Fecha de modificación:</strong> ${proyecto.fecha_modificacion}
-                    </p>
-                </div>
-                <div class="card-footer d-flex justify-content-between">
-                    <button class="btn btn-primary" onclick="window.location.href='/perfil/proyecto_editar/${proyecto.id}'">Editar</button>
-                    <button class="btn btn-danger" onclick="eliminarProyecto('${proyecto.id}', this.closest('.col-md-6'))">Eliminar</button>
+
+    console.log("Renderizando proyectos:", proyectos);
+
+    // Actualizar contador
+    document.getElementById("total-proyectos").textContent = proyectos.length;
+
+    if (!proyectos || proyectos.length === 0) {
+        proyectosContainer.innerHTML = `
+            <div class="col-12">
+                <div class="empty-state">
+                    <i class="fas fa-folder-open"></i>
+                    <h3>No hay proyectos</h3>
+                    <p>Crea tu primer proyecto para comenzar</p>
+                    <a href="/perfil/proyecto_nuevo" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Crear Proyecto
+                    </a>
                 </div>
             </div>
         `;
-        proyectosContainer.appendChild(proyectoDiv);
+        return;
+    }
+
+    proyectosContainer.innerHTML = "";
+    proyectos.forEach((proyecto) => {
+        const usuario = usuarios.find(u => u.id === proyecto.usuario_id);
+        const nombreUsuario = usuario ? usuario.username : 'Usuario desconocido';
+        
+        const proyectoCard = document.createElement("div");
+        proyectoCard.classList.add("col-md-6", "col-xl-4", "mb-3");
+        proyectoCard.innerHTML = `
+            <div class="project-card">
+                <h3 class="project-title">${proyecto.nombre}</h3>
+                <p class="project-description">${proyecto.descripcion || 'Sin descripción disponible'}</p>
+                <div class="project-meta">
+                    <div><strong>Propietario:</strong> ${nombreUsuario}</div>
+                    <div><strong>Creado:</strong> ${new Date(proyecto.fecha_creacion).toLocaleDateString('es-ES')}</div>
+                    <div><strong>Modificado:</strong> ${new Date(proyecto.fecha_modificacion).toLocaleDateString('es-ES')}</div>
+                </div>
+                <div class="project-actions">
+                    <button class="btn btn-edit" onclick="window.location.href='/perfil/proyecto_editar/${proyecto.id}'">
+                        <i class="fas fa-edit me-1"></i>Editar
+                    </button>
+                    <button class="btn btn-delete" onclick="eliminarProyecto('${proyecto.id}', this.closest('.col-md-6'))">
+                        <i class="fas fa-trash me-1"></i>Eliminar
+                    </button>
+                </div>
+            </div>
+        `;
+        proyectosContainer.appendChild(proyectoCard);
     });
 }
 
-// Función para renderizar información personal en el HTML
-function renderizarInformacionPersonal(usuario) {
-    const informacionPersonalContainer = document.getElementById("informacion-personal-container");
-    if (!informacionPersonalContainer) return;
-    informacionPersonalContainer.innerHTML = `
-        <h1 class="text-center mb-4">Información Personal</h1>
-    `;
+// ✅ FUNCIÓN MEJORADA PARA RENDERIZAR USUARIOS
+function renderizarUsuarios(usuarios) {
+    const usuariosContainer = document.getElementById("usuarios-container");
+    const usuariosSection = document.getElementById("usuarios-section");
     
-    const informacionPersonalDiv = document.createElement("div");
-    informacionPersonalDiv.classList.add("col-md-6", "col-lg-4", "mb-4");
-    informacionPersonalDiv.innerHTML = `
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title text-primary">${usuario.username}</h5>
-                <p class="card-text">
-                    <strong>Nombre:</strong> ${usuario.nombre} <br>
-                    <strong>Apellidos:</strong> ${usuario.apellidos} <br>
-                    <strong>Email:</strong> ${usuario.email}
-                </p>
+    if (!usuariosContainer) return;
+
+    // Mostrar sección de usuarios solo para admin
+    if (usuariosSection) {
+        usuariosSection.style.display = 'block';
+    }
+
+    console.log("Renderizando usuarios:", usuarios);
+
+    if (!usuarios || usuarios.length === 0) {
+        usuariosContainer.innerHTML = `
+            <div class="col-12">
+                <div class="empty-state">
+                    <i class="fas fa-users"></i>
+                    <h3>No hay usuarios</h3>
+                    <p>Crea el primer usuario del sistema</p>
+                    <a href="/perfil/usuario_nuevo" class="btn btn-success">
+                        <i class="fas fa-user-plus me-1"></i>Crear Usuario
+                    </a>
+                </div>
             </div>
-            <div class="card-footer d-flex justify-content-between">
-                <button class="btn btn-primary btn-editar">Editar</button>
-            </div>
-        </div>
-    `;
-    // Añadir listeners después de insertar el HTML
-    informacionPersonalDiv.querySelector('.btn-editar').addEventListener('click', () => {
-        window.location.href = `/perfil/usuario_editar/${usuario.id}`;
+        `;
+        return;
+    }
+
+    obtenerRolUsuario().then(rol => {
+            rolUsuario.textContent = rol === 'admin' ? 'Admin' : 'Usuario';
     });
-    informacionPersonalContainer.appendChild(informacionPersonalDiv);
+
+    usuariosContainer.innerHTML = "";
+    usuarios.forEach((usuario) => {
+        const usuarioCard = document.createElement("div");
+        usuarioCard.classList.add("col-md-6", "col-xl-4", "mb-3");
+        usuarioCard.innerHTML = `
+            <div class="user-card">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <h3 class="user-title">${usuario.username}</h3>
+                <div class="user-info">
+                    <div><strong>Nombre:</strong> ${usuario.nombre} ${usuario.apellidos}</div>
+                    <div><strong>Email:</strong> ${usuario.email}</div>
+                </div>
+                <span class="user-role ${usuario.roles === 'admin' ? 'admin' : 'user'}">
+                    ${usuario.roles || 'user'}
+                </span>
+                <div class="user-actions">
+                    <button class="btn btn-edit" onclick="window.location.href='/perfil/usuario_editar/${usuario.id}'">
+                        <i class="fas fa-edit me-1"></i>Editar
+                    </button>
+                    <button class="btn btn-delete" onclick="eliminarUsuario('${usuario.id}')">
+                        <i class="fas fa-trash me-1"></i>Eliminar
+                    </button>
+                </div>
+            </div>
+        `;
+        usuariosContainer.appendChild(usuarioCard);
+    });
+}
+
+// ✅ FUNCIÓN MEJORADA PARA RENDERIZAR INFORMACIÓN PERSONAL
+function renderizarInformacionPersonal(usuario) {
+    const profileInfo = document.getElementById("profile-info");
+    const rolUsuario = document.getElementById("rol-usuario");
+    
+    if (!profileInfo) return;
+
+    console.log("Renderizando información personal:", usuario);
+
+    profileInfo.innerHTML = `
+        <h3>${usuario.nombre} ${usuario.apellidos}</h3>
+        <p>@${usuario.username}</p>
+        <p class="text-muted small">${usuario.email}</p>
+    `;
+
+    if (rolUsuario) {
+        obtenerRolUsuario().then(rol => {
+            rolUsuario.textContent = rol === 'admin' ? 'Admin' : 'Usuario';
+        });
+    }
 }
 
 // ✅ ACTUALIZAR EDITAR PROYECTO
@@ -544,7 +707,7 @@ async function editarProyecto(proyectoId) {
         localStorage.setItem("proyectoEditar", proyecto.id);
     }
     if (!proyecto) {
-        alert("No se pudo cargar el proyecto. Redirigiendo al perfil.");
+        mostrarAlerta("No se pudo cargar el proyecto. Redirigiendo al perfil.", "danger");
         window.location.href = "/perfil";
         return;
     }
@@ -587,10 +750,10 @@ async function editarProyecto(proyectoId) {
                 throw new Error("Error al actualizar el proyecto");
             }
 
-            alert("Proyecto actualizado con éxito");
+            mostrarAlerta("Proyecto actualizado con éxito", "success");
             window.location.href = "/perfil";
         } catch (error) {
-            alert("Hubo un error al actualizar el proyecto");
+            mostrarAlerta("Hubo un error al actualizar el proyecto", "danger");
             console.error(error);
         }
     });
@@ -605,7 +768,7 @@ async function editarUsuario(usuarioId) {
         localStorage.setItem("usuarioEditar", usuario.id);
     }
     if (!usuario) {
-        alert("No se pudo cargar el usuario. Redirigiendo al perfil.");
+        mostrarAlerta("No se pudo cargar el usuario. Redirigiendo al perfil.", "danger");
         window.location.href = "/perfil";
         return;
     }
@@ -668,10 +831,10 @@ async function editarUsuario(usuarioId) {
                 throw new Error("Error al actualizar el usuario");
             }
 
-            alert("Usuario actualizado con éxito");
+            mostrarAlerta("Usuario actualizado con éxito", "success");
             window.location.href = "/perfil";
         } catch (error) {
-            alert("Hubo un error al actualizar el usuario");
+            mostrarAlerta("Hubo un error al actualizar el usuario", "danger");
             console.error(error);
         }
     });
@@ -697,11 +860,14 @@ async function cargarFormularioCrearProyecto() {
                 throw new Error("Error al crear el proyecto");
             }
 
-            alert("Proyecto creado con éxito");
-            window.location.href = "/perfil";
+            // ✅ Toast inmediato + redirección
+            mostrarToast("Proyecto creado con éxito", "success", 3000);
+            setTimeout(() => {
+                window.location.href = "/perfil";
+            }, 1500);
         } catch (error) {
             console.error("Error al crear el proyecto:", error);
-            alert("Hubo un error al crear el proyecto");
+            mostrarToast("Hubo un error al crear el proyecto", "danger");
         }
     });
 }
@@ -728,12 +894,14 @@ async function cargarFormularioCrearUsuario() {
 
         try {
             await crearUsuario(nuevoUsuario);
-            alert("Usuario creado con éxito");
-            window.location.href = "/perfil";
+            mostrarToast("Usuario creado con éxito", "success");
+            setTimeout(() => {
+                window.location.href = "/perfil";
+            }, 1500);
         }
         catch (error) {
             console.error("Error al crear el usuario:", error);
-            alert("Hubo un error al crear el usuario");
+            mostrarToast("Hubo un error al crear el usuario", "danger");
         }
     });
 };
@@ -816,48 +984,48 @@ async function cargarDatosUsuarios() {
     }
 }
 
-// ✅ LOGIN ACTUALIZADO PARA COOKIES
+// ✅ ACTUALIZAR LOGIN PARA ACTUALIZAR NAVEGACIÓN
 async function logearUsuario() {
     console.log("Iniciando sesión...");
     const form = document.getElementById("login-form");
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
-        console.log("Formulario de inicio de sesión enviado.");
-
+        
         const username = document.getElementById("username").value;
         const password = document.getElementById("password").value;
 
         try {
-            console.log("Datos de inicio de sesión:", { username, password });
-            
             const response = await fetchWithCredentials(`${API_BASE_URL}/login`, {
                 method: "POST",
                 body: JSON.stringify({ username, password })
             });
             
-            console.log("Respuesta del servidor:", response);
-
             if (!response.ok) {
-                alert("Usuario o contraseña incorrectos");
+                mostrarToast("Usuario o contraseña incorrectos", "danger");
                 return;
             }
             
             const data = await response.json();
-            console.log("Datos de inicio de sesión recibidos:", data);
-            
-            // ✅ Solo guardamos el username para referencia
             sessionStorage.setItem("username", username);
-            console.log("Username guardado:", username);
+            
+            // ✅ Actualizar navegación después del login
+            actualizarNavegacion(true);
 
-            window.location.href = "/perfil";
+            // ✅ Toast de bienvenida inmediato
+            mostrarToast(`¡Bienvenido, ${username}!`, "success", 4000);
+            
+            setTimeout(() => {
+                window.location.href = "/perfil";
+            }, 1500);
+            
         } catch (error) {
             console.error(error);
-            alert("Error al iniciar sesión. Verifica tus credenciales.");
+            mostrarToast("Error al iniciar sesión. Verifica tus credenciales.", "danger");
         }
     });
 }
 
-// ✅ LOGOUT ACTUALIZADO
+// ✅ ACTUALIZAR LOGOUT PARA ACTUALIZAR NAVEGACIÓN
 async function cerrarSesion() {
     try {
         await fetchWithCredentials(`${API_BASE_URL}/logout`, {
@@ -865,11 +1033,27 @@ async function cerrarSesion() {
         });
         
         sessionStorage.clear();
-        window.location.href = "/login";
+
+        // ✅ Usar toast inmediato en lugar de guardar para siguiente página
+        mostrarToast("Sesión cerrada correctamente", "success", 3000);
+        
+        // Actualizar navegación
+        actualizarNavegacion(false);
+        
+        // Redirigir después de un breve delay
+        setTimeout(() => {
+            window.location.href = "/login";
+        }, 1500);
+        
     } catch (error) {
         console.error("Error al cerrar sesión:", error);
         sessionStorage.clear();
-        window.location.href = "/login";
+        actualizarNavegacion(false);
+        
+        mostrarToast("Sesión cerrada", "info", 3000);
+        setTimeout(() => {
+            window.location.href = "/login";
+        }, 1500);
     }
 }
 
@@ -898,191 +1082,452 @@ function configurarLogout() {
     }
 }
 
-// ✅ ACTUALIZAR SIDEBAR CHAT PARA USAR COOKIES
-async function renderizarNombresProyectosSidebarChat() {
+// ✅ FUNCIÓN PARA MOSTRAR/OCULTAR ELEMENTOS DE NAVEGACIÓN
+function actualizarNavegacion(estaLogueado) {
+    const elementosUsuario = document.querySelectorAll('.user-only');
+    const elementosInvitado = document.querySelectorAll('.guest-only');
+    
+    if (estaLogueado) {
+        // Mostrar elementos para usuarios logueados
+        elementosUsuario.forEach(elemento => {
+            elemento.style.display = 'block';
+        });
+        // Ocultar elementos para invitados
+        elementosInvitado.forEach(elemento => {
+            elemento.style.display = 'none';
+        });
+    } else {
+        // Ocultar elementos para usuarios logueados
+        elementosUsuario.forEach(elemento => {
+            elemento.style.display = 'none';
+        });
+        // Mostrar elementos para invitados
+        elementosInvitado.forEach(elemento => {
+            elemento.style.display = 'block';
+        });
+    }
+}
+
+// ✅ FUNCIÓN PARA VERIFICAR ESTADO DE AUTENTICACIÓN Y ACTUALIZAR NAVEGACIÓN
+async function verificarYActualizarNavegacion() {
+    try {
+        const response = await fetchWithCredentials(`${API_BASE_URL}/usuarios/rol`);
+        const estaLogueado = response.ok;
+        
+        console.log("Estado de autenticación:", estaLogueado ? "Logueado" : "No logueado");
+        actualizarNavegacion(estaLogueado);
+        
+        return estaLogueado;
+    } catch (error) {
+        console.log("Error verificando autenticación:", error);
+        actualizarNavegacion(false);
+        return false;
+    }
+}
+
+// ✅ MODIFICAR LA FUNCIÓN DE NAVEGACIÓN CON AUTENTICACIÓN
+async function navegarConAutenticacion(url) {
+    const estaLogueado = await verificarYActualizarNavegacion();
+    
+    if (estaLogueado) {
+        window.location.href = url;
+    } else {
+        mostrarAlerta("Debes iniciar sesión para acceder a esta sección.", "warning");
+        setTimeout(() => {
+            window.location.href = "/login";
+        }, 2000);
+    }
+}
+
+// ==================== CHAT ====================
+// ... existing code ...
+
+// ✅ VARIABLES GLOBALES DEL CHAT
+let proyectoActualChat = null;
+let chatMensajes = null;
+let messageInput = null;
+let sendButton = null;
+
+// ✅ FUNCIÓN MEJORADA PARA INICIALIZAR EL CHAT
+function inicializarChat() {
+    console.log("Inicializando chat...");
+    
+    // Seleccionar elementos del chat
+    chatMensajes = document.getElementById('chat-mensajes');
+    messageInput = document.getElementById('messageInput');
+    sendButton = document.getElementById('sendButton');
+
+    if (!chatMensajes || !messageInput || !sendButton) {
+        console.error("No se encontraron elementos del chat:", {
+            chatMensajes: !!chatMensajes,
+            messageInput: !!messageInput,
+            sendButton: !!sendButton
+        });
+        return;
+    }
+
+    // Configurar event listeners
+    configurarEventosChat();
+    
+    // Cargar proyectos en el sidebar
+    cargarProyectosSidebar();
+
+    console.log("Chat inicializado correctamente");
+    return { chatMensajes, messageInput, sendButton };
+}
+
+// ✅ CONFIGURAR EVENTOS DEL CHAT
+function configurarEventosChat() {
+    // Enviar mensaje con botón
+    sendButton.addEventListener('click', enviarMensaje);
+    
+    // Enviar mensaje con Enter
+    messageInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            enviarMensaje();
+        }
+    });
+}
+
+// ✅ FUNCIÓN PARA ENVIAR MENSAJE
+function enviarMensaje() {
+    if (!proyectoActualChat) {
+        mostrarToast("Selecciona un proyecto primero", "warning");
+        return;
+    }
+
+    const messageText = messageInput.value.trim();
+    if (messageText === '') return;
+
+    // Añadir mensaje del usuario al chat
+    agregarMensajeAlChat(messageText, 'user');
+    
+    // Limpiar input
+    messageInput.value = '';
+    
+    // Enviar al servidor
+    enviarMensajeAlServidor(messageText);
+}
+
+// ✅ FUNCIÓN PARA AGREGAR MENSAJE AL CHAT
+function agregarMensajeAlChat(mensaje, tipo) {
+    const messageGroup = document.createElement('div');
+    messageGroup.className = `message-group ${tipo}`;
+    
+    const timestamp = new Date().toLocaleTimeString('es-ES', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
+    
+    messageGroup.innerHTML = `
+        <div class="message-avatar ${tipo}">
+            <i class="fas fa-${tipo === 'user' ? 'user' : 'robot'}"></i>
+        </div>
+        <div class="message-content">
+            <div class="message-bubble ${tipo}">
+                ${mensaje}
+            </div>
+            <div class="message-time">${timestamp}</div>
+        </div>
+    `;
+    
+    chatMensajes.appendChild(messageGroup);
+    scrollToBottom();
+}
+
+// ✅ FUNCIÓN PARA SCROLL AUTOMÁTICO
+function scrollToBottom() {
+    if (chatMensajes) {
+        chatMensajes.scrollTop = chatMensajes.scrollHeight;
+    }
+}
+
+// ✅ FUNCIÓN PARA ENVIAR MENSAJE AL SERVIDOR
+async function enviarMensajeAlServidor(messageText) {
+    try {
+        console.log("🚀 Enviando mensaje para proyecto:", proyectoActualChat.nombre);
+        
+        const response = await fetchWithCredentials(`${API_BASE_URL_CHAT}/chat/mensajes`, {
+            method: 'POST',
+            body: JSON.stringify({ 
+                message: messageText,
+                proyecto_id: proyectoActualChat.id,
+                proyecto_nombre: proyectoActualChat.nombre
+            })
+        });
+
+        if (response.status === 401) {
+            mostrarToast("Tu sesión ha expirado", "danger");
+            setTimeout(() => window.location.href = "/login", 2000);
+            return;
+        }
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Error ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("✅ Respuesta recibida:", data);
+
+        // Mostrar respuesta del bot
+        agregarMensajeAlChat(data.message, 'bot');
+        
+    } catch (error) {
+        console.error("❌ Error en el chat:", error);
+        agregarMensajeAlChat(
+            `🚫 Error: ${error.message}. Verifica tu conexión.`, 
+            'bot'
+        );
+    }
+}
+
+// ✅ FUNCIÓN ÚNICA PARA CARGAR PROYECTOS EN EL SIDEBAR
+async function cargarProyectosSidebar() {
     const sidebarChat = document.getElementById("proyectos-sidebar");
-    if (!sidebarChat) return;
+    if (!sidebarChat) {
+        console.error("No se encontró el elemento proyectos-sidebar");
+        return;
+    }
+
+    console.log("Cargando proyectos para el sidebar...");
 
     try {
+        // Mostrar loading mientras carga
+        sidebarChat.innerHTML = `
+            <div class="loading-projects">
+                <div class="skeleton-project"></div>
+                <div class="skeleton-project"></div>
+                <div class="skeleton-project"></div>
+            </div>
+        `;
+
         const response = await fetchWithCredentials(`${API_BASE_URL}/proyectos`);
         
         if (!response.ok) {
             if (response.status === 401) {
+                console.log("No autorizado, redirigiendo al login");
                 window.location.href = "/login";
                 return;
             }
-            throw new Error("Error al obtener proyectos");
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
         }
 
         const proyectos = await response.json();
-        console.log("Proyectos para sidebar:", proyectos);
+        console.log("Proyectos cargados para chat:", proyectos);
 
-        sidebarChat.innerHTML = "";
-        proyectos.forEach((proyecto) => {
-            const proyectoDiv = document.createElement("div");
-            proyectoDiv.classList.add("proyecto-chat");
-            proyectoDiv.innerHTML = `
-                <div class="d-flex align-items-center justify-content-between list-group-item list-group-item-action project-item mb-2">
-                    <span>${proyecto.nombre}</span>
-                    <button type="button" class="btn btn-sm btn-danger delete-button" title="Eliminar" data-id="${proyecto.id}">
-                        <svg class="trash-svg" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16">
-                            <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
-                        </svg>
-                    </button>
-                </div>
-            `;
-            sidebarChat.appendChild(proyectoDiv);
-        });
-
-        // Añadir listeners a los botones de borrar
-        sidebarChat.querySelectorAll('.delete-button').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const proyectoId = this.getAttribute('data-id');
-                eliminarProyecto(proyectoId, this.closest('.proyecto-chat'));
-            });
-        });
+        renderizarProyectosSidebar(proyectos);
+        
     } catch (error) {
         console.error("Error al cargar proyectos del sidebar:", error);
+        sidebarChat.innerHTML = `
+            <div class="text-center p-4 text-muted">
+                <i class="fas fa-exclamation-circle mb-2"></i>
+                <p>Error al cargar proyectos</p>
+                <p class="small text-danger">${error.message}</p>
+                <button class="btn btn-sm btn-outline-primary" onclick="cargarProyectosSidebar()">
+                    <i class="fas fa-redo me-1"></i>Reintentar
+                </button>
+            </div>
+        `;
     }
 }
 
-// ✅ FUNCIÓN DE DEBUG PARA EL CHAT
-async function debugChat() {
-    console.log("🔍 Debugeando servidor de chat...");
+// ✅ FUNCIÓN PARA RENDERIZAR PROYECTOS EN EL SIDEBAR (SIMPLIFICADA)
+function renderizarProyectosSidebar(proyectos) {
+    const sidebarChat = document.getElementById("proyectos-sidebar");
     
-    // Test 1: Verificar si el servidor responde
-    try {
-        const healthResponse = await fetch("http://localhost:5002/health");
-        const healthData = await healthResponse.json();
-        console.log("✅ Health check:", healthData);
-    } catch (error) {
-        console.log("❌ Servidor de chat no responde:", error);
+    if (!proyectos || proyectos.length === 0) {
+        sidebarChat.innerHTML = `
+            <div class="text-center p-4 text-muted">
+                <div class="welcome-icon mb-3">
+                    <i class="fas fa-folder-plus"></i>
+                </div>
+                <h5>No hay proyectos</h5>
+                <p class="small">Crea tu primer proyecto para empezar a chatear</p>
+                <a href="/perfil/proyecto_nuevo" class="btn btn-sm btn-primary">
+                    <i class="fas fa-plus me-1"></i>Crear Proyecto
+                </a>
+            </div>
+        `;
+        return;
+    }
+
+    sidebarChat.innerHTML = "";
+    
+    proyectos.forEach((proyecto) => {
+        const proyectoElement = document.createElement("div");
+        proyectoElement.className = "project-item";
+        proyectoElement.dataset.proyectoId = proyecto.id;
+        
+        proyectoElement.innerHTML = `
+            <div class="project-info">
+                <div class="project-name">${proyecto.nombre}</div>
+                <div class="project-description">${proyecto.descripcion || 'Sin descripción'}</div>
+            </div>
+            <div class="project-actions">
+                <button class="btn-project-action btn-delete-project" 
+                        onclick="eliminarProyectoChat(${proyecto.id})"
+                        title="Eliminar proyecto">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        
+        // Añadir evento de click para seleccionar proyecto
+        proyectoElement.addEventListener('click', (e) => {
+            if (!e.target.closest('.project-actions')) {
+                seleccionarProyecto(proyecto);
+            }
+        });
+        
+        sidebarChat.appendChild(proyectoElement);
+    });
+
+    console.log(`${proyectos.length} proyectos renderizados en el sidebar`);
+}
+
+// ✅ FUNCIÓN PARA SELECCIONAR PROYECTO
+function seleccionarProyecto(proyecto) {
+    proyectoActualChat = proyecto;
+    
+    console.log("Proyecto seleccionado:", proyecto);
+    
+    // Actualizar UI del sidebar
+    document.querySelectorAll('.project-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    document.querySelector(`[data-proyecto-id="${proyecto.id}"]`).classList.add('active');
+    
+    // Actualizar header del chat
+    document.getElementById('current-project-name').textContent = proyecto.nombre;
+    document.getElementById('current-project-status').textContent = 
+        `Chat activo • ${proyecto.descripcion || 'Sin descripción'}`;
+    
+    // Habilitar input y botón
+    messageInput.disabled = false;
+    messageInput.placeholder = `Pregunta sobre "${proyecto.nombre}"...`;
+    sendButton.disabled = false;
+    
+    // Limpiar chat y mostrar mensaje de inicio
+    limpiarChatSilencioso();
+    agregarMensajeAlChat(
+        `¡Hola! Ahora estamos hablando sobre el proyecto "${proyecto.nombre}". ¿En qué puedo ayudarte?`, 
+        'bot'
+    );
+    
+    mostrarToast(`Chat iniciado para "${proyecto.nombre}"`, "success", 2000);
+}
+
+// ✅ FUNCIÓN PARA LIMPIAR CHAT
+function limpiarChat() {
+    if (!proyectoActualChat) {
+        mostrarToast("Selecciona un proyecto primero", "warning");
         return;
     }
     
-    // Test 2: Verificar autenticación
-    try {
-        const authResponse = await fetchWithCredentials("http://localhost:5001/usuarios/rol");
-        console.log("✅ Autenticación:", authResponse.ok ? "OK" : "FAIL");
-    } catch (error) {
-        console.log("❌ Error de autenticación:", error);
+    if (confirm('¿Estás seguro de que quieres limpiar el chat?')) {
+        limpiarChatSilencioso();
+        agregarMensajeAlChat(
+            `Chat limpiado. Continuemos hablando sobre "${proyectoActualChat.nombre}".`, 
+            'bot'
+        );
     }
 }
 
-// ✅ FUNCIÓN DE DEBUG MEJORADA
-async function debugChat() {
-    console.log("🔍 Debugeando servidor de chat...");
-    
-    // Test 1: Verificar si el servidor responde (sin CORS)
-    try {
-        console.log("📡 Probando conexión directa al chat...");
-        const response = await fetch("http://localhost:5002/health", {
-            method: "GET",
-            mode: "cors",
-            credentials: "include"
-        });
-        console.log("✅ Respuesta del servidor:", response.status);
-        
-        if (response.ok) {
-            const data = await response.json();
-            console.log("✅ Health check exitoso:", data);
-        } else {
-            console.log("❌ Health check falló:", response.status);
+// ✅ FUNCIÓN PARA LIMPIAR CHAT SIN CONFIRMACIÓN
+function limpiarChatSilencioso() {
+    if (chatMensajes) {
+        // Remover welcome message si existe
+        const welcomeMessage = chatMensajes.querySelector('.welcome-message');
+        if (welcomeMessage) {
+            welcomeMessage.remove();
         }
-    } catch (error) {
-        console.log("❌ Error conectando al chat:", error);
-    }
-    
-    // Test 2: Probar endpoint de chat
-    try {
-        console.log("📡 Probando endpoint de chat...");
-        const response = await fetch("http://localhost:5002/chat/mensajes", {
-            method: "POST",
-            mode: "cors",
-            credentials: "include",
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ message: "test" })
-        });
-        console.log("✅ Test de chat:", response.status);
         
-        if (response.ok) {
-            const data = await response.json();
-            console.log("✅ Respuesta de chat:", data);
-        }
-    } catch (error) {
-        console.log("❌ Error en test de chat:", error);
+        // Remover todos los mensajes
+        const messages = chatMensajes.querySelectorAll('.message-group');
+        messages.forEach(msg => msg.remove());
     }
 }
 
-// ✅ FUNCIÓN ESPECÍFICA PARA DEBUG DE AUTENTICACIÓN
-async function debugAutenticacion() {
-    console.log("🔍 Debugeando autenticación completa...");
-    
-    // 1. Ver cookies
-    console.log("🍪 document.cookie:", document.cookie);
-    
-    // 2. Test endpoint API principal
-    try {
-        const apiResponse = await fetchWithCredentials(`${API_BASE_URL}/usuarios/rol`);
-        console.log("📡 API principal (/usuarios/rol):", apiResponse.status);
-        if (apiResponse.ok) {
-            const apiData = await apiResponse.json();
-            console.log("✅ Datos del usuario:", apiData);
-        } else {
-            console.log("❌ Error en API principal:", apiResponse.statusText);
-        }
-    } catch (error) {
-        console.log("❌ Error conectando a API principal:", error);
+// ✅ FUNCIÓN PARA ELIMINAR PROYECTO DESDE EL CHAT
+async function eliminarProyectoChat(proyectoId) {
+    if (!confirm("¿Estás seguro de que deseas eliminar este proyecto?")) {
+        return;
     }
     
-    // 3. Test endpoint chat
     try {
-        const chatResponse = await fetchWithCredentials(`${API_BASE_URL_CHAT}/health`);
-        console.log("📡 Chat (/health):", chatResponse.status);
-        if (chatResponse.ok) {
-            const chatData = await chatResponse.json();
-            console.log("✅ Estado del chat:", chatData);
-        }
-    } catch (error) {
-        console.log("❌ Error conectando a chat:", error);
-    }
-    
-    // 4. Test mensaje chat
-    try {
-        const messageResponse = await fetchWithCredentials(`${API_BASE_URL_CHAT}/chat/mensajes`, {
-            method: 'POST',
-            body: JSON.stringify({ message: "test de debug" })
+        const response = await fetchWithCredentials(`${API_BASE_URL}/proyectos/${proyectoId}`, {
+            method: "DELETE"
         });
-        console.log("📡 Chat (/chat/mensajes):", messageResponse.status);
-        if (messageResponse.ok) {
-            const messageData = await messageResponse.json();
-            console.log("✅ Respuesta del chat:", messageData);
-        } else {
-            console.log("❌ Error en chat:", messageResponse.statusText);
+        
+        if (!response.ok) {
+            throw new Error(`Error al eliminar proyecto: ${response.statusText}`);
         }
+        
+        mostrarToast("Proyecto eliminado con éxito", "success");
+        
+        // Si era el proyecto actual, limpiar chat
+        if (proyectoActualChat && proyectoActualChat.id == proyectoId) {
+            proyectoActualChat = null;
+            messageInput.disabled = true;
+            messageInput.placeholder = "Selecciona un proyecto para empezar a chatear...";
+            sendButton.disabled = true;
+            
+            document.getElementById('current-project-name').textContent = "Selecciona un proyecto";
+            document.getElementById('current-project-status').textContent = "Para comenzar a chatear";
+            
+            chatMensajes.innerHTML = `
+                <div class="welcome-message">
+                    <div class="welcome-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h3>¡Bienvenido al Chat!</h3>
+                    <p>Selecciona un proyecto de la barra lateral para comenzar a chatear con la IA sobre ese proyecto específico.</p>
+                </div>
+            `;
+        }
+        
+        // Recargar proyectos
+        cargarProyectosSidebar();
+        
     } catch (error) {
-        console.log("❌ Error en mensaje de chat:", error);
+        console.error(error);
+        mostrarToast("Hubo un error al eliminar el proyecto.", "danger");
     }
+}
+
+// ✅ FUNCIÓN DE DEBUG TEMPORAL
+function debugChat() {
+    console.log("=== DEBUG CHAT ===");
+    console.log("chat-mensajes:", document.getElementById('chat-mensajes'));
+    console.log("messageInput:", document.getElementById('messageInput'));
+    console.log("sendButton:", document.getElementById('sendButton'));
+    console.log("proyectos-sidebar:", document.getElementById('proyectos-sidebar'));
+    console.log("chat-container:", document.querySelector('.chat-container'));
+    console.log("API_BASE_URL:", API_BASE_URL);
+    console.log("=================");
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    mostrarAlertaGuardada();
 
     configurarLogout();
     console.log("Configuración de logout completada.");
 
     console.log("DOM completamente cargado y analizado.");
+
+    // ✅ DETECTAR LA PÁGINA DE CHAT CORRECTAMENTE
+    if (document.getElementById("chat-mensajes") || document.querySelector('.chat-container')) {
+        console.log("🚀 Página de chat detectada, inicializando...");
+        inicializarChat();
+    }
+
     if (document.getElementById("login-form")) {
         console.log("Formulario de inicio de sesión encontrado.");
         logearUsuario();
-    }
-
-    if (document.getElementById("container-chat")) {
-        const { chatMensajes, messageInput, sendButton } = inicializarChat();
-        configurarChat(chatMensajes, messageInput, sendButton);
-        configurarEnvioConEnter(messageInput, sendButton);
-        renderizarNombresProyectosSidebarChat();
     }
     
     if (document.getElementById("crear-proyecto-form")) {

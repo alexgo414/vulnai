@@ -1,53 +1,90 @@
 {% extends "layout.html" %}
-{% block title %}Chat{% endblock %}
+{% block title %}Chat - SVAIA{% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+{% endblock %}
 {% block content %}
-<div class="container" id="container-path">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/">Inicio</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Chat</li>
-        </ol>
-    </nav>
-</div>
-<!-- Alerta
-    <div class="container" id="container-alert">
-        <div class="alert alert-dismissible alert-warning mt-3">
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            <h4 class="alert-heading">Atención!</h4>
-            <p class="mb-0">Mensaje de alerta para indicar que se ha podido producir un error (<a href="#" class="alert-link">ver detalles</a>).</p>
-        </div>
-    </div>
-    -->
-<div class="container" id="container-chat">
-    <div class="row flex-column flex-lg-row ps-lg-5 mt-3 mb-5">
-        <!-- Sidebar con orden 1 en pantallas pequeñas -->
-        <div class="col-12 col-lg-3 me-4 order-1 mb-lg-0 mb-4" id="sidebar">
-            <div class="d-flex justify-content-end">
-                <a href="/perfil/proyecto_nuevo" class="btn btn-primary" id="create-button">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
-                        <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
-                    </svg>
+
+<!-- Contenedor de alertas -->
+<div id="container-alert" class="container-fluid"></div>
+
+<div class="chat-container">
+    <div class="chat-layout">
+        <!-- Sidebar de proyectos -->
+        <div class="chat-sidebar">
+            <div class="sidebar-header">
+                <h3 class="sidebar-title">
+                    <i class="fas fa-folder me-2"></i>Proyectos
+                </h3>
+                <a href="/perfil/proyecto_nuevo" class="btn btn-new-project" title="Nuevo proyecto">
+                    <i class="fas fa-plus"></i>
                 </a>
             </div>
-            <div class="list-group mt-1 mb-2" id="proyectos-sidebar">
-                <!-- Proyectos se inyectarán aquí -->
-            </div>
-        </div>
-        <!-- Chat con orden 2 en pantallas pequeñas -->
-        <div class="col-12 col-lg-8 order-2" id="chat">
-            <div class="row" id="row-superior">
-                <div class="chat-mensajes">
-                    
+            
+            <div class="projects-list" id="proyectos-sidebar">
+                <!-- Los proyectos se cargarán aquí -->
+                <div class="loading-projects">
+                    <div class="skeleton-project"></div>
+                    <div class="skeleton-project"></div>
+                    <div class="skeleton-project"></div>
                 </div>
             </div>
-        
-            <div class="row" id="row-inferior">
-                <div class="col-12 d-flex align-items-center" id="escribir-mensaje">
-                    <input  id="messageInput" type="text" class="form-control flex-grow-1" placeholder="Escribe tu mensaje...">
-                    <button id="sendButton" class="btn btn-primary ms-0">Enviar</button>
+        </div>
+
+        <!-- Área principal del chat -->
+        <div class="chat-main">
+            <!-- Header del chat -->
+            <div class="chat-header">
+                <div class="chat-project-info">
+                    <div class="project-avatar">
+                        <i class="fas fa-folder-open"></i>
+                    </div>
+                    <div class="project-details">
+                        <h4 class="project-name" id="current-project-name">Selecciona un proyecto</h4>
+                        <p class="project-status" id="current-project-status">Para comenzar a chatear</p>
+                    </div>
+                </div>
+                <div class="chat-actions">
+                    <button class="btn btn-chat-action" onclick="limpiarChat()" title="Limpiar chat">
+                        <i class="fas fa-broom"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Área de mensajes -->
+            <div class="chat-messages" id="chat-mensajes">
+                <div class="welcome-message">
+                    <div class="welcome-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h3>¡Bienvenido al Chat!</h3>
+                    <p>Selecciona un proyecto de la barra lateral para comenzar a chatear con la IA sobre ese proyecto específico.</p>
+                </div>
+            </div>
+
+            <!-- Área de entrada de mensajes -->
+            <div class="chat-input-area">
+                <div class="chat-input-container" id="chat-input-container">
+                    <input 
+                        type="text" 
+                        id="messageInput" 
+                        class="chat-input" 
+                        placeholder="Selecciona un proyecto para empezar a chatear..."
+                        disabled
+                    >
+                    <button id="sendButton" class="chat-send-btn" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="chat-input-help">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Presiona Enter para enviar tu mensaje
+                    </small>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}

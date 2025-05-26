@@ -1,81 +1,550 @@
-/* PERFIL.CSS - Estilos exclusivos para la página de perfil */
+/* ==================== VARIABLES Y RESET ==================== */
+:root {
+    --primary-color: #2563eb;
+    --secondary-color: #64748b;
+    --success-color: #10b981;
+    --danger-color: #ef4444;
+    --warning-color: #f59e0b;
+    --background-color: #f8fafc;
+    --card-background: #ffffff;
+    --border-color: #e2e8f0;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+}
 
-/* Títulos */
-#usuarios-container h1, #proyectos-container h1, #informacion-personal-container h1 {
-    font-size: 2.2rem;
-    color: #22313f;
-    text-align: center;
-    margin-bottom: 28px;
+/* ==================== LAYOUT PRINCIPAL ==================== */
+.dashboard-container {
+    min-height: 100vh;
+    background-color: var(--background-color);
+}
+
+.dashboard-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #1d4ed8 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 0;
+}
+
+.dashboard-title {
+    font-size: 2rem;
     font-weight: 700;
-    letter-spacing: 1px;
+    margin: 0;
+    letter-spacing: -0.025em;
 }
 
-/* Tarjetas elegantes solo en perfil */
-#usuarios-container .card, #proyectos-container .card {
-    background: linear-gradient(135deg, #ffffff 80%, #eaf6f6 100%);
-    border: none;
-    border-radius: 16px;
-    box-shadow: 0 6px 24px rgba(44, 62, 80, 0.10);
-    transition: transform 0.25s cubic-bezier(.4,2,.6,1), box-shadow 0.25s;
-    margin-bottom: 24px;
-    color: #22313f;
-    opacity: 1 !important;
-    max-width: 100%;
-}
-
-/* Card body y títulos */
-#usuarios-container .card-body, #proyectos-container .card-body {
-    padding: 24px 20px 20px 20px;
-}
-
-#usuarios-container .card-title, #proyectos-container .card-title {
-    font-size: 1.3rem;
-    color: #18bc9c;
-    font-weight: 600;
-    margin-bottom: 12px;
-    letter-spacing: 0.5px;
-}
-
-#usuarios-container .card-text, #proyectos-container .card-text {
-    font-size: 1.05rem;
-    color: #5c6e7a;
-    margin-bottom: 10px;
-    line-height: 1.6;
-}
-
-/* Botones personalizados solo en perfil */
-#usuarios-container .btn, #proyectos-container .btn {
+.dashboard-subtitle {
     font-size: 1rem;
-    padding: 10px 20px;
-    border-radius: 6px;
-    margin-right: 8px;
-    margin-bottom: 6px;
-    box-shadow: 0 2px 8px rgba(24, 188, 156, 0.08);
+    margin: 0.5rem 0 0 0;
+    opacity: 0.9;
+    font-weight: 400;
 }
 
-#usuarios-container .btn-success, #proyectos-container .btn-success {
+.header-actions .btn {
+    border-radius: var(--radius-md);
+    padding: 0.625rem 1.25rem;
+    font-weight: 500;
+    font-size: 0.875rem;
     border: none;
-    color: #fff;
+    box-shadow: var(--shadow-sm);
 }
 
-#usuarios-container .btn-danger, #proyectos-container .btn-danger {
-    border: none;
-    color: #fff;
+.header-actions .btn-primary {
+    background-color: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
 }
 
-#informacion-personal-container {
+.header-actions .btn-primary:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.header-actions .btn-outline-secondary {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+/* ==================== SIDEBAR DE PERFIL ==================== */
+.profile-sidebar {
+    position: sticky;
+    top: 2rem;
+}
+
+.profile-card {
+    background: var(--card-background);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.profile-header {
+    padding: 2rem 1.5rem 1.5rem;
+    text-align: center;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.profile-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #1d4ed8 100%);
     display: flex;
-    justify-content: center;
     align-items: center;
-    min-height: 250px;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    box-shadow: var(--shadow-lg);
 }
 
-#informacion-personal-container .card {
-    min-width: 400px;
-    max-width: 600px;
+.profile-avatar i {
+    font-size: 2rem;
+    color: white;
+}
+
+#profile-info h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.25rem;
+}
+
+#profile-info p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.profile-stats {
+    display: flex;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.stat-item {
+    flex: 1;
+    text-align: center;
+    padding: 0 0.5rem;
+}
+
+.stat-item:not(:last-child) {
+    border-right: 1px solid var(--border-color);
+}
+
+.stat-number {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    line-height: 1;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.25rem;
+}
+
+/* ✅ AÑADIR ESTILOS PARA EL FOOTER DEL PERFIL Y BOTÓN LOGOUT */
+.profile-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    background-color: #f8fafc;
+}
+
+.btn-logout {
+    background: linear-gradient(135deg, var(--danger-color) 0%, #dc2626 100%);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-logout:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-logout:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-logout i {
+    opacity: 0.9;
+}
+
+/* Mejorar dropdown items */
+.dropdown-item {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    border-radius: var(--radius-sm);
+    margin: 0 0.25rem;
+    transition: all 0.15s ease;
+}
+
+.dropdown-item:hover {
+    background-color: #f1f5f9;
+}
+
+.dropdown-item.text-danger:hover {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--danger-color) !important;
+}
+
+/* ==================== SECCIONES DE CONTENIDO ==================== */
+.content-section {
+    background: var(--card-background);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.section-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+    background: #f8fafc;
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    flex: 1;
+}
+
+.section-content {
+    padding: 2rem;
+}
+
+/* ==================== TARJETAS DE PROYECTO ==================== */
+.project-card {
+    background: var(--card-background);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    transition: all 0.2s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.project-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+.project-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.75rem;
+    line-height: 1.4;
+}
+
+.project-description {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0 0 1rem;
+    flex: 1;
+}
+
+.project-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin: 0 0 1.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.project-meta strong {
+    color: var(--text-secondary);
+}
+
+.project-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: auto;
+}
+
+.project-actions .btn {
+    flex: 1;
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    border: none;
+}
+
+.btn-edit {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-edit:hover {
+    background-color: #1d4ed8;
+    color: white;
+}
+
+.btn-delete {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.btn-delete:hover {
+    background-color: #dc2626;
+    color: white;
+}
+
+/* ==================== TARJETAS DE USUARIO ==================== */
+.user-card {
+    background: var(--card-background);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    transition: all 0.2s ease;
+    height: 100%;
+}
+
+.user-card:hover {
+    border-color: var(--success-color);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+.user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.user-avatar i {
+    font-size: 1.25rem;
+    color: white;
+}
+
+.user-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem;
+}
+
+.user-info {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0 0 1rem;
+}
+
+.user-role {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+}
+
+.user-role.admin {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--danger-color);
+}
+
+.user-role.user {
+    background-color: rgba(37, 99, 235, 0.1);
+    color: var(--primary-color);
+}
+
+.user-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.user-actions .btn {
+    flex: 1;
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    border: none;
+}
+
+/* ==================== SKELETON LOADING ==================== */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: var(--radius-sm);
+}
+
+.skeleton-title {
+    height: 1.5rem;
+    width: 70%;
+    margin-bottom: 0.75rem;
+}
+
+.skeleton-text {
+    height: 1rem;
     width: 100%;
-    margin: 0 auto;
-    font-size: 1.15rem;
-    border-radius: 18px;
-    box-shadow: 0 8px 32px rgba(44, 62, 80, 0.18);
+    margin-bottom: 0.5rem;
+}
+
+.skeleton-text.small {
+    width: 60%;
+}
+
+.skeleton-card {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+}
+
+.placeholder-content {
+    text-align: center;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* ==================== ESTADO VACÍO ==================== */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 0 0 0.5rem;
+}
+
+.empty-state p {
+    font-size: 0.875rem;
+    margin: 0 0 1.5rem;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 992px) {
+    .dashboard-header {
+        padding: 1.5rem 0;
+    }
+    
+    .dashboard-title {
+        font-size: 1.75rem;
+    }
+    
+    .header-actions {
+        margin-top: 1rem;
+    }
+    
+    .profile-sidebar {
+        position: static;
+        margin-bottom: 2rem;
+    }
+    
+    .section-header {
+        padding: 1rem 1.5rem;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .section-content {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-header {
+        padding: 1rem 0;
+    }
+    
+    .dashboard-title {
+        font-size: 1.5rem;
+    }
+    
+    .header-actions .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .project-actions,
+    .user-actions {
+        flex-direction: column;
+    }
+    
+    .stat-item {
+        padding: 0.5rem;
+    }
+    
+    .profile-header {
+        padding: 1.5rem 1rem;
+    }
+    
+    .profile-avatar {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .profile-avatar i {
+        font-size: 1.5rem;
+    }
+}
+
+/* ==================== ALERTAS PERSONALIZADAS ==================== */
+#container-alert {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    margin-bottom: 0;
+}
+
+#container-alert .alert {
+    margin: 0;
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
 }
