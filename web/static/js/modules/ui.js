@@ -592,7 +592,7 @@ function validarEmail(campo) {
 
 function validarPassword(campo) {
     const password = campo.value;
-    const minLength = campo.getAttribute('minlength') || 6;
+    const minLength = campo.getAttribute('minlength') || VALIDATION_CONSTANTS.MIN_PASSWORD_LENGTH;
     
     if (password && password.length < minLength) {
         marcarCampoInvalido(campo, `La contraseña debe tener al menos ${minLength} caracteres`);

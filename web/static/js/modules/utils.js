@@ -8,6 +8,19 @@ const API_BASE_URL = "http://localhost:5001";
 let proyectoActualChat = 'general';
 let isInChat = false;
 
+/* ==================== CONSTANTES DE VALIDACIÓN ==================== */
+const VALIDATION_CONSTANTS = {
+    MIN_PASSWORD_LENGTH: 4,        // Cambiar aquí para toda la app
+    MIN_USERNAME_LENGTH: 3,
+    MIN_NAME_LENGTH: 2,
+    EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    USERNAME_REGEX: /^[a-zA-Z0-9_.-]+$/
+};
+
+// Exportar constantes para uso global
+window.VALIDATION_CONSTANTS = VALIDATION_CONSTANTS;
+
+
 // ==================== UTILIDADES DE FECHAS ====================
 
 function formatearFecha(fechaString) {
@@ -140,7 +153,7 @@ function validarURL(url) {
     }
 }
 
-function validarPassword(password, minLength = 6) {
+function validarPassword(password, minLength = VALIDATION_CONSTANTS.MIN_PASSWORD_LENGTH) {
     return password && password.length >= minLength;
 }
 

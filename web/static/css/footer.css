@@ -1,0 +1,347 @@
+/* ==================== FOOTER MODERNO ==================== */
+#container-footer {
+    margin-top: auto;
+    padding: 0;
+}
+
+#footer1 {
+    background: linear-gradient(135deg, var(--secondary-color) 0%, #34495e 100%);
+    padding: 4rem 0 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    padding-left: 10px;
+}
+
+#footer1::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 20%, rgba(24, 188, 156, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(52, 152, 219, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+#footer1 .container-fluid {
+    position: relative;
+    z-index: 1;
+}
+
+/* ==================== TÍTULOS DEL FOOTER ==================== */
+#footer1 h3 {
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 1.4rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    padding-bottom: 0.5rem;
+}
+
+#footer1 h3::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 40px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    border-radius: 2px;
+}
+
+/* ==================== ENLACES DEL FOOTER ==================== */
+#footer1 a {
+    color: #bdc3c7;
+    text-decoration: none;
+    font-size: 0.95rem;
+    line-height: 2;
+    transition: all 0.3s ease;
+    display: inline-block;
+    position: relative;
+}
+
+#footer1 a:hover {
+    color: var(--primary-color);
+    transform: translateX(5px);
+}
+
+#footer1 a::before {
+    content: '';
+    position: absolute;
+    left: -15px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 2px;
+    background: var(--primary-color);
+    transition: width 0.3s ease;
+}
+
+#footer1 a:hover::before {
+    width: 10px;
+}
+
+/* ==================== REDES SOCIALES ==================== */
+.bi-twitter,
+.bi-facebook,
+.bi-linkedin,
+.bi-discord {
+    color: var(--primary-color);
+    margin: 0 0.75rem 0.75rem 0;
+    font-size: 2rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    display: inline-block;
+}
+
+.bi-twitter:hover {
+    color: #1da1f2;
+    transform: translateY(-3px) scale(1.1);
+}
+
+.bi-facebook:hover {
+    color: #4267b2;
+    transform: translateY(-3px) scale(1.1);
+}
+
+.bi-linkedin:hover {
+    color: #0077b5;
+    transform: translateY(-3px) scale(1.1);
+}
+
+.bi-discord:hover {
+    color: #5865f2;
+    transform: translateY(-3px) scale(1.1);
+}
+
+/* ==================== MAPA INTEGRADO ==================== */
+#mapa {
+    width: 100%;
+    height: 200px;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+#mapa:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* ==================== SECCIONES DEL FOOTER ==================== */
+#footer1 .col-12 {
+    margin-bottom: 2rem;
+}
+
+#footer1 .row {
+    margin-bottom: 1rem;
+}
+
+/* Información de contacto específica */
+#footer1 .col-12:nth-child(2) a {
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+/* ==================== SEPARADORES ==================== */
+#footer1 hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    margin: 1.5rem 0;
+}
+
+/* ==================== FOOTER INFERIOR ==================== */
+#footer2 {
+    background: #1a252f;
+    padding: 1.5rem 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.fin-de-footer {
+    text-align: center;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    margin: 0;
+    font-weight: 400;
+}
+
+/* ==================== EFECTOS ESPECIALES ==================== */
+#footer1 .col-12:hover {
+    transform: translateY(-2px);
+    transition: transform 0.3s ease;
+}
+
+/* ==================== RESPONSIVE DESIGN ==================== */
+@media (max-width: 768px) {
+    #footer1 {
+        padding: 3rem 0 1.5rem;
+    }
+    
+    #footer1 h3 {
+        font-size: 1.2rem;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    
+    #footer1 h3::after {
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+    #footer1 .col-12 {
+        text-align: center;
+        margin-bottom: 2.5rem;
+    }
+    
+    #footer1 a {
+        display: block;
+        margin: 0.5rem 0;
+    }
+    
+    #footer1 a::before {
+        display: none;
+    }
+    
+    #footer1 a:hover {
+        transform: none;
+    }
+    
+    .bi-twitter,
+    .bi-facebook,
+    .bi-linkedin,
+    .bi-discord {
+        margin: 0 1rem;
+        font-size: 2.5rem;
+    }
+    
+    #mapa {
+        height: 250px;
+        margin: 1rem 0;
+    }
+    
+    #footer1 hr.d-md-none {
+        display: block !important;
+        margin: 2rem auto;
+        width: 60%;
+    }
+}
+
+@media (max-width: 576px) {
+    #footer1 {
+        padding: 2rem 0 1rem;
+    }
+    
+    #footer1 h3 {
+        font-size: 1.1rem;
+    }
+    
+    .bi-twitter,
+    .bi-facebook,
+    .bi-linkedin,
+    .bi-discord {
+        font-size: 2rem;
+        margin: 0 0.5rem;
+    }
+    
+    #mapa {
+        height: 200px;
+    }
+    
+    .fin-de-footer {
+        font-size: 0.8rem;
+        padding: 0 1rem;
+    }
+}
+
+/* ==================== ANIMACIONES ==================== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#footer1 .col-12 {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+#footer1 .col-12:nth-child(1) { animation-delay: 0.1s; }
+#footer1 .col-12:nth-child(2) { animation-delay: 0.2s; }
+#footer1 .col-12:nth-child(3) { animation-delay: 0.3s; }
+#footer1 .col-12:nth-child(4) { animation-delay: 0.4s; }
+
+/* ==================== MODO OSCURO ==================== */
+@media (prefers-color-scheme: dark) {
+    #footer1 {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    }
+    
+    #footer2 {
+        background: #0d0d0d;
+    }
+    
+    #footer1 a {
+        color: #e0e0e0;
+    }
+    
+    .fin-de-footer {
+        color: #a0a0a0;
+    }
+}
+
+/* ==================== ACCESIBILIDAD ==================== */
+@media (prefers-reduced-motion: reduce) {
+    #footer1 .col-12,
+    #footer1 a,
+    .bi-twitter,
+    .bi-facebook,
+    .bi-linkedin,
+    .bi-discord,
+    #mapa {
+        animation: none;
+        transition: none;
+    }
+    
+    #footer1 a:hover,
+    .bi-twitter:hover,
+    .bi-facebook:hover,
+    .bi-linkedin:hover,
+    .bi-discord:hover {
+        transform: none;
+    }
+}
+
+/* ==================== PRINT STYLES ==================== */
+@media print {
+    #footer1,
+    #footer2 {
+        background: white !important;
+        color: black !important;
+        box-shadow: none !important;
+    }
+    
+    #footer1 a {
+        color: black !important;
+    }
+    
+    .bi-twitter,
+    .bi-facebook,
+    .bi-linkedin,
+    .bi-discord {
+        display: none;
+    }
+    
+    #mapa {
+        display: none;
+    }
+}

@@ -2,7 +2,7 @@ import uuid
 from flask import Flask, render_template, request, flash, redirect, url_for, abort, make_response
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_sqlalchemy import SQLAlchemy
-from datetime import date
+from datetime import date, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from util import url_has_allowed_host_and_scheme

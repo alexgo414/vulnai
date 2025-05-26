@@ -119,24 +119,23 @@ function configurarEnvioConEnter(messageInput, sendButton) {
 
 // ==================== COMUNICACIÓN CON EL SERVIDOR ====================
 
+const CHAT_API_URL = 'http://localhost:5002';
+
 async function sendMessageToServer(messageText, chatMensajes) {
     console.log("Enviando mensaje al servidor:", messageText);
     
-    const sendButton = document.getElementById('sendButton');
-    
-    // Mostrar estado de carga
-    sendButton.classList.add('loading');
-    sendButton.disabled = true;
-
     try {
-        const response = await fetch(`${API_BASE_URL_CHAT}/chat/mensajes`, {
+        // Las cookies se envían automáticamente con credentials: 'include'
+        const response = await fetch(`${CHAT_API_URL}/chat/mensajes`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ 
+            credentials: 'include', // ¡IMPORTANTE!
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
                 message: messageText,
-                proyecto_id: proyectoActualChat || 'general'
-            }),
+                proyecto_id: 'general' // O el ID del proyecto actual
+            })
         });
 
         if (response.status === 401) {
@@ -147,47 +146,16 @@ async function sendMessageToServer(messageText, chatMensajes) {
             return;
         }
 
-        if (response.ok) {
-            const data = await response.json();
-            
-            // Procesar mensaje de Gemini con Markdown
-            const mensajeProcesado = procesarMensajeGemini(data.message);
-            
-            // Añadir mensaje del bot con contenido procesado
-            const botMessage = document.createElement('div');
-            botMessage.classList.add('campo-bot');
-            botMessage.innerHTML = `
-                <div class="icono-bot">
-                    <i class="fas fa-robot"></i>
-                </div>
-                <div class="mensaje-bot">
-                    <div class="mensaje-contenido">${mensajeProcesado}</div>
-                </div>
-            `;
-            chatMensajes.appendChild(botMessage);
-            
-            // Resaltar código después de añadir al DOM
-            setTimeout(() => {
-                const codeBlocks = botMessage.querySelectorAll('pre code');
-                codeBlocks.forEach(block => {
-                    if (typeof hljs !== 'undefined') {
-                        hljs.highlightElement(block);
-                    }
-                });
-            }, 100);
-            
-            // Scroll suave al final
-            scrollToBottomSuave(chatMensajes);
-        } else {
-            mostrarError('Error al enviar mensaje. Inténtalo de nuevo.');
+        if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
         }
+
+        const data = await response.json();
+        return data.message;
+
     } catch (error) {
-        console.error('Error al enviar mensaje:', error);
-        mostrarError('Error de conexión. Verifica tu internet.');
-    } finally {
-        // Quitar estado de carga
-        sendButton.classList.remove('loading');
-        sendButton.disabled = false;
+        console.error("Error enviando mensaje:", error);
+        throw error;
     }
 }
 

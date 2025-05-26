@@ -11,50 +11,63 @@
         <div class="row justify-content-center align-items-center min-vh-100">
             <div class="col-lg-5 col-md-7 col-sm-9">
                 <div class="login-card">
-                    <!-- Header de login -->
+                    <!-- Header del login -->
                     <div class="login-header">
                         <div class="login-logo">
                             <i class="fas fa-shield-alt"></i>
                         </div>
                         <h2>Bienvenido a SVAIA</h2>
-                        <p>Inicia sesión para acceder a tu dashboard</p>
+                        <p>Inicia sesión para acceder a tu cuenta</p>
                     </div>
                     
-                    <!-- Formulario de login -->
+                    <!-- Formulario -->
                     <div class="login-body">
                         <form id="login-form">
+                            <!-- Campo Usuario -->
                             <div class="login-field">
                                 <label for="username" class="login-label">
                                     <i class="fas fa-user me-2"></i>Usuario
                                 </label>
-                                <input type="text" id="username" name="username" class="login-input" required 
-                                       placeholder="Ingresa tu nombre de usuario">
+                                <input type="text" 
+                                       class="login-input" 
+                                       id="username" 
+                                       name="username" 
+                                       placeholder="Ingresa tu usuario" 
+                                       required 
+                                       autocomplete="username">
                                 <div class="input-focus-line"></div>
                             </div>
                             
+                            <!-- Campo Contraseña -->
                             <div class="login-field">
                                 <label for="password" class="login-label">
                                     <i class="fas fa-lock me-2"></i>Contraseña
                                 </label>
                                 <div class="password-container">
-                                    <input type="password" id="password" name="password" class="login-input" required 
-                                           placeholder="Ingresa tu contraseña">
-                                    <button type="button" class="password-toggle-login" onclick="togglePasswordLogin()">
+                                    <input type="password" 
+                                           class="login-input" 
+                                           id="password" 
+                                           name="password" 
+                                           placeholder="Ingresa tu contraseña" 
+                                           required 
+                                           autocomplete="current-password">
+                                    <button type="button" class="password-toggle-login">
                                         <i class="fas fa-eye"></i>
                                     </button>
                                 </div>
                                 <div class="input-focus-line"></div>
                             </div>
                             
+                            <!-- Opciones -->
                             <div class="login-options">
                                 <label class="remember-me">
-                                    <input type="checkbox" id="remember">
-                                    <span class="checkmark"></span>
+                                    <input type="checkbox" name="remember">
                                     Recordarme
                                 </label>
                                 <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
                             </div>
                             
+                            <!-- Botón de login -->
                             <button type="submit" class="login-btn">
                                 <span class="btn-text">Iniciar Sesión</span>
                                 <i class="fas fa-arrow-right btn-icon"></i>
@@ -65,16 +78,13 @@
                     <!-- Footer de login -->
                     <div class="login-footer">
                         <p>¿No tienes una cuenta? <a href="/registro">Regístrate aquí</a></p>
-                        <div class="login-divider">
-                            <span>o</span>
-                        </div>
                         <a href="/" class="back-home">
                             <i class="fas fa-home me-2"></i>Volver al inicio
                         </a>
                     </div>
                 </div>
                 
-                <!-- Info cards -->
+                <!-- Features -->
                 <div class="login-features">
                     <div class="row">
                         <div class="col-4">
@@ -85,14 +95,14 @@
                         </div>
                         <div class="col-4">
                             <div class="feature-mini">
-                                <i class="fas fa-robot"></i>
-                                <span>IA Avanzada</span>
+                                <i class="fas fa-bolt"></i>
+                                <span>Rápido</span>
                             </div>
                         </div>
                         <div class="col-4">
                             <div class="feature-mini">
-                                <i class="fas fa-chart-line"></i>
-                                <span>Analytics</span>
+                                <i class="fas fa-robot"></i>
+                                <span>IA</span>
                             </div>
                         </div>
                     </div>

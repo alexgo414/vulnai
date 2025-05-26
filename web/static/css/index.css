@@ -8,6 +8,7 @@
     display: flex;
     align-items: center;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #18bc9c 100%);
+    margin-top: 20px;
 }
 
 .hero-background {
@@ -865,7 +866,7 @@
     -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    padding: 0.75rem 0;
+    padding: 10px 0px;
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
 }
 
@@ -1019,8 +1020,8 @@
 
 /* User avatar */
 .user-avatar {
-    width: 35px;
-    height: 35px;
+    width: 20px;
+    height: 20px;
     background: linear-gradient(135deg, #667eea, #764ba2);
     border-radius: 50%;
     display: flex;

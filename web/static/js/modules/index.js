@@ -707,6 +707,11 @@ function inicializarEfectosNavbar() {
     });
 }
 
+// CORREGIR: Definir la función que falta
+function esPageHome() {
+    return window.location.pathname === '/' || window.location.pathname === '/index';
+}
+
 // Agregar a la función principal de inicialización del index
 function inicializarIndex() {
     console.log("🎨 Inicializando página de inicio...");

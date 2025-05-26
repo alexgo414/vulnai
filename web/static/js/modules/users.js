@@ -1,7 +1,7 @@
 // Gestión de Usuarios
 
 // ==================== CONFIGURACIÓN Y CONSTANTES ====================
-const API_BASE_URL = "http://localhost:5001";
+const { API_BASE_URL } = window.APP_CONFIG;
 
 // ==================== FUNCIONES PRINCIPALES ====================
 
@@ -219,10 +219,10 @@ function validarDatosUsuario(datos, esActualizacion = false) {
         }
     }
     
-    // Validar password (solo si no es actualización o si se proporciona)
+    // Validar contraseña usando constante global
     if (!esActualizacion || (datos.password && datos.password.trim())) {
-        if (!datos.password || datos.password.length < 6) {
-            errores.push('La contraseña debe tener al menos 6 caracteres');
+        if (!datos.password || datos.password.length < VALIDATION_CONSTANTS.MIN_PASSWORD_LENGTH) {
+            errores.push(`La contraseña debe tener al menos ${VALIDATION_CONSTANTS.MIN_PASSWORD_LENGTH} caracteres`);
         }
     }
     
