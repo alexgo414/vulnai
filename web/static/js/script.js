@@ -1334,7 +1334,7 @@ async function cargarProyectosSidebar() {
     }
 }
 
-// ✅ FUNCIÓN PARA RENDERIZAR PROYECTOS EN EL SIDEBAR (SIMPLIFICADA)
+// ✅ FUNCIÓN CORREGIDA PARA RENDERIZAR PROYECTOS EN EL SIDEBAR
 function renderizarProyectosSidebar(proyectos) {
     const sidebarChat = document.getElementById("proyectos-sidebar");
     
@@ -1368,24 +1368,99 @@ function renderizarProyectosSidebar(proyectos) {
             </div>
             <div class="project-actions">
                 <button class="btn-project-action btn-delete-project" 
-                        onclick="eliminarProyectoChat(${proyecto.id})"
+                        data-proyecto-id="${proyecto.id}"
                         title="Eliminar proyecto">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
         `;
         
-        // Añadir evento de click para seleccionar proyecto
-        proyectoElement.addEventListener('click', (e) => {
-            if (!e.target.closest('.project-actions')) {
-                seleccionarProyecto(proyecto);
-            }
+        // ✅ EVENTO PARA SELECCIONAR PROYECTO (solo en la info, no en las acciones)
+        const projectInfo = proyectoElement.querySelector('.project-info');
+        projectInfo.addEventListener('click', () => {
+            seleccionarProyecto(proyecto);
+        });
+        
+        // ✅ EVENTO ESPECÍFICO PARA EL BOTÓN DE ELIMINAR
+        const deleteButton = proyectoElement.querySelector('.btn-delete-project');
+        deleteButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // Evitar que se propague al contenedor padre
+            eliminarProyectoChat(proyecto.id);
         });
         
         sidebarChat.appendChild(proyectoElement);
     });
 
     console.log(`${proyectos.length} proyectos renderizados en el sidebar`);
+}
+
+// ✅ FUNCIÓN MEJORADA PARA ELIMINAR PROYECTO DESDE EL CHAT
+async function eliminarProyectoChat(proyectoId) {
+    if (!confirm("¿Estás seguro de que deseas eliminar este proyecto? Esta acción no se puede deshacer.")) {
+        return;
+    }
+    
+    console.log("Eliminando proyecto desde chat:", proyectoId);
+    
+    try {
+        const response = await fetchWithCredentials(`${API_BASE_URL}/proyectos/${proyectoId}`, {
+            method: "DELETE"
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `Error al eliminar proyecto: ${response.statusText}`);
+        }
+        
+        mostrarToast("Proyecto eliminado con éxito", "success");
+        
+        // Si era el proyecto actual, resetear el chat
+        if (proyectoActualChat && proyectoActualChat.id == proyectoId) {
+            resetearChat();
+        }
+        
+        // Recargar proyectos del sidebar
+        cargarProyectosSidebar();
+        
+    } catch (error) {
+        console.error("Error al eliminar proyecto:", error);
+        mostrarToast(`Error: ${error.message}`, "danger");
+    }
+}
+
+// ✅ FUNCIÓN AUXILIAR PARA RESETEAR EL CHAT
+function resetearChat() {
+    proyectoActualChat = null;
+    
+    // Deshabilitar input y botón
+    if (messageInput) {
+        messageInput.disabled = true;
+        messageInput.placeholder = "Selecciona un proyecto para empezar a chatear...";
+    }
+    
+    if (sendButton) {
+        sendButton.disabled = true;
+    }
+    
+    // Actualizar header del chat
+    const projectName = document.getElementById('current-project-name');
+    const projectStatus = document.getElementById('current-project-status');
+    
+    if (projectName) projectName.textContent = "Selecciona un proyecto";
+    if (projectStatus) projectStatus.textContent = "Para comenzar a chatear";
+    
+    // Mostrar mensaje de bienvenida
+    if (chatMensajes) {
+        chatMensajes.innerHTML = `
+            <div class="welcome-message">
+                <div class="welcome-icon">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <h3>¡Bienvenido al Chat!</h3>
+                <p>Selecciona un proyecto de la barra lateral para comenzar a chatear con la IA sobre ese proyecto específico.</p>
+            </div>
+        `;
+    }
 }
 
 // ✅ FUNCIÓN PARA SELECCIONAR PROYECTO
