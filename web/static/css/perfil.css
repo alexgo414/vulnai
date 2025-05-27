@@ -1,6 +1,6 @@
 /* ==================== VARIABLES Y RESET ==================== */
 :root {
-    --primary-color: #2563eb;
+    --primary-color: #18bc9c;
     --secondary-color: #64748b;
     --success-color: #10b981;
     --danger-color: #ef4444;
@@ -26,7 +26,7 @@
 }
 
 .dashboard-header {
-    background: linear-gradient(135deg, var(--primary-color) 0%, #1d4ed8 100%);
+    background: linear-gradient(135deg, #18bc9c 0%, #18bc9c 100%);
     color: white;
     padding: 2rem 0;
     margin-bottom: 0;
@@ -94,7 +94,7 @@
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary-color) 0%, #1d4ed8 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, #18bc9c 100%);
     display: flex;
     align-items: center;
     justify-content: center;

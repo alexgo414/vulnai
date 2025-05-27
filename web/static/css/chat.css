@@ -47,7 +47,7 @@
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    background: #3b82f6;
+    background: #18bc9c;
     color: white;
     border: none;
     display: flex;
@@ -57,7 +57,7 @@
 }
 
 .btn-new-project:hover {
-    background: #2563eb;
+    background: #18bc9c;
     transform: translateY(-1px);
 }
 
@@ -87,7 +87,7 @@
 
 .project-item.active {
     background: #eff6ff;
-    border-color: #3b82f6;
+    border-color: #18bc9c;
     box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
 }
 
@@ -179,7 +179,7 @@
     width: 48px;
     height: 48px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    background: linear-gradient(135deg, #18bc9c, #18bc9c);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -299,7 +299,7 @@
 }
 
 .message-avatar.user {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    background: linear-gradient(135deg, #18bc9c, #18bc9c);
     color: white;
 }
 
@@ -322,7 +322,7 @@
 }
 
 .message-bubble.user {
-    background: #3b82f6;
+    background: #18bc9c;
     color: white;
 }
 
@@ -362,7 +362,7 @@
 
 .chat-input:focus {
     outline: none;
-    border-color: #3b82f6;
+    border-color: #18bc9c;
     background: white;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
@@ -378,7 +378,7 @@
     height: 44px;
     border: none;
     border-radius: 12px;
-    background: #3b82f6;
+    background: #18bc9c;
     color: white;
     display: flex;
     align-items: center;
@@ -388,7 +388,7 @@
 }
 
 .chat-send-btn:hover:not(:disabled) {
-    background: #2563eb;
+    background: #18bc9c;
     transform: translateY(-1px);
 }
 
@@ -494,5 +494,3 @@
 .chat-messages::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
 }
-
-/* ... resto del CSS existing ... */
