@@ -1176,7 +1176,33 @@ function inicializarChat() {
     return { chatMensajes, messageInput, sendButton };
 }
 
-// ✅ FUNCIÓN PARA MANEJAR UPLOAD DE ARCHIVOS SBOM
+// ✅ ACTUALIZAR FUNCIÓN PARA MOSTRAR INFORMACIÓN DE SBOM CON NVD
+function mostrarInformacionSBOM(sbomInfo) {
+    if (!sbomInfo) return;
+    
+    let mensaje = `**Archivo procesado:** ${sbomInfo.filename}\n`;
+    mensaje += `**Formato:** ${sbomInfo.formato}\n`;
+    mensaje += `**Componentes:** ${sbomInfo.componentes}\n`;
+    
+    // ✅ MOSTRAR INFORMACIÓN DE NVD
+    if (sbomInfo.nvd_analysis) {
+        const nvd = sbomInfo.nvd_analysis;
+        mensaje += `\n**🔍 Análisis de Vulnerabilidades (NVD):**\n`;
+        mensaje += `• Componentes analizados: ${nvd.componentes_analizados}\n`;
+        mensaje += `• Vulnerabilidades encontradas: ${nvd.vulnerabilidades_encontradas}\n`;
+        mensaje += `• Componentes vulnerables: ${nvd.componentes_vulnerables}\n`;
+        
+        if (nvd.vulnerabilidades_encontradas > 0) {
+            mensaje += `\n⚠️ **Se encontraron vulnerabilidades de seguridad.** Revisa el análisis detallado abajo.`;
+        } else {
+            mensaje += `\n✅ **No se encontraron vulnerabilidades conocidas.**`;
+        }
+    }
+    
+    agregarMensajeAlChat(mensaje, 'bot');
+}
+
+// ✅ ACTUALIZAR FUNCIÓN DE MANEJO DE ARCHIVOS SBOM
 async function manejarArchivoSBOM(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -1202,13 +1228,13 @@ async function manejarArchivoSBOM(event) {
     }
     
     try {
-        // Mostrar mensaje de carga
-        agregarMensajeAlChat(`📁 Subiendo archivo SBOM: ${file.name}...`, 'user');
+        // Mostrar mensaje de carga con información sobre NVD
+        agregarMensajeAlChat(`📁 Subiendo archivo SBOM: ${file.name}...\n🔍 Consultando National Vulnerability Database...`, 'user');
         
         // Crear FormData
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('mensaje', `Analiza este archivo SBOM del proyecto ${proyectoActualChat.nombre}`);
+        formData.append('mensaje', `Analiza este archivo SBOM del proyecto ${proyectoActualChat.nombre} consultando la National Vulnerability Database para identificar vulnerabilidades conocidas`);
         
         // Enviar archivo
         const response = await fetch(`${API_BASE_URL_CHAT}/chat/upload-sbom`, {
@@ -1223,19 +1249,34 @@ async function manejarArchivoSBOM(event) {
         }
         
         const data = await response.json();
-        console.log("✅ Archivo SBOM procesado:", data);
+        console.log("✅ Archivo SBOM procesado con NVD:", data);
+        
+        // Mostrar información del archivo procesado
+        if (data.sbom_info) {
+            mostrarInformacionSBOM(data.sbom_info);
+        }
         
         // Mostrar respuesta del análisis
         agregarMensajeAlChat(data.message, 'bot');
         
-        // Mostrar información adicional del archivo
-        if (data.sbom_info) {
-            const info = data.sbom_info;
-            mostrarToast(
-                `SBOM procesado: ${info.formato} con ${info.componentes} componentes`, 
-                "success", 
-                4000
-            );
+        // Toast con información de vulnerabilidades
+        if (data.sbom_info && data.sbom_info.nvd_analysis) {
+            const nvd = data.sbom_info.nvd_analysis;
+            const vulnCount = nvd.vulnerabilidades_encontradas;
+            
+            if (vulnCount > 0) {
+                mostrarToast(
+                    `⚠️ Análisis completado: ${vulnCount} vulnerabilidades encontradas en ${nvd.componentes_vulnerables} componentes`, 
+                    "warning", 
+                    6000
+                );
+            } else {
+                mostrarToast(
+                    `✅ Análisis completado: No se encontraron vulnerabilidades conocidas`, 
+                    "success", 
+                    4000
+                );
+            }
         }
         
         // Limpiar input
