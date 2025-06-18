@@ -14,6 +14,7 @@ import google.generativeai as genai
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 import asyncio
+import traceback
 
 # ✅ CARGAR CONFIGURACIÓN
 load_dotenv()
@@ -1056,7 +1057,6 @@ def upload_sbom():
             
     except Exception as e:
         print(f"❌ Error en upload_sbom: {str(e)}")
-        import traceback
         traceback.print_exc()
         return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
 

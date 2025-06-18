@@ -2,7 +2,6 @@ cryptography
 flask==2.3.3
 flask_sqlalchemy
 Flask-Login
-PyMySQLy
 sqlalchemy
 python-dotenv==1.0.0
 flask_restful
@@ -14,4 +13,4 @@ requests==2.31.0
 PyYAML==6.0.1
 Werkzeug==2.3.7
 asyncio
-traceback
+pymysql
