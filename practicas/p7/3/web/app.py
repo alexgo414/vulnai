@@ -38,7 +38,9 @@ def vuln():
 
 @app.route('/dom')
 def dom():
-    return render_template('dom.html')
+    response = make_response(render_template('dom.html'))
+    response.set_cookie('test_cookie', 'test_value_123')
+    return response
 
 # Ruta para la página inicial
 @app.route('/')
