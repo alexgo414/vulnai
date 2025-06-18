@@ -72,6 +72,12 @@
                         placeholder="Selecciona un proyecto para empezar a chatear..."
                         disabled
                     >
+                    <!-- ✅ BOTÓN PARA SUBIR ARCHIVOS SBOM -->
+                    <label for="file-upload" class="chat-file-btn" title="Subir archivo SBOM" style="display: none;" id="file-upload-btn">
+                        <i class="fas fa-paperclip"></i>
+                    </label>
+                    <input type="file" id="file-upload" accept=".json,.xml,.yaml,.yml,.spdx,.txt" style="display: none;">
+                    
                     <button id="sendButton" class="chat-send-btn" disabled>
                         <i class="fas fa-paper-plane"></i>
                     </button>
@@ -79,7 +85,9 @@
                 <div class="chat-input-help">
                     <small class="text-muted">
                         <i class="fas fa-info-circle me-1"></i>
-                        Presiona Enter para enviar tu mensaje
+                        Presiona Enter para enviar tu mensaje • 
+                        <i class="fas fa-paperclip me-1"></i>
+                        Sube archivos SBOM (JSON, XML, YAML, SPDX)
                     </small>
                 </div>
             </div>

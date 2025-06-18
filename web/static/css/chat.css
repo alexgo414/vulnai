@@ -494,3 +494,180 @@
 .chat-messages::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
 }
+
+/* ==================== BOTÓN DE UPLOAD DE ARCHIVOS ==================== */
+.chat-file-btn {
+    width: 44px;
+    height: 44px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fafc;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-right: 8px;
+}
+
+.chat-file-btn:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #374151;
+    transform: translateY(-1px);
+}
+
+.chat-file-btn:active {
+    transform: translateY(0);
+}
+
+.chat-file-btn i {
+    font-size: 1rem;
+}
+
+/* ==================== ESTILOS PARA MARKDOWN EN MENSAJES ==================== */
+.message-bubble h1,
+.message-bubble h2,
+.message-bubble h3,
+.message-bubble h4,
+.message-bubble h5,
+.message-bubble h6 {
+    margin: 0.5em 0;
+    font-weight: 600;
+}
+
+.message-bubble h1 { font-size: 1.5em; }
+.message-bubble h2 { font-size: 1.3em; }
+.message-bubble h3 { font-size: 1.1em; }
+.message-bubble h4 { font-size: 1em; }
+
+.message-bubble p {
+    margin: 0.5em 0;
+    line-height: 1.5;
+}
+
+.message-bubble p:first-child {
+    margin-top: 0;
+}
+
+.message-bubble p:last-child {
+    margin-bottom: 0;
+}
+
+.message-bubble strong {
+    font-weight: 600;
+    color: inherit;
+}
+
+.message-bubble em {
+    font-style: italic;
+}
+
+.message-bubble code {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: 'Courier New', Consolas, monospace;
+    font-size: 0.85em;
+}
+
+.message-bubble.bot code {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.message-bubble.user code {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.message-bubble pre {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 8px 12px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 0.5em 0;
+    font-family: 'Courier New', Consolas, monospace;
+    font-size: 0.85em;
+    white-space: pre-wrap;
+}
+
+.message-bubble.bot pre {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+}
+
+.message-bubble.user pre {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.message-bubble ul,
+.message-bubble ol {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+}
+
+.message-bubble li {
+    margin: 0.25em 0;
+    line-height: 1.4;
+}
+
+.message-bubble blockquote {
+    border-left: 3px solid #18bc9c;
+    margin: 0.5em 0;
+    padding: 0.5em 0 0.5em 1em;
+    font-style: italic;
+    background: rgba(24, 188, 156, 0.05);
+}
+
+.message-bubble.user blockquote {
+    border-left-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Tablas si las usas */
+.message-bubble table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0.5em 0;
+    font-size: 0.85em;
+}
+
+.message-bubble th,
+.message-bubble td {
+    border: 1px solid #ddd;
+    padding: 6px 8px;
+    text-align: left;
+}
+
+.message-bubble th {
+    background-color: rgba(24, 188, 156, 0.1);
+    font-weight: 600;
+}
+
+.message-bubble.user th {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Enlaces */
+.message-bubble a {
+    color: #18bc9c;
+    text-decoration: underline;
+}
+
+.message-bubble.user a {
+    color: #fff;
+    text-decoration: underline;
+}
+
+.message-bubble a:hover {
+    text-decoration: none;
+}
+
+/* Mejorar separación entre elementos */
+.message-bubble > *:not(:last-child) {
+    margin-bottom: 0.75em;
+}
+
+.message-bubble > *:last-child {
+    margin-bottom: 0;
+}

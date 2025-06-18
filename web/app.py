@@ -5,7 +5,6 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import date
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from util import url_has_allowed_host_and_scheme
 import os
 from dotenv import load_dotenv
 

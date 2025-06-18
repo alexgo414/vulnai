@@ -1176,7 +1176,84 @@ function inicializarChat() {
     return { chatMensajes, messageInput, sendButton };
 }
 
-// ✅ CONFIGURAR EVENTOS DEL CHAT
+// ✅ FUNCIÓN PARA MANEJAR UPLOAD DE ARCHIVOS SBOM
+async function manejarArchivoSBOM(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (!proyectoActualChat) {
+        mostrarToast("Selecciona un proyecto primero", "warning");
+        return;
+    }
+    
+    // Verificar tipo de archivo
+    const allowedTypes = ['json', 'xml', 'yaml', 'yml', 'spdx', 'txt'];
+    const fileExtension = file.name.split('.').pop().toLowerCase();
+    
+    if (!allowedTypes.includes(fileExtension)) {
+        mostrarToast("Tipo de archivo no soportado. Usa: JSON, XML, YAML, SPDX, TXT", "danger");
+        return;
+    }
+    
+    // Verificar tamaño (máximo 16MB)
+    if (file.size > 16 * 1024 * 1024) {
+        mostrarToast("Archivo demasiado grande. Máximo 16MB", "danger");
+        return;
+    }
+    
+    try {
+        // Mostrar mensaje de carga
+        agregarMensajeAlChat(`📁 Subiendo archivo SBOM: ${file.name}...`, 'user');
+        
+        // Crear FormData
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('mensaje', `Analiza este archivo SBOM del proyecto ${proyectoActualChat.nombre}`);
+        
+        // Enviar archivo
+        const response = await fetch(`${API_BASE_URL_CHAT}/chat/upload-sbom`, {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Error ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log("✅ Archivo SBOM procesado:", data);
+        
+        // Mostrar respuesta del análisis
+        agregarMensajeAlChat(data.message, 'bot');
+        
+        // Mostrar información adicional del archivo
+        if (data.sbom_info) {
+            const info = data.sbom_info;
+            mostrarToast(
+                `SBOM procesado: ${info.formato} con ${info.componentes} componentes`, 
+                "success", 
+                4000
+            );
+        }
+        
+        // Limpiar input
+        event.target.value = '';
+        
+    } catch (error) {
+        console.error("❌ Error subiendo SBOM:", error);
+        agregarMensajeAlChat(
+            `🚫 Error procesando archivo SBOM: ${error.message}`, 
+            'bot'
+        );
+        
+        // Limpiar input
+        event.target.value = '';
+    }
+}
+
+// ✅ FUNCIÓN PARA CONFIGURAR EVENTOS DEL CHAT (ACTUALIZADA)
 function configurarEventosChat() {
     // Enviar mensaje con botón
     sendButton.addEventListener('click', enviarMensaje);
@@ -1188,6 +1265,12 @@ function configurarEventosChat() {
             enviarMensaje();
         }
     });
+    
+    // ✅ CONFIGURAR UPLOAD DE ARCHIVOS
+    const fileInput = document.getElementById('file-upload');
+    if (fileInput) {
+        fileInput.addEventListener('change', manejarArchivoSBOM);
+    }
 }
 
 // ✅ FUNCIÓN PARA ENVIAR MENSAJE
@@ -1210,7 +1293,7 @@ function enviarMensaje() {
     enviarMensajeAlServidor(messageText);
 }
 
-// ✅ FUNCIÓN PARA AGREGAR MENSAJE AL CHAT
+// ✅ FUNCIÓN SEGURA CON DOMPURIFY
 function agregarMensajeAlChat(mensaje, tipo) {
     const messageGroup = document.createElement('div');
     messageGroup.className = `message-group ${tipo}`;
@@ -1220,13 +1303,46 @@ function agregarMensajeAlChat(mensaje, tipo) {
         minute: '2-digit' 
     });
     
+    let mensajeProcesado = mensaje;
+    
+    if (tipo === 'bot') {
+        try {
+            // Procesar markdown
+            if (typeof marked !== 'undefined') {
+                marked.setOptions({
+                    breaks: true,
+                    gfm: true,
+                    sanitize: false,
+                    smartypants: true
+                });
+                mensajeProcesado = marked.parse(mensaje);
+            } else {
+                mensajeProcesado = procesarMarkdownBasico(mensaje);
+            }
+            
+            // Sanitizar HTML para seguridad
+            if (typeof DOMPurify !== 'undefined') {
+                mensajeProcesado = DOMPurify.sanitize(mensajeProcesado, {
+                    ALLOWED_TAGS: ['strong', 'em', 'code', 'pre', 'br', 'p', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote'],
+                    ALLOWED_ATTR: []
+                });
+            }
+        } catch (error) {
+            console.warn("Error procesando markdown:", error);
+            mensajeProcesado = mensaje.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+        }
+    } else {
+        // Para usuarios, solo saltos de línea y escape básico
+        mensajeProcesado = mensaje.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+    }
+    
     messageGroup.innerHTML = `
         <div class="message-avatar ${tipo}">
             <i class="fas fa-${tipo === 'user' ? 'user' : 'robot'}"></i>
         </div>
         <div class="message-content">
             <div class="message-bubble ${tipo}">
-                ${mensaje}
+                ${mensajeProcesado}
             </div>
             <div class="message-time">${timestamp}</div>
         </div>
@@ -1428,11 +1544,11 @@ async function eliminarProyectoChat(proyectoId) {
     }
 }
 
-// ✅ FUNCIÓN AUXILIAR PARA RESETEAR EL CHAT
+// ✅ FUNCIÓN PARA RESETEAR CHAT (ACTUALIZADA)
 function resetearChat() {
     proyectoActualChat = null;
     
-    // Deshabilitar input y botón
+    // Deshabilitar input, botón y upload
     if (messageInput) {
         messageInput.disabled = true;
         messageInput.placeholder = "Selecciona un proyecto para empezar a chatear...";
@@ -1440,6 +1556,11 @@ function resetearChat() {
     
     if (sendButton) {
         sendButton.disabled = true;
+    }
+    
+    const fileUploadBtn = document.getElementById('file-upload-btn');
+    if (fileUploadBtn) {
+        fileUploadBtn.style.display = 'none';
     }
     
     // Actualizar header del chat
@@ -1457,13 +1578,13 @@ function resetearChat() {
                     <i class="fas fa-comments"></i>
                 </div>
                 <h3>¡Bienvenido al Chat!</h3>
-                <p>Selecciona un proyecto de la barra lateral para comenzar a chatear con la IA sobre ese proyecto específico.</p>
+                <p>Selecciona un proyecto de la barra lateral para comenzar a chatear con la IA sobre ese proyecto específico. También puedes subir archivos SBOM para análisis.</p>
             </div>
         `;
     }
 }
 
-// ✅ FUNCIÓN PARA SELECCIONAR PROYECTO
+// ✅ FUNCIÓN PARA SELECCIONAR PROYECTO (ACTUALIZADA)
 function seleccionarProyecto(proyecto) {
     proyectoActualChat = proyecto;
     
@@ -1481,15 +1602,28 @@ function seleccionarProyecto(proyecto) {
     document.getElementById('current-project-status').textContent = 
         `Chat activo • ${proyecto.descripcion || 'Sin descripción'}`;
     
-    // Habilitar input y botón
-    messageInput.disabled = false;
-    messageInput.placeholder = `Pregunta sobre "${proyecto.nombre}"...`;
-    sendButton.disabled = false;
+    // Habilitar input, botón y upload
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendButton');
+    const fileUploadBtn = document.getElementById('file-upload-btn');
+    
+    if (messageInput) {
+        messageInput.disabled = false;
+        messageInput.placeholder = `Pregunta sobre "${proyecto.nombre}" o sube un archivo SBOM...`;
+    }
+    
+    if (sendButton) {
+        sendButton.disabled = false;
+    }
+    
+    if (fileUploadBtn) {
+        fileUploadBtn.style.display = 'flex';
+    }
     
     // Limpiar chat y mostrar mensaje de inicio
     limpiarChatSilencioso();
     agregarMensajeAlChat(
-        `¡Hola! Ahora estamos hablando sobre el proyecto "${proyecto.nombre}". ¿En qué puedo ayudarte?`, 
+        `¡Hola! Ahora estamos hablando sobre el proyecto "${proyecto.nombre}". Puedes hacerme preguntas o subir archivos SBOM para análisis. ¿En qué puedo ayudarte?`, 
         'bot'
     );
     

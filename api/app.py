@@ -2,17 +2,19 @@ import os
 import uuid
 from datetime import date, timedelta
 from dotenv import load_dotenv
-from flask import Flask, request, jsonify, render_template, flash, redirect, url_for, abort, make_response
+from flask import Flask, request, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api, Resource
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from flask_login import LoginManager, UserMixin
 from flask_cors import CORS
 import flask_praetorian
 from werkzeug.security import generate_password_hash, check_password_hash
-from util import url_has_allowed_host_and_scheme
+from markupsafe import escape
 
-# Cargar configuración desde .env
-load_dotenv()
+if os.getenv('FLASK_TESTING') == 'true':
+    load_dotenv('.env.test')
+else:
+    load_dotenv()
 
 # Configurar Flask
 app = Flask(__name__)
@@ -23,17 +25,53 @@ app.config["PRAETORIAN_HASH_SCHEMES"] = ["pbkdf2_sha256"]
 app.config["JWT_ACCESS_LIFESPAN"] = {"hours": 24}
 app.config["JWT_REFRESH_LIFESPAN"] = {"days": 30}
 
-# ✅ CONFIGURACIÓN PARA JWT COOKIES
 app.config["JWT_ACCESS_COOKIE_NAME"] = "access_token"
-app.config["JWT_COOKIE_SECURE"] = False  # True en producción con HTTPS
-app.config["JWT_COOKIE_CSRF_PROTECT"] = False  # Simplificado para desarrollo
+app.config["JWT_COOKIE_SECURE"] = False
+app.config["JWT_COOKIE_CSRF_PROTECT"] = False
 app.config["JWT_COOKIE_SAMESITE"] = "Lax"
+app.config["JWT_TOKEN_LOCATION"] = ["cookies", "headers"]
 
 db = SQLAlchemy(app)
-api = Api(app)
+
+def handle_praetorian_errors(error):
+    """Función para manejar errores de Praetorian en Flask-RESTful"""
+    error_message = str(error)
+    
+    if "401" in error_message:
+        return {"message": "Token de autenticación requerido"}, 401
+    elif "403" in error_message:
+        return {"message": "Permisos insuficientes para esta operación"}, 403
+    elif "400" in error_message:
+        return {"message": "Solicitud incorrecta"}, 400
+    else:
+        return {"message": "Error de autenticación"}, 401
+
+api = Api(app, errors={
+    'MissingToken': {
+        'message': "Token de autenticación requerido",
+        'status': 401
+    },
+    'ExpiredAccessError': {
+        'message': "Token de autenticación expirado", 
+        'status': 401
+    },
+    'MissingRoleError': {
+        'message': "Permisos insuficientes para esta operación",
+        'status': 403
+    },
+    'AuthenticationError': {
+        'message': "Error de autenticación",
+        'status': 401
+    },
+    'PraetorianError': {
+        'message': "Error de autenticación",
+        'status': 401
+    }
+})
+
 guard = flask_praetorian.Praetorian()
 
-# ✅ CONFIGURAR CORS PARA COOKIES
+# ✅ CONFIGURAR CORS
 CORS(app, 
      origins=["http://localhost:5003"], 
      supports_credentials=True,
@@ -46,7 +84,7 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = None
 
-# Modelos
+# Modelos (igual que antes)
 class Proyecto(db.Model):
     __tablename__ = 'proyectos'
     id = db.Column(db.String(36), primary_key=True)
@@ -65,28 +103,15 @@ class Usuario(UserMixin, db.Model):
     email = db.Column(db.String(50), nullable=False, unique=True)
     password = db.Column(db.String(200), nullable=False)
     proyectos = db.relationship('Proyecto', backref='propietario', lazy=True)
-    roles = db.Column(db.Text)  # Necesario para Praetorian
+    roles = db.Column(db.Text)
     is_active = db.Column(db.Boolean, default=True)
 
     @property
     def identity(self):
-        """
-        *Required Attribute or Property*
-
-        flask-praetorian requires that the user class has an ``identity`` instance
-        attribute or property that provides the unique id of the user instance
-        """
         return self.id
 
     @property
     def rolenames(self):
-        """
-        *Required Attribute or Property*
-
-        flask-praetorian requires that the user class has a ``rolenames`` instance
-        attribute or property that provides a list of strings that describe the roles
-        attached to the user instance
-        """
         try:
             return self.roles.split(",")
         except Exception:
@@ -94,24 +119,10 @@ class Usuario(UserMixin, db.Model):
 
     @classmethod
     def lookup(cls, username):
-        """
-        *Required Method*
-
-        flask-praetorian requires that the user class implements a ``lookup()``
-        class method that takes a single ``username`` argument and returns a user
-        instance if there is one that matches or ``None`` if there is not.
-        """
         return cls.query.filter_by(username=username).one_or_none()
 
     @classmethod
     def identify(cls, id):
-        """
-        *Required Method*
-
-        flask-praetorian requires that the user class implements an ``identify()``
-        class method that takes a single ``id`` argument and returns user instance if
-        there is one that matches or ``None`` if there is not.
-        """
         return cls.query.get(id)
 
     def is_valid(self):
@@ -119,18 +130,39 @@ class Usuario(UserMixin, db.Model):
 
 guard.init_app(app, Usuario)
 
-def check(password, hash): # verificar contraseña
-    return check_password_hash(hash, password)
+# ✅ OVERRIDE DEL MÉTODO DE MANEJO DE ERRORES EN API
+def custom_handle_error(self, e):
+    """Método personalizado para manejar errores de Praetorian"""
+    # Verificar si es una excepción de Praetorian
+    if isinstance(e, flask_praetorian.exceptions.MissingToken):
+        return {"message": "Token de autenticación requerido"}, 401
+    elif isinstance(e, flask_praetorian.exceptions.MissingRoleError):
+        return {"message": "Permisos insuficientes para esta operación"}, 403
+    elif isinstance(e, flask_praetorian.exceptions.ExpiredAccessError):
+        return {"message": "Token de autenticación expirado"}, 401
+    elif isinstance(e, flask_praetorian.exceptions.AuthenticationError):
+        return {"message": "Error de autenticación"}, 401
+    elif isinstance(e, flask_praetorian.exceptions.PraetorianError):
+        error_message = str(e)
+        if "401" in error_message:
+            return {"message": "Token de autenticación requerido"}, 401
+        elif "403" in error_message:
+            return {"message": "Permisos insuficientes para esta operación"}, 403
+        else:
+            return {"message": "Error de autenticación"}, 401
+    
+    # Para otros errores, usar el manejo por defecto
+    return self._original_handle_error(e)
 
-def hash_password(password):
-    return generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
+# ✅ APLICAR EL OVERRIDE
+api._original_handle_error = api.handle_error
+api.handle_error = lambda e: custom_handle_error(api, e)
 
-# Crear el user loader
 @login_manager.user_loader
-def load_user(user_id:str):
-    return db.session.get(Usuario, user_id) # Poner que devuelva None si no existe el usuario??
+def load_user(user_id: str):
+    return db.session.get(Usuario, user_id)
 
-# Crear la base de datos y el usuario admin si no existe
+# Crear base de datos y usuarios por defecto
 with app.app_context():
     db.create_all()
 
@@ -160,13 +192,8 @@ with app.app_context():
 
     db.session.commit()
 
-
-# ✅ ENDPOINT DE LOGIN MODIFICADO PARA COOKIES
 @app.route("/login", methods=["POST"])
 def login():
-    """
-    Login con JWT cookie en lugar de token en respuesta JSON
-    """
     req = request.get_json(force=True)
     username = req.get("username", None)
     password = req.get("password", None)
@@ -174,8 +201,7 @@ def login():
     try:
         user = guard.authenticate(username, password)
         token = guard.encode_jwt_token(user)
-        
-        # ✅ CREAR RESPUESTA CON COOKIE
+
         response = make_response(jsonify({
             "message": "Login exitoso",
             "user": {
@@ -184,13 +210,13 @@ def login():
             }
         }))
         
-        # ✅ CONFIGURAR COOKIE JWT
         response.set_cookie(
             'access_token',
             token,
-            max_age=timedelta(hours=24),
-            httponly=True,  # Más seguro - no accesible desde JS
-            secure=False,   # True en producción con HTTPS
+            max_age=int(timedelta(hours=24).total_seconds()),
+            httponly=True,
+            path='/',
+            secure=False,
             samesite='Lax'
         )
         
@@ -199,30 +225,22 @@ def login():
     except Exception as e:
         return jsonify({"message": "Credenciales inválidas"}), 401
 
-# ✅ ENDPOINT DE LOGOUT PARA LIMPIAR COOKIE
 @app.route("/logout", methods=["POST"])
 def logout():
-    """
-    Logout limpiando la cookie JWT
-    """
     response = make_response(jsonify({"message": "Logout exitoso"}))
     response.set_cookie('access_token', '', expires=0)
     return response, 200
 
-
 @app.route("/usuarios/rol", methods=["GET"])
 @flask_praetorian.auth_required
 def get_user_role():
-    """
-    Endpoint para obtener el rol del usuario autenticado.
-    """
     user = flask_praetorian.current_user()
     if user:
         return jsonify({"rol": user.rolenames}), 200
     else:
         return jsonify({"message": "Usuario no autenticado"}), 401
 
-# Recursos RESTful
+# ✅ RECURSOS RESTful CON MANEJO DE ERRORES MEJORADO
 class UsuarioResource(Resource):
     @flask_praetorian.auth_required
     def get(self, user_id=None):
@@ -253,14 +271,21 @@ class UsuarioResource(Resource):
     @flask_praetorian.roles_required('admin')
     def post(self):
         data = request.json
+        
+        if not all(k in data for k in ("username", "nombre", "apellidos", "email", "password")):
+            return {"message": "Faltan campos requeridos"}, 400
+        
+        if Usuario.query.filter_by(username=data["username"]).first() or Usuario.query.filter_by(email=data["email"]).first():
+            return {"message": "El nombre de usuario o email ya existe"}, 409
+        
         new_user = Usuario(
             id=str(uuid.uuid4()),
-            username=data["username"],
-            nombre=data["nombre"],
-            apellidos=data["apellidos"],
+            username=escape(data["username"]),
+            nombre=escape(data["nombre"]),
+            apellidos=escape(data["apellidos"]),
             email=data["email"],
             password=guard.hash_password(data["password"]),
-            roles=data.get("roles", "user")  # Asignar rol por defecto como 'user'
+            roles=data.get("roles", "user")
         )
         db.session.add(new_user)
         db.session.commit()
@@ -281,7 +306,6 @@ class UsuarioResource(Resource):
             db.session.commit()
             return {"message": "Usuario actualizado con éxito"}
         except Exception as e:
-            print("Error en PUT /usuarios/<user_id>:", str(e))
             return {"message": f"Error interno: {str(e)}"}, 500
 
     @flask_praetorian.roles_required('admin')
@@ -305,7 +329,6 @@ class ProyectoResource(Resource):
             proyecto = Proyecto.query.get(proyecto_id)
             if not proyecto:
                 return {"message": "Proyecto no encontrado"}, 404
-            # Solo permite ver el proyecto si es admin o propietario
             if "admin" in user.rolenames or proyecto.usuario_id == user.id:
                 return {
                     "id": proyecto.id,
@@ -318,7 +341,6 @@ class ProyectoResource(Resource):
             else:
                 return {"message": "No autorizado"}, 403
         else:
-            # Si es admin, ve todos; si no, solo los suyos
             if "admin" in user.rolenames:
                 proyectos = Proyecto.query.all()
             else:
@@ -338,10 +360,7 @@ class ProyectoResource(Resource):
     @flask_praetorian.auth_required
     def post(self):
         data = request.json
-        print("Datos recibidos:", data)  # Verificar los datos recibidos
-
         try:
-            # Crear el proyecto directamente
             new_proyecto = Proyecto(
                 id=str(uuid.uuid4()),
                 nombre=data["nombre"],
@@ -354,7 +373,6 @@ class ProyectoResource(Resource):
             db.session.commit()
             return {"message": "Proyecto creado con éxito"}, 201
         except Exception as e:
-            print("Error al guardar el proyecto:", str(e))
             return {"message": "Error al crear el proyecto"}, 500
 
     @flask_praetorian.auth_required
@@ -380,19 +398,12 @@ class ProyectoResource(Resource):
 
 @app.route("/reflejar")
 def reflejar():
-    """
-    Endpoint de prueba para permitir ataques Reflected XSS.
-    """
     mensaje = request.args.get("mensaje", "")
     return f"<h1>{mensaje}</h1>"
 
-# Rutas de la API
+# ✅ REGISTRAR RECURSOS
 api.add_resource(UsuarioResource, '/usuarios', '/usuarios/<string:user_id>')
 api.add_resource(ProyectoResource, '/proyectos', '/proyectos/<string:proyecto_id>')
-
-# Crear la base de datos
-with app.app_context():
-    db.create_all()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
