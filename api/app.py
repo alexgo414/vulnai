@@ -240,7 +240,6 @@ def get_user_role():
     else:
         return jsonify({"message": "Usuario no autenticado"}), 401
 
-# ✅ RECURSOS RESTful CON MANEJO DE ERRORES MEJORADO
 class UsuarioResource(Resource):
     @flask_praetorian.auth_required
     def get(self, user_id=None):
@@ -253,7 +252,8 @@ class UsuarioResource(Resource):
                 "username": user.username,
                 "nombre": user.nombre,
                 "apellidos": user.apellidos,
-                "email": user.email
+                "email": user.email,
+                "roles": user.roles  # ✅ Añadir roles
             }
         else:
             users = Usuario.query.all()
@@ -263,63 +263,154 @@ class UsuarioResource(Resource):
                     "username": user.username,
                     "nombre": user.nombre,
                     "apellidos": user.apellidos,
-                    "email": user.email
+                    "email": user.email,
+                    "roles": user.roles  # ✅ Añadir roles
                 }
                 for user in users
             ]
 
     @flask_praetorian.roles_required('admin')
     def post(self):
-        data = request.json
-        
-        if not all(k in data for k in ("username", "nombre", "apellidos", "email", "password")):
-            return {"message": "Faltan campos requeridos"}, 400
-        
-        if Usuario.query.filter_by(username=data["username"]).first() or Usuario.query.filter_by(email=data["email"]).first():
-            return {"message": "El nombre de usuario o email ya existe"}, 409
-        
-        new_user = Usuario(
-            id=str(uuid.uuid4()),
-            username=escape(data["username"]),
-            nombre=escape(data["nombre"]),
-            apellidos=escape(data["apellidos"]),
-            email=data["email"],
-            password=guard.hash_password(data["password"]),
-            roles=data.get("roles", "user")
-        )
-        db.session.add(new_user)
-        db.session.commit()
-        return {"message": "Usuario creado con éxito"}, 201
+        try:
+            data = request.json
+            print(f"🚀 Datos recibidos: {data}")  # Debug
+            
+            # ✅ VALIDACIÓN MEJORADA
+            if not data:
+                return {"message": "No se enviaron datos"}, 400
+                
+            required_fields = ["username", "nombre", "apellidos", "email", "password"]
+            missing_fields = [field for field in required_fields if not data.get(field)]
+            
+            if missing_fields:
+                return {"message": f"Faltan campos requeridos: {', '.join(missing_fields)}"}, 400
+            
+            # ✅ VALIDAR LONGITUDES
+            if len(data["username"]) > 20:
+                return {"message": "El nombre de usuario no puede tener más de 20 caracteres"}, 400
+            if len(data["nombre"]) > 40:
+                return {"message": "El nombre no puede tener más de 40 caracteres"}, 400
+            if len(data["apellidos"]) > 50:
+                return {"message": "Los apellidos no pueden tener más de 50 caracteres"}, 400
+            if len(data["email"]) > 50:
+                return {"message": "El email no puede tener más de 50 caracteres"}, 400
+            
+            # ✅ VERIFICAR DUPLICADOS
+            existing_user = Usuario.query.filter(
+                (Usuario.username == data["username"]) | 
+                (Usuario.email == data["email"])
+            ).first()
+            
+            if existing_user:
+                if existing_user.username == data["username"]:
+                    return {"message": "El nombre de usuario ya existe"}, 409
+                else:
+                    return {"message": "El email ya está registrado"}, 409
+            
+            # ✅ CREAR NUEVO USUARIO
+            new_user = Usuario(
+                id=str(uuid.uuid4()),
+                username=data["username"].strip(),
+                nombre=data["nombre"].strip(),
+                apellidos=data["apellidos"].strip(),
+                email=data["email"].strip().lower(),
+                password=guard.hash_password(data["password"]),
+                roles=data.get("roles", "user"),
+                is_active=True
+            )
+            
+            print(f"✅ Creando usuario: {new_user.username}")  # Debug
+            
+            db.session.add(new_user)
+            db.session.commit()
+            
+            print(f"✅ Usuario creado con ID: {new_user.id}")  # Debug
+            
+            return {
+                "message": "Usuario creado con éxito",
+                "usuario": {
+                    "id": new_user.id,
+                    "username": new_user.username,
+                    "nombre": new_user.nombre,
+                    "apellidos": new_user.apellidos,
+                    "email": new_user.email,
+                    "roles": new_user.roles
+                }
+            }, 201
+            
+        except Exception as e:
+            print(f"❌ Error creando usuario: {str(e)}")  # Debug
+            print(f"❌ Tipo de error: {type(e)}")  # Debug
+            import traceback
+            traceback.print_exc()  # Debug detallado
+            
+            db.session.rollback()
+            return {"message": f"Error interno del servidor: {str(e)}"}, 500
 
+    @flask_praetorian.auth_required
     def put(self, user_id):
         try:
             user = Usuario.query.get(user_id)
             if not user:
                 return {"message": "Usuario no encontrado"}, 404
+                
             data = request.json
-            user.username = data.get("username", user.username)
-            user.nombre = data.get("nombre", user.nombre)
-            user.apellidos = data.get("apellidos", user.apellidos)
-            user.email = data.get("email", user.email)
-            if "password" in data:
+            if not data:
+                return {"message": "No se enviaron datos"}, 400
+            
+            # Verificar duplicados solo si se cambia username o email
+            if "username" in data and data["username"] != user.username:
+                existing = Usuario.query.filter_by(username=data["username"]).first()
+                if existing:
+                    return {"message": "El nombre de usuario ya existe"}, 409
+                    
+            if "email" in data and data["email"] != user.email:
+                existing = Usuario.query.filter_by(email=data["email"]).first()
+                if existing:
+                    return {"message": "El email ya está registrado"}, 409
+            
+            # Actualizar campos
+            if "username" in data:
+                user.username = data["username"].strip()
+            if "nombre" in data:
+                user.nombre = data["nombre"].strip()
+            if "apellidos" in data:
+                user.apellidos = data["apellidos"].strip()
+            if "email" in data:
+                user.email = data["email"].strip().lower()
+            if "password" in data and data["password"]:
                 user.password = guard.hash_password(data["password"])
+                
             db.session.commit()
-            return {"message": "Usuario actualizado con éxito"}
+            return {"message": "Usuario actualizado con éxito"}, 200
+            
         except Exception as e:
-            return {"message": f"Error interno: {str(e)}"}, 500
+            print(f"❌ Error actualizando usuario: {str(e)}")
+            db.session.rollback()
+            return {"message": f"Error interno del servidor: {str(e)}"}, 500
 
     @flask_praetorian.roles_required('admin')
     def delete(self, user_id):
-        user = Usuario.query.get(user_id)
-        if not user:
-            return {"message": "Usuario no encontrado"}, 404
-        if user.username == "admin":
-            return {"message": "No se puede eliminar el usuario administrador"}, 403
-        if user.proyectos and len(user.proyectos) > 0:
-            return {"message": "No se puede eliminar el usuario porque tiene proyectos asociados."}, 400
-        db.session.delete(user)
-        db.session.commit()
-        return {"message": "Usuario eliminado con éxito"}
+        try:
+            user = Usuario.query.get(user_id)
+            if not user:
+                return {"message": "Usuario no encontrado"}, 404
+                
+            if user.username == "admin":
+                return {"message": "No se puede eliminar el usuario administrador"}, 403
+                
+            # Verificar proyectos asociados
+            if user.proyectos and len(user.proyectos) > 0:
+                return {"message": "No se puede eliminar el usuario porque tiene proyectos asociados"}, 400
+                
+            db.session.delete(user)
+            db.session.commit()
+            return {"message": "Usuario eliminado con éxito"}, 200
+            
+        except Exception as e:
+            print(f"❌ Error eliminando usuario: {str(e)}")
+            db.session.rollback()
+            return {"message": f"Error interno del servidor: {str(e)}"}, 500
 
 class ProyectoResource(Resource):
     @flask_praetorian.auth_required

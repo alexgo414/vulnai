@@ -190,32 +190,8 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.7/dist/purify.min.js"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
-<script>
-    // ✅ CONFIGURAR NAVEGACIÓN CONDICIONAL AL CARGAR LA PÁGINA
-    document.addEventListener("DOMContentLoaded", async () => {
-        // Verificar autenticación y actualizar navegación
-        await verificarYActualizarNavegacion();
-        
-        // Configurar event listeners
-        const perfilLink = document.getElementById("perfil-link");
-        const chatLink = document.getElementById("chat-link");
-        
-        if (perfilLink) {
-            perfilLink.addEventListener("click", function (e) {
-                e.preventDefault();
-                navegarConAutenticacion("/perfil");
-            });
-        }
-
-        if (chatLink) {
-            chatLink.addEventListener("click", function (e) {
-                e.preventDefault();
-                navegarConAutenticacion("/chat");
-            });
-        }
-    });
-</script>
 </html>
