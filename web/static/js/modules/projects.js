@@ -10,11 +10,12 @@ export async function cargarFormularioCrearProyecto() {
 
         const nombre = document.getElementById("nombre").value;
         const descripcion = document.getElementById("descripcion").value;
+        const maxVulnerabilidades = parseInt(document.getElementById("max_vulnerabilidades").value) || 10;
 
         try {
             const response = await fetchWithCredentials(`${API_BASE_URL}/proyectos`, {
                 method: "POST",
-                body: JSON.stringify({ nombre, descripcion })
+                body: JSON.stringify({ nombre, descripcion, max_vulnerabilidades: maxVulnerabilidades })
             });
 
             if (!response.ok) {
@@ -54,8 +55,61 @@ export async function editarProyecto(proyectoId) {
             </div>
             <div class="mb-3">
                 <label for="descripcion" class="form-label"><strong>Descripción:</strong></label>
-                <textarea id="descripcion" name="descripcion" class="form-control" rows="4" placeholder="Describe brevemente el proyecto">${proyecto.descripcion}</textarea>
+                <textarea id="descripcion" name="descripcion" class="form-control" rows="4" placeholder="Describe brevemente el proyecto">${proyecto.descripcion || ''}</textarea>
             </div>
+            
+            <!-- ✅ SECCIÓN DE CONFIGURACIÓN DE SEGURIDAD MEJORADA -->
+            <div class="mb-4">
+                <h6 class="border-bottom pb-2 mb-3">
+                    <i class="fas fa-shield-alt me-2 text-warning"></i>
+                    Configuración de Seguridad
+                </h6>
+                
+                <div class="mb-3">
+                    <label for="max_vulnerabilidades" class="form-label">
+                        <strong>Máximo de vulnerabilidades aceptadas en SBOM:</strong>
+                    </label>
+                    <div class="input-group">
+                        <input type="number" id="max_vulnerabilidades" name="max_vulnerabilidades" 
+                                class="form-control" value="${proyecto.max_vulnerabilidades || 10}" min="0" max="1000">
+                        <span class="input-group-text">
+                            <i class="fas fa-bug"></i>
+                        </span>
+                    </div>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Define cuántas vulnerabilidades como máximo puede tener un archivo SBOM 
+                        para ser considerado aceptable en este proyecto. 
+                        <strong>Valor actual: ${proyecto.max_vulnerabilidades || 10}</strong>
+                    </div>
+                </div>
+
+                <!-- ✅ INDICADORES VISUALES -->
+                <div class="alert alert-info mb-3">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-lightbulb me-2"></i>Guía de configuración:
+                    </h6>
+                    <ul class="mb-0">
+                        <li><strong>0-5 vulnerabilidades:</strong> Proyecto de alta seguridad</li>
+                        <li><strong>6-15 vulnerabilidades:</strong> Proyecto de seguridad estándar</li>
+                        <li><strong>16+ vulnerabilidades:</strong> Proyecto en desarrollo/testing</li>
+                    </ul>
+                </div>
+
+                <!-- ✅ PREVIEW DEL NIVEL DE SEGURIDAD -->
+                <div class="security-level-preview">
+                    <label class="form-label">
+                        <strong>Nivel de seguridad:</strong>
+                    </label>
+                    <div id="security-level-indicator" class="security-level high">
+                        <span class="security-badge">
+                            <i class="fas fa-shield-alt me-1"></i>
+                            <span id="security-level-text">Alta Seguridad</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
             <div class="text-center">
                 <button type="submit" class="btn btn-primary">Actualizar</button>
                 <a href="/perfil" class="btn btn-secondary">Cancelar</a>
@@ -70,11 +124,19 @@ export async function editarProyecto(proyectoId) {
 
         const nombre = document.getElementById("nombre").value;
         const descripcion = document.getElementById("descripcion").value;
+        const maxVulnerabilidades = document.getElementById("max_vulnerabilidades").value;
 
         try {
+            // ✅ INCLUIR max_vulnerabilidades EN EL BODY
+            const body = { 
+                nombre, 
+                descripcion,
+                max_vulnerabilidades: maxVulnerabilidades ? parseInt(maxVulnerabilidades) : proyecto.max_vulnerabilidades
+            };
+
             const response = await fetchWithCredentials(`${API_BASE_URL}/proyectos/${proyecto.id}`, {
                 method: "PUT",
-                body: JSON.stringify({ nombre, descripcion })
+                body: JSON.stringify(body)
             });
 
             if (!response.ok) {
@@ -162,12 +224,47 @@ export function renderizarProyectos(proyectos, usuarios) {
         const usuario = usuarios.find(u => u.id === proyecto.usuario_id);
         const nombreUsuario = usuario ? usuario.username : 'Usuario desconocido';
         
+        // ✅ AÑADIR INDICADOR DE NIVEL DE SEGURIDAD
+        const maxVuln = proyecto.max_vulnerabilidades || 10;
+        let nivelSeguridad = '';
+        let iconoSeguridad = '';
+        let colorSeguridad = '';
+        
+        if (maxVuln <= 5) {
+            nivelSeguridad = 'Alta Seguridad';
+            iconoSeguridad = 'fas fa-shield-alt';
+            colorSeguridad = 'text-success';
+        } else if (maxVuln <= 15) {
+            nivelSeguridad = 'Seguridad Estándar';
+            iconoSeguridad = 'fas fa-shield-halved';
+            colorSeguridad = 'text-warning';
+        } else {
+            nivelSeguridad = 'Seguridad Básica';
+            iconoSeguridad = 'fas fa-exclamation-triangle';
+            colorSeguridad = 'text-danger';
+        }
+        
         const proyectoCard = document.createElement("div");
         proyectoCard.classList.add("col-md-6", "col-xl-4", "mb-3");
         proyectoCard.innerHTML = `
             <div class="project-card">
                 <h3 class="project-title">${proyecto.nombre}</h3>
                 <p class="project-description">${proyecto.descripcion || 'Sin descripción disponible'}</p>
+                
+                <!-- ✅ INFORMACIÓN DE SEGURIDAD -->
+                <div class="project-security mb-3">
+                    <div class="security-info ${colorSeguridad}">
+                        <i class="${iconoSeguridad} me-1"></i>
+                        <strong>${nivelSeguridad}</strong>
+                    </div>
+                    <div class="security-limit">
+                        <small class="text-muted">
+                            <i class="fas fa-bug me-1"></i>
+                            Máximo: ${maxVuln} vulnerabilidades
+                        </small>
+                    </div>
+                </div>
+                
                 <div class="project-meta">
                     <div><strong>Propietario:</strong> ${nombreUsuario}</div>
                     <div><strong>Creado:</strong> ${new Date(proyecto.fecha_creacion).toLocaleDateString('es-ES')}</div>

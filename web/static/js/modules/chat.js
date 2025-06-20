@@ -451,8 +451,8 @@ async function enviarMensajeAlServidor(messageText) {
             method: 'POST',
             body: JSON.stringify({ 
                 message: messageText,
-                proyecto_id: proyectoActualChat.id,
-                proyecto_nombre: proyectoActualChat.nombre
+                proyecto_id: proyectoActualChat.id,  // ✅ Incluir ID del proyecto
+                proyecto_nombre: proyectoActualChat.nombre  // ✅ Incluir nombre del proyecto
             })
         });
 
@@ -505,7 +505,7 @@ export function inicializarChat() {
     return { chatMensajes, messageInput, sendButton };
 }
 
-function mostrarInformacionSBOM(sbomInfo) {
+function mostrarInformacionSBOM(sbomInfo, limitesInfo = null) {
     if (!sbomInfo) return;
     
     let mensaje = `**Archivo procesado:** ${sbomInfo.filename}\n`;
@@ -519,10 +519,35 @@ function mostrarInformacionSBOM(sbomInfo) {
         mensaje += `• Vulnerabilidades encontradas: ${nvd.vulnerabilidades_encontradas}\n`;
         mensaje += `• Componentes vulnerables: ${nvd.componentes_vulnerables}\n`;
         
-        if (nvd.vulnerabilidades_encontradas > 0) {
-            mensaje += `\n⚠️ **Se encontraron vulnerabilidades de seguridad.** Revisa el análisis detallado abajo.`;
+        // ✅ AÑADIR INFORMACIÓN DE LÍMITES DEL PROYECTO
+        if (limitesInfo && limitesInfo.limite_configurado !== null) {
+            mensaje += `• **Límite configurado para el proyecto:** ${limitesInfo.limite_configurado}\n`;
+            
+            if (limitesInfo.excede_limite) {
+                mensaje += `• ⚠️ **LÍMITE EXCEDIDO** por **${limitesInfo.diferencia}** vulnerabilidades\n`;
+                mensaje += `• 🚨 **Estado:** NO CUMPLE con los estándares de seguridad del proyecto\n`;
+            } else {
+                mensaje += `• ✅ **DENTRO DEL LÍMITE** - Margen disponible: **${limitesInfo.margen_disponible}** vulnerabilidades\n`;
+                mensaje += `• 🟢 **Estado:** CUMPLE con los estándares de seguridad del proyecto (${limitesInfo.porcentaje_usado}% usado)\n`;
+            }
+        }
+        
+        // ✅ MENSAJE CONTEXTUALIZADO SEGÚN LOS LÍMITES
+        if (limitesInfo && limitesInfo.limite_configurado !== null) {
+            if (limitesInfo.excede_limite) {
+                mensaje += `\n🚨 **CRÍTICO:** El proyecto supera el límite de seguridad establecido. Se requiere acción inmediata.`;
+            } else if (nvd.vulnerabilidades_encontradas > 0) {
+                mensaje += `\n⚠️ **Se encontraron vulnerabilidades de seguridad, pero están dentro del límite permitido.** Revisa el análisis detallado abajo.`;
+            } else {
+                mensaje += `\n✅ **Excelente:** No se encontraron vulnerabilidades conocidas y cumple con los estándares del proyecto.`;
+            }
         } else {
-            mensaje += `\n✅ **No se encontraron vulnerabilidades conocidas.**`;
+            // Mensaje original si no hay información de límites
+            if (nvd.vulnerabilidades_encontradas > 0) {
+                mensaje += `\n⚠️ **Se encontraron vulnerabilidades de seguridad.** Revisa el análisis detallado abajo.`;
+            } else {
+                mensaje += `\n✅ **No se encontraron vulnerabilidades conocidas.**`;
+            }
         }
     }
     
@@ -556,7 +581,10 @@ async function manejarArchivoSBOM(event) {
         
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('mensaje', `Analiza este archivo SBOM del proyecto ${proyectoActualChat.nombre} consultando la National Vulnerability Database para identificar vulnerabilidades conocidas`);
+        formData.append('proyecto_id', proyectoActualChat.id);
+        // ✅ ENVIAR EL LÍMITE DIRECTAMENTE
+        formData.append('limite_vulnerabilidades', proyectoActualChat.max_vulnerabilidades); 
+        formData.append('mensaje', `Analiza este archivo SBOM del proyecto ${proyectoActualChat.nombre}`);
         
         const response = await fetch(`${API_BASE_URL_CHAT}/chat/upload-sbom`, {
             method: 'POST',
@@ -570,29 +598,31 @@ async function manejarArchivoSBOM(event) {
         }
         
         const data = await response.json();
-        console.log("✅ Archivo SBOM procesado con NVD:", data);
+        console.log("✅ Archivo SBOM procesado con límites del proyecto:", data);
         
+        // ✅ MOSTRAR INFORMACIÓN DEL SBOM CON CONTEXTO DE LÍMITES
         if (data.sbom_info) {
-            mostrarInformacionSBOM(data.sbom_info);
+            mostrarInformacionSBOM(data.sbom_info, data.limites_info);
         }
         
+        // ✅ RESPUESTA DE LA IA (ya viene con contexto de límites)
         agregarMensajeAlChat(data.message, 'bot');
         
-        if (data.sbom_info && data.sbom_info.nvd_analysis) {
-            const nvd = data.sbom_info.nvd_analysis;
-            const vulnCount = nvd.vulnerabilidades_encontradas;
-            
-            if (vulnCount > 0) {
+        // ✅ TOAST MEJORADO CON INFORMACIÓN DE LÍMITES
+        if (data.limites_info) {
+            const limites = data.limites_info;
+            if (limites.excede_limite) {
                 mostrarToast(
-                    `⚠️ Análisis completado: ${vulnCount} vulnerabilidades encontradas en ${nvd.componentes_vulnerables} componentes`, 
-                    "warning", 
-                    6000
+                    `⚠️ LÍMITE EXCEDIDO: ${limites.vulnerabilidades_encontradas}/${limites.limite_configurado} vulnerabilidades (+${limites.diferencia})`, 
+                    "danger", 
+                    8000
                 );
             } else {
+                const estado = limites.porcentaje_usado >= 80 ? "warning" : "success";
                 mostrarToast(
-                    `✅ Análisis completado: No se encontraron vulnerabilidades conocidas`, 
-                    "success", 
-                    4000
+                    `✅ Dentro del límite: ${limites.vulnerabilidades_encontradas}/${limites.limite_configurado} vulnerabilidades (${limites.porcentaje_usado}%)`, 
+                    estado, 
+                    6000
                 );
             }
         }

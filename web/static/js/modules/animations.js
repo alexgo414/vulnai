@@ -1,5 +1,5 @@
 export function scrollToBottom(container) {
-    // Si no se proporciona container, intentar encontrar el chat automáticamente
+    // Si no se proporciona container, usar específicamente el contenedor del chat
     if (!container) {
         container = document.getElementById('chat-mensajes');
         if (!container) {
@@ -8,10 +8,9 @@ export function scrollToBottom(container) {
         }
     }
     
-    const lastChild = container.lastElementChild;
-    if (lastChild) {
-        lastChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+    // ✅ ASEGURAR QUE SOLO SE HAGA SCROLL EN EL CONTENEDOR ESPECÍFICO
+    // Usar scrollTop en lugar de scrollIntoView para evitar scroll de página
+    container.scrollTop = container.scrollHeight;
 }
 
 export function animateSteps() {

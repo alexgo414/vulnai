@@ -13,10 +13,64 @@
                     <label for="nombre" class="form-label"><strong>Nombre del proyecto:</strong></label>
                     <input type="text" id="nombre" name="nombre" class="form-control" required placeholder="Ingresa el nombre del proyecto">
                 </div>
+
                 <div class="mb-3">
                     <label for="descripcion" class="form-label"><strong>Descripción:</strong></label>
                     <textarea id="descripcion" name="descripcion" class="form-control" rows="4" placeholder="Describe brevemente el proyecto"></textarea>
                 </div>
+
+                <!-- ✅ NUEVA SECCIÓN DE CONFIGURACIÓN DE SEGURIDAD -->
+                <div class="mb-4">
+                    <h6 class="border-bottom pb-2 mb-3">
+                        <i class="fas fa-shield-alt me-2 text-warning"></i>
+                        Configuración de Seguridad
+                    </h6>
+                    
+                    <div class="mb-3">
+                        <label for="max_vulnerabilidades" class="form-label">
+                            <strong>Máximo de vulnerabilidades aceptadas en SBOM:</strong>
+                        </label>
+                        <div class="input-group">
+                            <input type="number" id="max_vulnerabilidades" name="max_vulnerabilidades" 
+                                    class="form-control" value="10" min="0" max="1000" required>
+                            <span class="input-group-text">
+                                <i class="fas fa-bug"></i>
+                            </span>
+                        </div>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Define cuántas vulnerabilidades como máximo puede tener un archivo SBOM 
+                            para ser considerado aceptable en este proyecto. 
+                            <strong>Valor recomendado: 10</strong>
+                        </div>
+                    </div>
+
+                    <!-- ✅ INDICADORES VISUALES -->
+                    <div class="alert alert-info mb-3">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-lightbulb me-2"></i>Guía de configuración:
+                        </h6>
+                        <ul class="mb-0">
+                            <li><strong>0-5 vulnerabilidades:</strong> Proyecto de alta seguridad</li>
+                            <li><strong>6-15 vulnerabilidades:</strong> Proyecto de seguridad estándar</li>
+                            <li><strong>16+ vulnerabilidades:</strong> Proyecto en desarrollo/testing</li>
+                        </ul>
+                    </div>
+
+                    <!-- ✅ PREVIEW DEL NIVEL DE SEGURIDAD -->
+                    <div class="security-level-preview">
+                        <label class="form-label">
+                            <strong>Nivel de seguridad:</strong>
+                        </label>
+                        <div id="security-level-indicator" class="security-level high">
+                            <span class="security-badge">
+                                <i class="fas fa-shield-alt me-1"></i>
+                                <span id="security-level-text">Alta Seguridad</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="text-center">
                     <button type="submit" class="btn btn-primary">Crear</button>
                     <a href="{{ url_for('perfil') }}" class="btn btn-secondary">Cancelar</a>
@@ -25,4 +79,38 @@
         </div>
     </div>
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+// ✅ SCRIPT PARA ACTUALIZAR EL INDICADOR DE NIVEL DE SEGURIDAD
+document.addEventListener('DOMContentLoaded', function() {
+    const maxVulnInput = document.getElementById('max_vulnerabilidades');
+    const securityIndicator = document.getElementById('security-level-indicator');
+    const securityText = document.getElementById('security-level-text');
+
+    function updateSecurityLevel() {
+        const value = parseInt(maxVulnInput.value) || 0;
+        
+        // Remover clases anteriores
+        securityIndicator.className = 'security-level';
+        
+        if (value <= 5) {
+            securityIndicator.classList.add('high');
+            securityText.innerHTML = '<i class="fas fa-shield-alt me-1"></i>Alta Seguridad';
+        } else if (value <= 15) {
+            securityIndicator.classList.add('medium');
+            securityText.innerHTML = '<i class="fas fa-shield-halved me-1"></i>Seguridad Estándar';
+        } else {
+            securityIndicator.classList.add('low');
+            securityText.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Seguridad Básica';
+        }
+    }
+
+    // Actualizar al cambiar el valor
+    maxVulnInput.addEventListener('input', updateSecurityLevel);
+    
+    // Actualizar al cargar
+    updateSecurityLevel();
+});
+</script>
 {% endblock %}

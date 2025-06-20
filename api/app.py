@@ -93,6 +93,7 @@ class Proyecto(db.Model):
     fecha_creacion = db.Column(db.Date, nullable=False)
     fecha_modificacion = db.Column(db.Date, nullable=False)
     usuario_id = db.Column(db.String(36), db.ForeignKey('usuarios.id'), nullable=False)
+    max_vulnerabilidades = db.Column(db.Integer, default=10, nullable=False)
 
 class Usuario(UserMixin, db.Model):
     __tablename__ = 'usuarios'
@@ -427,7 +428,8 @@ class ProyectoResource(Resource):
                     "descripcion": proyecto.descripcion,
                     "fecha_creacion": proyecto.fecha_creacion.isoformat(),
                     "fecha_modificacion": proyecto.fecha_modificacion.isoformat(),
-                    "usuario_id": proyecto.usuario_id
+                    "usuario_id": proyecto.usuario_id,
+                    "max_vulnerabilidades": proyecto.max_vulnerabilidades
                 }
             else:
                 return {"message": "No autorizado"}, 403
@@ -443,7 +445,8 @@ class ProyectoResource(Resource):
                     "descripcion": proyecto.descripcion,
                     "fecha_creacion": proyecto.fecha_creacion.isoformat(),
                     "fecha_modificacion": proyecto.fecha_modificacion.isoformat(),
-                    "usuario_id": proyecto.usuario_id
+                    "usuario_id": proyecto.usuario_id,
+                    "max_vulnerabilidades": proyecto.max_vulnerabilidades
                 }
                 for proyecto in proyectos
             ]
@@ -458,7 +461,8 @@ class ProyectoResource(Resource):
                 descripcion=data["descripcion"],
                 fecha_creacion=date.today(),
                 fecha_modificacion=date.today(),
-                usuario_id=flask_praetorian.current_user().id
+                usuario_id=flask_praetorian.current_user().id,
+                max_vulnerabilidades=data.get("max_vulnerabilidades", 10)
             )
             db.session.add(new_proyecto)
             db.session.commit()
@@ -468,15 +472,71 @@ class ProyectoResource(Resource):
 
     @flask_praetorian.auth_required
     def put(self, proyecto_id):
-        proyecto = Proyecto.query.get(proyecto_id)
-        if not proyecto:
-            return {"message": "Proyecto no encontrado"}, 404
-        data = request.json
-        proyecto.nombre = data.get("nombre", proyecto.nombre)
-        proyecto.descripcion = data.get("descripcion", proyecto.descripcion)
-        proyecto.fecha_modificacion = date.today()
-        db.session.commit()
-        return {"message": "Proyecto actualizado con éxito"}
+        try:
+            user = flask_praetorian.current_user()
+            proyecto = Proyecto.query.get(proyecto_id)
+            
+            if not proyecto:
+                return {"message": "Proyecto no encontrado"}, 404
+                
+            # ✅ VERIFICAR PERMISOS: admin o propietario del proyecto
+            if "admin" not in user.rolenames and proyecto.usuario_id != user.id:
+                return {"message": "No autorizado para editar este proyecto"}, 403
+                
+            data = request.json
+            if not data:
+                return {"message": "No se enviaron datos"}, 400
+            
+            print(f"🔧 Actualizando proyecto {proyecto_id} con datos: {data}")
+            
+            # ✅ ACTUALIZAR CAMPOS (TODOS OPCIONALES)
+            if "nombre" in data and data["nombre"]:
+                if len(data["nombre"]) > 40:
+                    return {"message": "El nombre no puede tener más de 40 caracteres"}, 400
+                proyecto.nombre = data["nombre"].strip()
+                
+            if "descripcion" in data:
+                # La descripción puede ser vacía
+                proyecto.descripcion = data["descripcion"].strip() if data["descripcion"] else None
+                
+            if "max_vulnerabilidades" in data:
+                max_vuln = data["max_vulnerabilidades"]
+                if max_vuln is not None:
+                    try:
+                        max_vuln_int = int(max_vuln)
+                        if max_vuln_int < 0:
+                            return {"message": "El máximo de vulnerabilidades no puede ser negativo"}, 400
+                        if max_vuln_int > 1000:
+                            return {"message": "El máximo de vulnerabilidades no puede ser mayor a 1000"}, 400
+                        proyecto.max_vulnerabilidades = max_vuln_int
+                        print(f"✅ max_vulnerabilidades actualizado a: {proyecto.max_vulnerabilidades}")
+                    except (ValueError, TypeError):
+                        return {"message": "El máximo de vulnerabilidades debe ser un número válido"}, 400
+            
+            # ✅ ACTUALIZAR FECHA DE MODIFICACIÓN
+            proyecto.fecha_modificacion = date.today()
+            
+            db.session.commit()
+            
+            print(f"✅ Proyecto actualizado: {proyecto.nombre}, max_vulnerabilidades: {proyecto.max_vulnerabilidades}")
+            
+            return {
+                "message": "Proyecto actualizado con éxito",
+                "proyecto": {
+                    "id": proyecto.id,
+                    "nombre": proyecto.nombre,
+                    "descripcion": proyecto.descripcion,
+                    "max_vulnerabilidades": proyecto.max_vulnerabilidades,
+                    "fecha_modificacion": proyecto.fecha_modificacion.isoformat()
+                }
+            }, 200
+            
+        except Exception as e:
+            print(f"❌ Error actualizando proyecto: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            db.session.rollback()
+            return {"message": f"Error interno del servidor: {str(e)}"}, 500
 
     @flask_praetorian.auth_required
     def delete(self, proyecto_id):

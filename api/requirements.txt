@@ -1,11 +1,11 @@
 cryptography
 flask
-flask_sqlalchemy
-Flask-Login
+flask-sqlalchemy
+flask-login
 sqlalchemy
 python-dotenv
-flask_restful
-flask_jwt_extended
+flask-restful
+flask-jwt-extended
 flask-cors
 flask-praetorian
 markupsafe

@@ -1078,3 +1078,39 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+/* ✅ ASEGURAR QUE EL CONTENEDOR DE CHAT TENGA SCROLL PROPIO */
+#chat-mensajes {
+    max-height: 400px; /* o la altura que tengas configurada */
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    /* Evitar que el scroll del chat afecte la página principal */
+    position: relative;
+    isolation: isolate;
+}
+
+/* ✅ PREVENIR SCROLL EN LA PÁGINA PRINCIPAL CUANDO SE INTERACTÚA CON EL CHAT */
+.chat-container {
+    contain: layout style;
+}
+
+/* ✅ MEJORAR EL SCROLL DEL CHAT */
+#chat-mensajes::-webkit-scrollbar {
+    width: 6px;
+}
+
+#chat-mensajes::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+#chat-mensajes::-webkit-scrollbar-thumb {
+    background: #18bc9c;
+    border-radius: 3px;
+}
+
+#chat-mensajes::-webkit-scrollbar-thumb:hover {
+    background: #16a085;
+}
+

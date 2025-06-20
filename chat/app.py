@@ -30,8 +30,8 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 CORS(app, 
      origins=[
-         "http://localhost:5003",
-         "http://127.0.0.1:5003"
+        "http://localhost:5003",
+        "http://127.0.0.1:5003"
      ],
      supports_credentials=True,
      allow_headers=["Content-Type", "Authorization", "Cookie"],
@@ -928,19 +928,140 @@ def validar_sbom_texto(content):
     
     return False, "El archivo de texto no parece contener información de SBOM"
 
-# ✅ ACTUALIZAR FUNCIÓN DE UPLOAD PARA INCLUIR ANÁLISIS NVD
+def verificar_limites_proyecto(proyecto_id, vulnerabilidades_encontradas):
+    """Verifica si las vulnerabilidades encontradas exceden el límite del proyecto"""
+    try:
+        print(f"🔍 Consultando proyecto {proyecto_id} desde API...")
+        
+        # Construir URL y headers
+        url = f"http://localhost:5001/proyectos/{proyecto_id}"
+        headers = {}
+        
+        # Copiar cookies de la request actual
+        cookies = {}
+        if hasattr(request, 'cookies'):
+            for name, value in request.cookies.items():
+                cookies[name] = value
+        
+        print(f"📡 Haciendo request a: {url}")
+        print(f"🍪 Cookies: {list(cookies.keys())}")
+        print(f"📊 Proyecto ID: '{proyecto_id}' (tipo: {type(proyecto_id)})")
+        
+        response = requests.get(url, cookies=cookies, headers=headers, timeout=10)
+        
+        print(f"📤 Status code: {response.status_code}")
+        print(f"📤 Response text preview: {response.text[:200]}...")
+        
+        if response.status_code == 200:
+            proyecto_data = response.json()
+            max_vulnerabilidades = proyecto_data.get('max_vulnerabilidades', 10)
+            
+            # ✅ VALIDAR QUE SEA UN NÚMERO VÁLIDO
+            if max_vulnerabilidades is None:
+                print(f"⚠️ max_vulnerabilidades es None, usando valor por defecto: 10")
+                max_vulnerabilidades = 10
+            
+            try:
+                max_vulnerabilidades = int(max_vulnerabilidades)
+            except (ValueError, TypeError):
+                print(f"⚠️ max_vulnerabilidades no es válido: {max_vulnerabilidades}, usando 10")
+                max_vulnerabilidades = 10
+            
+            print(f"✅ Proyecto encontrado: límite = {max_vulnerabilidades}")
+            print(f"✅ Datos completos del proyecto: {proyecto_data}")
+            
+            return {
+                'excede_limite': vulnerabilidades_encontradas > max_vulnerabilidades,
+                'limite_configurado': max_vulnerabilidades,
+                'vulnerabilidades_encontradas': vulnerabilidades_encontradas,
+                'diferencia': vulnerabilidades_encontradas - max_vulnerabilidades,
+                'proyecto_encontrado': True
+            }
+        elif response.status_code == 404:
+            print(f"⚠️ Proyecto {proyecto_id} no encontrado (404)")
+            return {
+                'excede_limite': False,
+                'limite_configurado': None,
+                'vulnerabilidades_encontradas': vulnerabilidades_encontradas,
+                'diferencia': 0,
+                'proyecto_encontrado': False,
+                'error': 'Proyecto no encontrado'
+            }
+        elif response.status_code == 403:
+            print(f"🚫 Sin permisos para acceder al proyecto {proyecto_id} (403)")
+            return {
+                'excede_limite': False,
+                'limite_configurado': None,
+                'vulnerabilidades_encontradas': vulnerabilidades_encontradas,
+                'diferencia': 0,
+                'proyecto_encontrado': False,
+                'error': 'Sin permisos para acceder al proyecto'
+            }
+        else:
+            print(f"❌ Error HTTP {response.status_code}: {response.text}")
+            return {
+                'excede_limite': False,
+                'limite_configurado': None,
+                'vulnerabilidades_encontradas': vulnerabilidades_encontradas,
+                'diferencia': 0,
+                'proyecto_encontrado': False,
+                'error': f'Error HTTP {response.status_code}'
+            }
+            
+    except requests.exceptions.Timeout:
+        print(f"⏰ Timeout consultando proyecto {proyecto_id}")
+        return {
+            'excede_limite': False,
+            'limite_configurado': None,
+            'vulnerabilidades_encontradas': vulnerabilidades_encontradas,
+            'diferencia': 0,
+            'proyecto_encontrado': False,
+            'error': 'Timeout en consulta'
+        }
+    except requests.exceptions.ConnectionError:
+        print(f"🔌 Error de conexión consultando proyecto {proyecto_id}")
+        return {
+            'excede_limite': False,
+            'limite_configurado': None,
+            'vulnerabilidades_encontradas': vulnerabilidades_encontradas,
+            'diferencia': 0,
+            'proyecto_encontrado': False,
+            'error': 'Error de conexión con API'
+        }
+    except Exception as e:
+        print(f"❌ Error inesperado verificando límites del proyecto {proyecto_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            'excede_limite': False,
+            'limite_configurado': None,
+            'vulnerabilidades_encontradas': vulnerabilidades_encontradas,
+            'diferencia': 0,
+            'proyecto_encontrado': False,
+            'error': f'Error inesperado: {str(e)}'
+        }
+
 @app.route('/chat/upload-sbom', methods=['POST'])
 def upload_sbom():
-    """Endpoint para subir y procesar archivos SBOM con análisis NVD"""
+    """Endpoint para subir y procesar archivos SBOM con análisis NVD y verificación de límites"""
     try:
         print("🚀 Endpoint /chat/upload-sbom llamado")
         
-        # Verificar que se haya enviado un archivo
         if 'file' not in request.files:
             return jsonify({"error": "No se ha enviado ningún archivo"}), 400
         
         file = request.files['file']
         mensaje = request.form.get('mensaje', 'Analiza este archivo SBOM con consulta a NVD')
+        proyecto_id = request.form.get('proyecto_id', '')
+        # ✅ OBTENER LÍMITE DIRECTAMENTE DEL FORMULARIO
+        limite_vulnerabilidades = request.form.get('limite_vulnerabilidades', '10')
+        
+        try:
+            limite_vulnerabilidades = int(limite_vulnerabilidades)
+        except (ValueError, TypeError):
+            limite_vulnerabilidades = 10
+        
+        print(f"📥 Archivo: {file.filename}, Proyecto: {proyecto_id}, Límite: {limite_vulnerabilidades}")
         
         if file.filename == '':
             return jsonify({"error": "No se ha seleccionado ningún archivo"}), 400
@@ -996,27 +1117,195 @@ def upload_sbom():
                 sbom_data = asyncio.run(enriquecer_sbom_con_nvd(sbom_data))
                 print("✅ Enriquecimiento NVD completado")
             
+            # ✅ VERIFICAR LÍMITES SIN CONSULTAR API - USAR LÍMITE DEL FORMULARIO
+            limites_check = None
+            contexto_proyecto = ""
+
+            if proyecto_id and isinstance(sbom_data, dict) and 'vulnerabilidades_nvd' in sbom_data:
+                vulnerabilidades_nvd = sbom_data.get('vulnerabilidades_nvd', [])
+                total_vulnerabilidades = len(vulnerabilidades_nvd)
+                
+                print(f"🔒 Verificando límites para proyecto {proyecto_id}: {total_vulnerabilidades} vulnerabilidades encontradas")
+                print(f"🎯 Límite configurado: {limite_vulnerabilidades}")
+                
+                # ✅ CREAR LIMITES_CHECK MANUALMENTE SIN API
+                limites_check = {
+                    'excede_limite': total_vulnerabilidades > limite_vulnerabilidades,
+                    'limite_configurado': limite_vulnerabilidades,
+                    'vulnerabilidades_encontradas': total_vulnerabilidades,
+                    'diferencia': total_vulnerabilidades - limite_vulnerabilidades,
+                    'proyecto_encontrado': True
+                }
+                
+                print(f"🔒 Límites calculados: {limites_check}")
+                
+                # ✅ GENERAR CONTEXTO ESPECÍFICO PARA LA IA
+                contexto_proyecto = f"\n\n🎯 **CONFIGURACIÓN DEL PROYECTO:**\n"
+                contexto_proyecto += f"- Límite máximo de vulnerabilidades configurado: **{limite_vulnerabilidades}**\n"
+                contexto_proyecto += f"- Vulnerabilidades encontradas en el SBOM: **{total_vulnerabilidades}**\n"
+                
+                if limites_check['excede_limite']:
+                    diferencia = limites_check['diferencia']
+                    contexto_proyecto += f"- ⚠️ **ESTADO: LÍMITE EXCEDIDO** por {diferencia} vulnerabilidades\n"
+                    contexto_proyecto += f"- 🚨 **ACCIÓN REQUERIDA**: El SBOM NO cumple con los estándares de seguridad del proyecto\n"
+                    
+                    # Categorizar nivel de exceso
+                    if diferencia <= 5:
+                        contexto_proyecto += f"- 📊 **Nivel de exceso**: MODERADO (+{diferencia})\n"
+                    elif diferencia <= 15:
+                        contexto_proyecto += f"- 📊 **Nivel de exceso**: ALTO (+{diferencia})\n"
+                    else:
+                        contexto_proyecto += f"- 📊 **Nivel de exceso**: CRÍTICO (+{diferencia})\n"
+                else:
+                    margen_restante = limite_vulnerabilidades - total_vulnerabilidades
+                    contexto_proyecto += f"- ✅ **ESTADO: DENTRO DEL LÍMITE**\n"
+                    contexto_proyecto += f"- 📊 **Margen disponible**: {margen_restante} vulnerabilidades adicionales\n"
+                    
+                    # Evaluar proximidad al límite
+                    if limite_vulnerabilidades > 0:
+                        porcentaje_usado = (total_vulnerabilidades / limite_vulnerabilidades) * 100
+                        if porcentaje_usado >= 80:
+                            contexto_proyecto += f"- ⚠️ **Advertencia**: Usando {porcentaje_usado:.1f}% del límite (muy cerca del máximo)\n"
+                        elif porcentaje_usado >= 60:
+                            contexto_proyecto += f"- 🔄 **Atención**: Usando {porcentaje_usado:.1f}% del límite (monitoreo recomendado)\n"
+                        else:
+                            contexto_proyecto += f"- 🟢 **Estado saludable**: Usando {porcentaje_usado:.1f}% del límite\n"
+                
+                # ✅ AÑADIR INFORMACIÓN SOBRE SEVERIDADES SI EXCEDE LÍMITE
+                if limites_check['excede_limite'] and sbom_data.get('vulnerabilidades_nvd'):
+                    severidades = {}
+                    for vuln in sbom_data['vulnerabilidades_nvd']:
+                        sev = vuln.get('severidad', 'UNKNOWN')
+                        severidades[sev] = severidades.get(sev, 0) + 1
+                    
+                    contexto_proyecto += f"\n📈 **Distribución de severidades que causan el exceso:**\n"
+                    for sev in ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'UNKNOWN']:
+                        if sev in severidades:
+                            icono = {'CRITICAL': '🔴', 'HIGH': '🟠', 'MEDIUM': '🟡', 'LOW': '🟢', 'UNKNOWN': '⚪'}.get(sev, '⚪')
+                            contexto_proyecto += f"• {icono} **{sev}**: {severidades[sev]} vulnerabilidades\n"
+                
+                # ✅ RECOMENDACIONES ESPECÍFICAS SEGÚN EL ESTADO
+                contexto_proyecto += f"\n💡 **RECOMENDACIONES BASADAS EN LA CONFIGURACIÓN DEL PROYECTO:**\n"
+                
+                if limites_check['excede_limite']:
+                    contexto_proyecto += f"• 🎯 **Objetivo**: Reducir {limites_check['diferencia']} vulnerabilidades para cumplir límite\n"
+                    contexto_proyecto += f"• 🔧 Priorizar parches para vulnerabilidades CRITICAL y HIGH\n"
+                    contexto_proyecto += f"• 📦 Actualizar dependencias con vulnerabilidades conocidas\n"
+                    contexto_proyecto += f"• 🛡️ Implementar controles de mitigación temporales\n"
+                    contexto_proyecto += f"• 📊 Considerar si el límite de {limite_vulnerabilidades} es apropiado para este proyecto\n"
+                else:
+                    contexto_proyecto += f"• ✅ El SBOM cumple con los estándares de seguridad configurados\n"
+                    contexto_proyecto += f"• 🔍 Mantener monitoreo proactivo de nuevas vulnerabilidades\n"
+                    contexto_proyecto += f"• 📈 Considerar reducir vulnerabilidades existentes para mejorar postura de seguridad\n"
+                    if margen_restante <= 3:
+                        contexto_proyecto += f"• ⚠️ Margen pequeño: establecer alertas para nuevas vulnerabilidades\n"
+
             # Obtener usuario y historial
             user_id = obtener_usuario_id(request)
             if user_id not in historial_conversaciones:
                 historial_conversaciones[user_id] = []
             
-            # Generar respuesta con Gemini
+            # ✅ GENERAR RESPUESTA CON GEMINI INCLUYENDO CONTEXTO DEL PROYECTO
             if model and isinstance(sbom_data, dict):
                 try:
-                    prompt = generar_prompt_sbom(sbom_data, mensaje)
-                    print(f"🧠 Enviando análisis SBOM con NVD a Gemini...")
+                    # ✅ PROMPT COMPLETO CON CONTEXTO DE LÍMITES
+                    prompt_base = generar_prompt_sbom(sbom_data, mensaje)
+                    prompt_completo = prompt_base + contexto_proyecto
                     
-                    response = model.generate_content(prompt)
+                    # ✅ INSTRUCCIONES ESPECÍFICAS PARA LA IA
+                    instrucciones_ia = f"\n\n🤖 **INSTRUCCIONES PARA EL ANÁLISIS:**\n"
+
+                    if limites_check and limites_check.get('proyecto_encontrado', False):
+                        limite = limites_check['limite_configurado']
+                        vulnerabilidades = limites_check['vulnerabilidades_encontradas']
+                        
+                        instrucciones_ia += f"1. **CONTEXTO DEL PROYECTO**: Este proyecto tiene configurado un límite máximo de **{limite}** vulnerabilidades\n"
+                        instrucciones_ia += f"2. **ESTADO ACTUAL**: Se encontraron **{vulnerabilidades}** vulnerabilidades en el SBOM\n"
+                        
+                        if limites_check['excede_limite']:
+                            diferencia = limites_check['diferencia']
+                            instrucciones_ia += f"3. **🚨 SITUACIÓN CRÍTICA**: El proyecto EXCEDE el límite por **{diferencia}** vulnerabilidades\n"
+                            instrucciones_ia += f"4. **PRIORIDAD ALTA**: Enfócate en las vulnerabilidades más críticas que DEBEN resolverse\n"
+                            instrucciones_ia += f"5. **PLAN DE ACCIÓN**: Proporciona un plan específico para reducir a **{limite}** o menos vulnerabilidades\n"
+                            instrucciones_ia += f"6. **RECOMENDACIONES**: Prioriza por severidad (CRITICAL > HIGH > MEDIUM > LOW)\n"
+                            instrucciones_ia += f"7. **OBJETIVO**: Identificar las **{diferencia}** vulnerabilidades menos críticas que se pueden resolver más fácilmente\n"
+                        else:
+                            margen = limite - vulnerabilidades
+                            porcentaje = round((vulnerabilidades / limite) * 100, 1) if limite > 0 else 0
+                            instrucciones_ia += f"3. **✅ ESTADO CONFORME**: El proyecto CUMPLE con el límite establecido\n"
+                            instrucciones_ia += f"4. **MARGEN DISPONIBLE**: {margen} vulnerabilidades adicionales permitidas\n"
+                            instrucciones_ia += f"5. **USO DEL LÍMITE**: {porcentaje}% del límite utilizado\n"
+                            instrucciones_ia += f"6. **RECOMENDACIONES**: Mantener vigilancia y considerar mejorar aún más la seguridad\n"
+                            
+                            if porcentaje >= 80:
+                                instrucciones_ia += f"7. **⚠️ ADVERTENCIA**: Muy cerca del límite ({porcentaje}%), considerar reducir vulnerabilidades proactivamente\n"
+                            elif porcentaje >= 60:
+                                instrucciones_ia += f"7. **🔄 MONITOREO**: Uso moderado del límite, mantener seguimiento regular\n"
+                            else:
+                                instrucciones_ia += f"7. **🟢 ESTADO SALUDABLE**: Uso bajo del límite, excelente postura de seguridad\n"
+                    else:
+                        instrucciones_ia += f"1. **CONTEXTO**: No se pudo obtener la configuración específica del proyecto\n"
+                        instrucciones_ia += f"2. **ANÁLISIS GENERAL**: Proporciona recomendaciones generales de seguridad\n"
+                        instrucciones_ia += f"3. **EVALUACIÓN**: Analiza el nivel de riesgo basado en las vulnerabilidades encontradas\n"
+
+                    instrucciones_ia += f"\n🎯 **FORMATO DE RESPUESTA REQUERIDO:**\n"
+                    instrucciones_ia += f"• Inicia con un **RESUMEN EJECUTIVO** que mencione el cumplimiento/incumplimiento del límite\n"
+                    instrucciones_ia += f"• Usa **negrita** para destacar el estado respecto al límite configurado\n"
+                    instrucciones_ia += f"• Proporciona **recomendaciones específicas** priorizadas según la situación del proyecto\n"
+                    instrucciones_ia += f"• Incluye una **evaluación de riesgo** considerando el contexto del límite del proyecto\n"
+                    
+                    prompt_final = prompt_completo + instrucciones_ia
+                    
+                    print(f"🧠 Enviando análisis SBOM con contexto de proyecto a Gemini...")
+                    
+                    response = model.generate_content(prompt_final)
                     response_text = response.text
                     
                 except Exception as e:
                     print(f"❌ Error con Gemini: {e}")
+                    
+                    # ✅ RESPUESTA DE FALLBACK CON CONTEXTO DE LÍMITES
                     nvd_info = sbom_data.get('resumen', {}).get('nvd_analysis', {})
                     vulns_count = nvd_info.get('total_vulnerabilidades_nvd', 0)
-                    response_text = f"He procesado tu archivo SBOM ({sbom_data.get('formato', 'formato desconocido')}) y consultado la National Vulnerability Database. Encontré {vulns_count} vulnerabilidades. ¿Qué aspecto específico te gustaría analizar?"
+
+                    response_text = f"He procesado tu archivo SBOM ({sbom_data.get('formato', 'formato desconocido')}) "
+                    response_text += f"y consultado la National Vulnerability Database.\n\n"
+                    response_text += f"📊 **Resultados del análisis:**\n"
+                    response_text += f"• Vulnerabilidades encontradas: **{vulns_count}**\n"
+
+                    # ✅ VERIFICAR QUE LIMITES_CHECK Y LIMITE_CONFIGURADO SEAN VÁLIDOS
+                    if (limites_check and 
+                        limites_check.get('proyecto_encontrado', False) and 
+                        limites_check.get('limite_configurado') is not None):
+                        
+                        limite_configurado = limites_check['limite_configurado']
+                        response_text += f"• Límite configurado para tu proyecto: **{limite_configurado}**\n"
+                        
+                        if limites_check['excede_limite']:
+                            response_text += f"• ⚠️ **LÍMITE EXCEDIDO** por **{limites_check['diferencia']}** vulnerabilidades\n"
+                            response_text += f"• 🎯 **Acción requerida**: Reducir vulnerabilidades para cumplir estándar del proyecto\n"
+                        else:
+                            margen = limite_configurado - vulns_count
+                            response_text += f"• ✅ **DENTRO DEL LÍMITE** - Margen disponible: **{margen}**\n"
+                            response_text += f"• 🟢 **Estado**: El SBOM cumple con los estándares de seguridad del proyecto\n"
+                    else:
+                        response_text += f"• ⚠️ No se pudo verificar límites del proyecto\n"
+
+                    response_text += f"\n¿Qué aspecto específico del análisis te gustaría explorar?"
             else:
-                response_text = f"He recibido y procesado tu archivo SBOM con consulta a NVD. ¿En qué puedo ayudarte con este análisis de seguridad?"
+                # ✅ RESPUESTA BÁSICA CON CONTEXTO DE LÍMITES
+                response_text = f"He recibido y procesado tu archivo SBOM con consulta a NVD.\n\n"
+                if limites_check:
+                    if limites_check['excede_limite']:
+                        response_text += f"⚠️ **IMPORTANTE**: Se encontraron **{limites_check['vulnerabilidades_encontradas']}** vulnerabilidades, "
+                        response_text += f"excediendo el límite de **{limites_check['limite_configurado']}** configurado para tu proyecto por **{limites_check['diferencia']}** vulnerabilidades.\n\n"
+                        response_text += f"🎯 **Tu proyecto requiere acción** para cumplir con los estándares de seguridad establecidos.\n"
+                    else:
+                        response_text += f"✅ **EXCELENTE**: Se encontraron **{limites_check['vulnerabilidades_encontradas']}** vulnerabilidades, "
+                        response_text += f"dentro del límite de **{limites_check['limite_configurado']}** configurado para tu proyecto.\n\n"
+                        response_text += f"🟢 **Tu proyecto cumple** con los estándares de seguridad establecidos.\n"
+                
+                response_text += f"\n¿En qué puedo ayudarte con este análisis de seguridad?"
             
             # Guardar en historial
             historial_usuario = historial_conversaciones[user_id]
@@ -1037,7 +1326,7 @@ def upload_sbom():
                 "validacion": mensaje_validacion
             }
             
-            # ✅ AÑADIR INFORMACIÓN DE NVD
+            # ✅ AÑADIR INFORMACIÓN DE NVD Y LÍMITES
             if isinstance(sbom_data, dict) and 'vulnerabilidades_nvd' in sbom_data:
                 nvd_analysis = sbom_data.get('resumen', {}).get('nvd_analysis', {})
                 sbom_info['nvd_analysis'] = {
@@ -1045,11 +1334,33 @@ def upload_sbom():
                     'componentes_analizados': nvd_analysis.get('componentes_analizados', 0),
                     'componentes_vulnerables': nvd_analysis.get('componentes_con_vulnerabilidades', 0)
                 }
+                
+                # ✅ AÑADIR INFORMACIÓN DE LÍMITES DEL PROYECTO
+                if limites_check:
+                    sbom_info['limites_proyecto'] = {
+                        'limite_configurado': limites_check['limite_configurado'],
+                        'vulnerabilidades_encontradas': limites_check['vulnerabilidades_encontradas'],
+                        'excede_limite': limites_check['excede_limite'],
+                        'diferencia': limites_check['diferencia'],
+                        'estado': 'CRÍTICO' if limites_check['excede_limite'] else 'ACEPTABLE'
+                    }
             
             return jsonify({
                 "message": response_text,
                 "sbom_info": sbom_info,
-                "file_processed": True
+                "file_processed": True,
+                # ✅ INFORMACIÓN ADICIONAL PARA EL FRONTEND
+                "security_alert": limites_check['excede_limite'] if (limites_check and limites_check.get('proyecto_encontrado', False)) else False,
+                "proyecto_id": proyecto_id,
+                # ✅ NUEVO: Información detallada de límites para el frontend
+                "limites_info": {
+                    "limite_configurado": limites_check['limite_configurado'] if (limites_check and limites_check.get('proyecto_encontrado', False) and limites_check.get('limite_configurado') is not None) else None,
+                    "vulnerabilidades_encontradas": limites_check['vulnerabilidades_encontradas'] if limites_check else 0,
+                    "excede_limite": limites_check['excede_limite'] if (limites_check and limites_check.get('proyecto_encontrado', False)) else False,
+                    "diferencia": limites_check['diferencia'] if (limites_check and limites_check.get('proyecto_encontrado', False)) else 0,
+                    "margen_disponible": (limites_check['limite_configurado'] - limites_check['vulnerabilidades_encontradas']) if (limites_check and limites_check.get('proyecto_encontrado', False) and not limites_check['excede_limite'] and limites_check.get('limite_configurado') is not None) else 0,
+                    "porcentaje_usado": round((limites_check['vulnerabilidades_encontradas'] / limites_check['limite_configurado']) * 100, 1) if (limites_check and limites_check.get('proyecto_encontrado', False) and limites_check.get('limite_configurado', 0) > 0) else 0
+                } if limites_check else None
             }), 200
             
         else:
@@ -1057,94 +1368,107 @@ def upload_sbom():
             
     except Exception as e:
         print(f"❌ Error en upload_sbom: {str(e)}")
+        import traceback
         traceback.print_exc()
         return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
+
+@app.route('/debug/proyecto/<proyecto_id>', methods=['GET'])
+def debug_proyecto(proyecto_id):
+    """Endpoint temporal para debug de configuración de proyecto"""
+    try:
+        print(f"🔍 DEBUG: Proyecto ID recibido: {proyecto_id}")
+        print(f"🍪 DEBUG: Cookies en request: {dict(request.cookies)}")
+        
+        limites_info = verificar_limites_proyecto(proyecto_id, 0)
+        
+        return jsonify({
+            "proyecto_id": proyecto_id,
+            "limites_info": limites_info,
+            "cookies_disponibles": dict(request.cookies),
+            "headers": dict(request.headers)
+        })
+    except Exception as e:
+        print(f"❌ Error en debug: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "error": str(e),
+            "proyecto_id": proyecto_id
+        }), 500
 
 @app.route('/chat/mensajes', methods=['POST'])
 def chat_mensajes():
     try:
-        print("🚀 Endpoint /chat/mensajes llamado")
+        data = request.json
+        mensaje = data.get('message', '')
+        proyecto_id = data.get('proyecto_id', '')  # ✅ Obtener ID del proyecto
+        proyecto_nombre = data.get('proyecto_nombre', '')  # ✅ Obtener nombre del proyecto
         
-        # ✅ OBTENER ID DEL USUARIO
-        user_id = obtener_usuario_id(request)
-        print(f"👤 Usuario ID: {user_id}")
-        
-        # ✅ OBTENER DATOS DEL MENSAJE
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "No se recibieron datos"}), 400
-            
-        message_text = data.get('message', '').strip()
-        proyecto_id = data.get('proyecto_id', '')
-        proyecto_nombre = data.get('proyecto_nombre', '')
-        
-        print(f"💬 Mensaje recibido: {message_text}")
-        print(f"📁 Proyecto: {proyecto_nombre} (ID: {proyecto_id})")
-
-        if not message_text:
+        if not mensaje:
             return jsonify({"error": "Mensaje vacío"}), 400
-
-        # 🧠 OBTENER HISTORIAL EXISTENTE PARA ESTE USUARIO
+        
+        user_id = obtener_usuario_id(request)
+        
+        # ✅ OBTENER CONTEXTO DEL PROYECTO SI ESTÁ DISPONIBLE
+        contexto_proyecto = ""
+        if proyecto_id:
+            try:
+                proyecto_info = verificar_limites_proyecto(proyecto_id, 0)  # 0 vulnerabilidades para obtener solo info del proyecto
+                
+                # ✅ VERIFICAR QUE SE ENCONTRÓ EL PROYECTO
+                if proyecto_info.get('proyecto_encontrado', False) and proyecto_info.get('limite_configurado') is not None:
+                    contexto_proyecto = f"\n\n🎯 **CONTEXTO DEL PROYECTO ACTUAL:**\n"
+                    contexto_proyecto += f"- Proyecto: **{proyecto_nombre}**\n"
+                    contexto_proyecto += f"- Límite máximo de vulnerabilidades: **{proyecto_info['limite_configurado']}**\n"
+                    contexto_proyecto += f"- Configuración de seguridad: {'Alta' if proyecto_info['limite_configurado'] <= 5 else 'Estándar' if proyecto_info['limite_configurado'] <= 15 else 'Permisiva'}\n"
+                    contexto_proyecto += f"\n💡 **Cuando analices vulnerabilidades o SBOM, considera este límite como referencia para tus recomendaciones.**\n"
+                else:
+                    error_msg = proyecto_info.get('error', 'Error desconocido')
+                    print(f"⚠️ No se pudo obtener contexto del proyecto {proyecto_id}: {error_msg}")
+                    contexto_proyecto = f"\n\n⚠️ **Nota:** No se pudo obtener la configuración específica del proyecto ({error_msg})\n"
+                    
+            except Exception as e:
+                print(f"⚠️ Error obteniendo contexto del proyecto: {e}")
+                contexto_proyecto = f"\n\n⚠️ **Nota:** Error obteniendo configuración del proyecto\n"
+        
+        # Inicializar historial si no existe
         if user_id not in historial_conversaciones:
             historial_conversaciones[user_id] = []
         
         historial_usuario = historial_conversaciones[user_id]
         
-        # ✅ AÑADIR MENSAJE DEL USUARIO AL HISTORIAL
-        entrada_usuario = f"Usuario ({proyecto_nombre}): {message_text}"
-        historial_usuario.append(entrada_usuario)
-        print(f"📝 Historial actualizado. Total mensajes: {len(historial_usuario)}")
-
-        # 🤖 GENERAR RESPUESTA CON CONTEXTO
         if model:
             try:
-                # Crear prompt con contexto del historial y proyecto
-                contexto_base = f"Eres un experto en ciberseguridad trabajando en el proyecto '{proyecto_nombre}'. Puedes analizar archivos SBOM y brindar asesoramiento en seguridad."
-                contexto_historial = formatear_historial_para_ai(historial_usuario)
-                prompt_completo = f"{contexto_base}\n\n{contexto_historial}\n\nÚltimo mensaje del usuario sobre el proyecto '{proyecto_nombre}': {message_text}"
+                # ✅ GENERAR CONTEXTO COMPLETO INCLUYENDO PROYECTO
+                contexto_previo = formatear_historial_para_ai(historial_usuario)
+                prompt_completo = contexto_previo + contexto_proyecto + f"\n\nUsuario: {mensaje}"
                 
-                print(f"🧠 Enviando contexto a AI: {len(historial_usuario)} mensajes previos")
+                print(f"🧠 Enviando mensaje con contexto de proyecto a Gemini...")
+                
                 response = model.generate_content(prompt_completo)
                 response_text = response.text
-                print(f"🤖 Respuesta AI: {response_text[:100]}...")
                 
             except Exception as e:
-                print(f"❌ Error con AI: {e}")
-                # Respuesta de fallback con contexto
-                if len(historial_usuario) > 1:
-                    response_text = f"Recuerdo que estábamos hablando sobre el proyecto '{proyecto_nombre}'. Sobre tu mensaje '{message_text}', ¿puedes darme más detalles?"
-                else:
-                    response_text = f"Hola! Estoy aquí para ayudarte con el proyecto '{proyecto_nombre}'. Recibí tu mensaje: '{message_text}'. ¿En qué aspectos de ciberseguridad puedo asistirte?"
+                print(f"❌ Error con Gemini: {e}")
+                response_text = "Lo siento, hubo un error procesando tu mensaje. ¿Podrías reformular tu pregunta?"
         else:
-            # 🔄 RESPUESTAS INTELIGENTES SIN AI
-            if len(historial_usuario) == 1:
-                response_text = f"¡Hola! Soy tu asistente de ciberseguridad para el proyecto '{proyecto_nombre}'. Recibí tu mensaje: '{message_text}'. ¿En qué puedo ayudarte? Puedo analizar archivos SBOM y brindar asesoramiento en seguridad."
-            else:
-                response_text = f"Continuando nuestra conversación sobre '{proyecto_nombre}', sobre '{message_text}', ¿qué específicamente necesitas saber?"
-
-        # 🧠 AÑADIR RESPUESTA DEL BOT AL HISTORIAL
-        entrada_bot = f"Bot ({proyecto_nombre}): {response_text}"
-        historial_usuario.append(entrada_bot)
+            response_text = "Servidor de AI temporalmente no disponible. Por favor, intenta más tarde."
         
-        # 🗑️ LIMITAR HISTORIAL PARA NO CONSUMIR MUCHA MEMORIA
-        if len(historial_usuario) > 50:  # Mantener últimos 50 mensajes
-            historial_usuario = historial_usuario[-50:]
-            historial_conversaciones[user_id] = historial_usuario
-            print(f"🗑️ Historial recortado a {len(historial_usuario)} mensajes")
+        # Guardar en historial
+        historial_usuario.append(f"Usuario: {mensaje}")
+        historial_usuario.append(f"Bot: {response_text}")
         
-        print(f"✅ Respuesta enviada: {response_text[:50]}...")
-        return jsonify({
-            "message": response_text,
-            "historial_length": len(historial_usuario),
-            "user_id": user_id[:10] + "..." if len(user_id) > 10 else user_id,
-            "proyecto": proyecto_nombre
-        })
-
+        # Mantener solo los últimos 20 intercambios
+        if len(historial_usuario) > 40:
+            historial_usuario = historial_usuario[-40:]
+        
+        historial_conversaciones[user_id] = historial_usuario
+        
+        return jsonify({"message": response_text}), 200
+        
     except Exception as e:
         print(f"❌ Error en chat_mensajes: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
+        return jsonify({"error": "Error interno del servidor"}), 500
 
 # ✅ ENDPOINT DE HEALTH CHECK
 @app.route('/health', methods=['GET'])

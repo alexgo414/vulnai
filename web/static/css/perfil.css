@@ -548,3 +548,88 @@
     border: none;
     border-bottom: 1px solid var(--border-color);
 }
+
+/* ✅ ESTILOS PARA CONFIGURACIÓN DE SEGURIDAD */
+.security-level-preview {
+    margin-top: 15px;
+}
+
+.security-level {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 2px solid;
+    transition: all 0.3s ease;
+}
+
+.security-level.high {
+    background-color: #d4edda;
+    border-color: #28a745;
+    color: #155724;
+}
+
+.security-level.medium {
+    background-color: #fff3cd;
+    border-color: #ffc107;
+    color: #856404;
+}
+
+.security-level.low {
+    background-color: #f8d7da;
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+.security-badge {
+    font-weight: 600;
+    font-size: 1.1em;
+}
+
+.security-level i {
+    font-size: 1.2em;
+}
+
+/* ✅ MEJORAR ALERTAS */
+.alert-info {
+    border-left: 4px solid #17a2b8;
+}
+
+.alert-info .alert-heading {
+    color: #17a2b8;
+    margin-bottom: 10px;
+}
+
+.form-text {
+    color: #6c757d;
+    font-size: 0.875em;
+}
+
+.form-text .fas {
+    color: #17a2b8;
+}
+
+/* ✅ ESTILOS PARA INFORMACIÓN DE SEGURIDAD EN PROYECTOS */
+.project-security {
+    padding: 0.75rem;
+    background-color: #f8fafc;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+}
+
+.security-info {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.security-info i {
+    opacity: 0.8;
+}
+
+.security-limit {
+    font-size: 0.75rem;
+}
+
+.project-card {
+    /* Ajustar altura para acomodar la nueva información */
+    min-height: 280px;
+}

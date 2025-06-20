@@ -11,3 +11,53 @@
     </div>
 </div>
 {% endblock %}
+{% block scripts %}
+<script>
+// ✅ SCRIPT PARA ACTUALIZAR EL INDICADOR DE NIVEL DE SEGURIDAD
+function updateSecurityLevel() {
+    const maxVulnInput = document.getElementById('max_vulnerabilidades');
+    const securityIndicator = document.getElementById('security-level-indicator');
+    const securityText = document.getElementById('security-level-text');
+
+    if (!maxVulnInput || !securityIndicator || !securityText) return;
+
+    const value = parseInt(maxVulnInput.value) || 0;
+    
+    // Remover clases anteriores
+    securityIndicator.className = 'security-level';
+    
+    if (value <= 5) {
+        securityIndicator.classList.add('high');
+        securityText.innerHTML = '<i class="fas fa-shield-alt me-1"></i>Alta Seguridad';
+    } else if (value <= 15) {
+        securityIndicator.classList.add('medium');
+        securityText.innerHTML = '<i class="fas fa-shield-halved me-1"></i>Seguridad Estándar';
+    } else {
+        securityIndicator.classList.add('low');
+        securityText.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Seguridad Básica';
+    }
+}
+
+// Aplicar cuando se cargue dinámicamente el formulario
+document.addEventListener('DOMContentLoaded', function() {
+    // Observer para detectar cuando se añade el formulario
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList') {
+                const maxVulnInput = document.getElementById('max_vulnerabilidades');
+                if (maxVulnInput) {
+                    maxVulnInput.addEventListener('input', updateSecurityLevel);
+                    updateSecurityLevel(); // Actualizar al cargar
+                    observer.disconnect(); // Dejar de observar
+                }
+            }
+        });
+    });
+    
+    observer.observe(document.getElementById('proyecto-editar-container'), {
+        childList: true,
+        subtree: true
+    });
+});
+</script>
+{% endblock %}
