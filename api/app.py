@@ -94,6 +94,7 @@ class Proyecto(db.Model):
     fecha_modificacion = db.Column(db.Date, nullable=False)
     usuario_id = db.Column(db.String(36), db.ForeignKey('usuarios.id'), nullable=False)
     max_vulnerabilidades = db.Column(db.Integer, default=10, nullable=False)
+    max_severidad = db.Column(db.String(20), default="MEDIUM", nullable=True)
 
 class Usuario(UserMixin, db.Model):
     __tablename__ = 'usuarios'
@@ -429,7 +430,9 @@ class ProyectoResource(Resource):
                     "fecha_creacion": proyecto.fecha_creacion.isoformat(),
                     "fecha_modificacion": proyecto.fecha_modificacion.isoformat(),
                     "usuario_id": proyecto.usuario_id,
-                    "max_vulnerabilidades": proyecto.max_vulnerabilidades
+                    "max_vulnerabilidades": proyecto.max_vulnerabilidades,
+                    "max_severidad": proyecto.max_severidad
+                    
                 }
             else:
                 return {"message": "No autorizado"}, 403
@@ -446,7 +449,8 @@ class ProyectoResource(Resource):
                     "fecha_creacion": proyecto.fecha_creacion.isoformat(),
                     "fecha_modificacion": proyecto.fecha_modificacion.isoformat(),
                     "usuario_id": proyecto.usuario_id,
-                    "max_vulnerabilidades": proyecto.max_vulnerabilidades
+                    "max_vulnerabilidades": proyecto.max_vulnerabilidades,
+                    "max_severidad": proyecto.max_severidad
                 }
                 for proyecto in proyectos
             ]
@@ -462,7 +466,8 @@ class ProyectoResource(Resource):
                 fecha_creacion=date.today(),
                 fecha_modificacion=date.today(),
                 usuario_id=flask_praetorian.current_user().id,
-                max_vulnerabilidades=data.get("max_vulnerabilidades", 10)
+                max_vulnerabilidades=data.get("max_vulnerabilidades", 10),
+                max_severidad=data.get("max_severidad", "MEDIUM")
             )
             db.session.add(new_proyecto)
             db.session.commit()
@@ -513,12 +518,23 @@ class ProyectoResource(Resource):
                     except (ValueError, TypeError):
                         return {"message": "El máximo de vulnerabilidades debe ser un número válido"}, 400
             
-            # ✅ ACTUALIZAR FECHA DE MODIFICACIÓN
-            proyecto.fecha_modificacion = date.today()
+            # ✅ NUEVO: ACTUALIZAR SEVERIDAD MÁXIMA
+            if "max_severidad" in data:
+                max_sev = data["max_severidad"]
+                if max_sev is not None:
+                    severidades_validas = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
+                    max_sev_upper = max_sev.strip().upper()
+                    
+                    if max_sev_upper not in severidades_validas:
+                        return {"message": f"Severidad inválida. Debe ser una de: {', '.join(severidades_validas)}"}, 400
+                    
+                    proyecto.max_severidad = max_sev_upper
+                    print(f"✅ max_severidad actualizado a: {proyecto.max_severidad}")
             
+            proyecto.fecha_modificacion = date.today()
             db.session.commit()
             
-            print(f"✅ Proyecto actualizado: {proyecto.nombre}, max_vulnerabilidades: {proyecto.max_vulnerabilidades}")
+            print(f"✅ Proyecto actualizado: {proyecto.nombre}, max_vulnerabilidades: {proyecto.max_vulnerabilidades}, max_severidad: {proyecto.max_severidad}")
             
             return {
                 "message": "Proyecto actualizado con éxito",
@@ -527,6 +543,7 @@ class ProyectoResource(Resource):
                     "nombre": proyecto.nombre,
                     "descripcion": proyecto.descripcion,
                     "max_vulnerabilidades": proyecto.max_vulnerabilidades,
+                    "max_severidad": proyecto.max_severidad,  # ✅ INCLUIR EN RESPUESTA
                     "fecha_modificacion": proyecto.fecha_modificacion.isoformat()
                 }
             }, 200

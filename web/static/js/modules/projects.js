@@ -11,11 +11,17 @@ export async function cargarFormularioCrearProyecto() {
         const nombre = document.getElementById("nombre").value;
         const descripcion = document.getElementById("descripcion").value;
         const maxVulnerabilidades = parseInt(document.getElementById("max_vulnerabilidades").value) || 10;
+        const maxSeveridad = document.getElementById("max_severidad").value || 'MEDIUM';
 
         try {
             const response = await fetchWithCredentials(`${API_BASE_URL}/proyectos`, {
                 method: "POST",
-                body: JSON.stringify({ nombre, descripcion, max_vulnerabilidades: maxVulnerabilidades })
+                body: JSON.stringify({ 
+                    nombre, 
+                    descripcion, 
+                    max_vulnerabilidades: maxVulnerabilidades,
+                    max_severidad: maxSeveridad
+                })
             });
 
             if (!response.ok) {
@@ -44,7 +50,7 @@ export async function editarProyecto(proyectoId) {
         return;
     }
 
-    // Generar el formulario de edición
+    // ✅ GENERAR EL FORMULARIO UNIFICADO CON LAS MISMAS GUÍAS
     const formContainer = document.createElement("div");
     formContainer.classList.add("card-body");
     formContainer.innerHTML = `
@@ -58,7 +64,7 @@ export async function editarProyecto(proyectoId) {
                 <textarea id="descripcion" name="descripcion" class="form-control" rows="4" placeholder="Describe brevemente el proyecto">${proyecto.descripcion || ''}</textarea>
             </div>
             
-            <!-- ✅ SECCIÓN DE CONFIGURACIÓN DE SEGURIDAD MEJORADA -->
+            <!-- ✅ SECCIÓN DE CONFIGURACIÓN DE SEGURIDAD UNIFICADA -->
             <div class="mb-4">
                 <h6 class="border-bottom pb-2 mb-3">
                     <i class="fas fa-shield-alt me-2 text-warning"></i>
@@ -71,7 +77,7 @@ export async function editarProyecto(proyectoId) {
                     </label>
                     <div class="input-group">
                         <input type="number" id="max_vulnerabilidades" name="max_vulnerabilidades" 
-                                class="form-control" value="${proyecto.max_vulnerabilidades || 10}" min="0" max="1000">
+                                class="form-control" value="${proyecto.max_vulnerabilidades || 10}" min="0" max="1000" required>
                         <span class="input-group-text">
                             <i class="fas fa-bug"></i>
                         </span>
@@ -84,28 +90,71 @@ export async function editarProyecto(proyectoId) {
                     </div>
                 </div>
 
-                <!-- ✅ INDICADORES VISUALES -->
+                <div class="mb-3">
+                    <label for="max_severidad" class="form-label">
+                        <strong>Severidad máxima aceptada:</strong>
+                    </label>
+                    <div class="input-group">
+                        <select id="max_severidad" name="max_severidad" class="form-control" required>
+                            <option value="LOW" ${proyecto.max_severidad === 'LOW' ? 'selected' : ''}>🟢 LOW - Baja</option>
+                            <option value="MEDIUM" ${proyecto.max_severidad === 'MEDIUM' ? 'selected' : ''}>🟡 MEDIUM - Media</option>
+                            <option value="HIGH" ${proyecto.max_severidad === 'HIGH' ? 'selected' : ''}>🟠 HIGH - Alta</option>
+                            <option value="CRITICAL" ${proyecto.max_severidad === 'CRITICAL' ? 'selected' : ''}>🔴 CRITICAL - Crítica</option>
+                        </select>
+                        <span class="input-group-text">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </span>
+                    </div>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Define la severidad máxima de vulnerabilidades que se considerarán aceptables.
+                        Las vulnerabilidades por encima de este nivel se marcarán como críticas.
+                        <strong>Valor actual: ${proyecto.max_severidad || 'MEDIUM'}</strong>
+                    </div>
+                </div>
+
+                <!-- ✅ GUÍAS UNIFICADAS - IGUAL QUE EN PROYECTO_NUEVO -->
                 <div class="alert alert-info mb-3">
                     <h6 class="alert-heading">
                         <i class="fas fa-lightbulb me-2"></i>Guía de configuración:
                     </h6>
-                    <ul class="mb-0">
-                        <li><strong>0-5 vulnerabilidades:</strong> Proyecto de alta seguridad</li>
-                        <li><strong>6-15 vulnerabilidades:</strong> Proyecto de seguridad estándar</li>
-                        <li><strong>16+ vulnerabilidades:</strong> Proyecto en desarrollo/testing</li>
-                    </ul>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>📊 Vulnerabilidades:</strong>
+                            <ul class="mb-2">
+                                <li><strong>0-5:</strong> Proyecto de alta seguridad</li>
+                                <li><strong>6-15:</strong> Proyecto de seguridad estándar</li>
+                                <li><strong>16+:</strong> Proyecto en desarrollo/testing</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>🔺 Severidad:</strong>
+                            <ul class="mb-0">
+                                <li><strong>CRITICAL:</strong> Solo vulnerabilidades críticas son inaceptables (más permisivo)</li>
+                                <li><strong>HIGH:</strong> Vulnerabilidades altas y críticas son inaceptables</li>
+                                <li><strong>MEDIUM:</strong> Vulnerabilidades medias, altas y críticas son inaceptables (recomendado)</li>
+                                <li><strong>LOW:</strong> Cualquier vulnerabilidad es inaceptable (más restrictivo)</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- ✅ PREVIEW DEL NIVEL DE SEGURIDAD -->
+                <!-- ✅ PREVIEW DEL NIVEL DE SEGURIDAD - IGUAL QUE EN PROYECTO_NUEVO -->
                 <div class="security-level-preview">
                     <label class="form-label">
-                        <strong>Nivel de seguridad:</strong>
+                        <strong>Configuración de seguridad:</strong>
                     </label>
                     <div id="security-level-indicator" class="security-level high">
                         <span class="security-badge">
                             <i class="fas fa-shield-alt me-1"></i>
                             <span id="security-level-text">Alta Seguridad</span>
                         </span>
+                    </div>
+                    <div class="severity-level-preview mt-2">
+                        <small class="text-muted">
+                            <strong>Máximo:</strong> <span id="severity-display">🟡 MEDIUM</span> •
+                            <strong>Cantidad:</strong> <span id="quantity-display">10</span> vulnerabilidades
+                        </small>
                     </div>
                 </div>
             </div>
@@ -125,13 +174,14 @@ export async function editarProyecto(proyectoId) {
         const nombre = document.getElementById("nombre").value;
         const descripcion = document.getElementById("descripcion").value;
         const maxVulnerabilidades = document.getElementById("max_vulnerabilidades").value;
+        const maxSeveridad = document.getElementById("max_severidad").value;
 
         try {
-            // ✅ INCLUIR max_vulnerabilidades EN EL BODY
             const body = { 
                 nombre, 
                 descripcion,
-                max_vulnerabilidades: maxVulnerabilidades ? parseInt(maxVulnerabilidades) : proyecto.max_vulnerabilidades
+                max_vulnerabilidades: maxVulnerabilidades ? parseInt(maxVulnerabilidades) : proyecto.max_vulnerabilidades,
+                max_severidad: maxSeveridad || proyecto.max_severidad
             };
 
             const response = await fetchWithCredentials(`${API_BASE_URL}/proyectos/${proyecto.id}`, {
@@ -192,6 +242,16 @@ export async function obtenerProyectos() {
         console.error(error);
         return [];
     }
+}
+
+function getSeverityDisplay(severity) {
+    const severityMap = {
+        'LOW': '🟢 LOW',
+        'MEDIUM': '🟡 MEDIUM', 
+        'HIGH': '🟠 HIGH',
+        'CRITICAL': '🔴 CRITICAL'
+    };
+    return severityMap[severity] || '🟡 MEDIUM';
 }
 
 export function renderizarProyectos(proyectos, usuarios) {
@@ -261,6 +321,11 @@ export function renderizarProyectos(proyectos, usuarios) {
                         <small class="text-muted">
                             <i class="fas fa-bug me-1"></i>
                             Máximo: ${maxVuln} vulnerabilidades
+                        </small>
+                        <br>
+                        <small class="text-muted">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            Severidad máxima: ${getSeverityDisplay(proyecto.max_severidad || 'MEDIUM')}
                         </small>
                     </div>
                 </div>

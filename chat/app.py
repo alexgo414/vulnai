@@ -933,108 +933,125 @@ def verificar_limites_proyecto(proyecto_id, vulnerabilidades_encontradas):
     try:
         print(f"🔍 Consultando proyecto {proyecto_id} desde API...")
         
-        # Construir URL y headers
-        url = f"http://localhost:5001/proyectos/{proyecto_id}"
-        headers = {}
+        # ✅ USAR NOMBRE DEL SERVICIO DOCKER EN LUGAR DE LOCALHOST
+        # Si estás usando Docker Compose, el nombre del servicio API
+        api_host = os.getenv('API_HOST', 'api')  # Por defecto 'api' (nombre del servicio)
+        api_port = os.getenv('API_PORT', '5001')
         
-        # Copiar cookies de la request actual
+        url = f"http://{api_host}:{api_port}/proyectos/{proyecto_id}"
+        headers = {'Content-Type': 'application/json'}
+        
+        print(f"📡 URL construida: {url}")
+        
+        # ✅ MEJORAR EL MANEJO DE COOKIES
         cookies = {}
-        if hasattr(request, 'cookies'):
+        if hasattr(request, 'cookies') and request.cookies:
             for name, value in request.cookies.items():
                 cookies[name] = value
+            print(f"🍪 Cookies encontradas: {list(cookies.keys())}")
+        else:
+            print("⚠️ No se encontraron cookies en la request")
+            return {
+                'excede_limite': False,
+                'limite_configurado': None,
+                'max_severidad_configurada': None,
+                'vulnerabilidades_encontradas': vulnerabilidades_encontradas,
+                'diferencia': 0,
+                'proyecto_encontrado': False,
+                'error': 'No hay cookies de autenticación disponibles'
+            }
         
         print(f"📡 Haciendo request a: {url}")
-        print(f"🍪 Cookies: {list(cookies.keys())}")
-        print(f"📊 Proyecto ID: '{proyecto_id}' (tipo: {type(proyecto_id)})")
+        print(f"🍪 Cookies a enviar: {cookies}")
         
-        response = requests.get(url, cookies=cookies, headers=headers, timeout=10)
+        # ✅ MULTIPLE HOSTS FALLBACK
+        hosts_to_try = [
+            f"http://{api_host}:{api_port}",  # Nombre del servicio Docker
+            "http://api:5001",                # Nombre estándar del servicio
+            "http://localhost:5001",          # Para desarrollo local
+            "http://127.0.0.1:5001",         # Para desarrollo local
+            "http://host.docker.internal:5001" # Para Docker Desktop
+        ]
+        
+        response = None
+        for host_url in hosts_to_try:
+            try:
+                test_url = f"{host_url}/proyectos/{proyecto_id}"
+                print(f"🔄 Intentando conectar a: {test_url}")
+                
+                response = requests.get(test_url, cookies=cookies, headers=headers, timeout=5)
+                print(f"✅ Conexión exitosa a: {host_url}")
+                break
+                
+            except requests.exceptions.ConnectionError as e:
+                print(f"❌ Falló conexión a {host_url}: {e}")
+                continue
+            except Exception as e:
+                print(f"❌ Error inesperado con {host_url}: {e}")
+                continue
+        
+        if response is None:
+            return {
+                'excede_limite': False,
+                'limite_configurado': None,
+                'max_severidad_configurada': None,
+                'vulnerabilidades_encontradas': vulnerabilidades_encontradas,
+                'diferencia': 0,
+                'proyecto_encontrado': False,
+                'error': 'No se pudo conectar a ningún endpoint de la API'
+            }
         
         print(f"📤 Status code: {response.status_code}")
-        print(f"📤 Response text preview: {response.text[:200]}...")
         
         if response.status_code == 200:
             proyecto_data = response.json()
             max_vulnerabilidades = proyecto_data.get('max_vulnerabilidades', 10)
+            max_severidad = proyecto_data.get('max_severidad', 'MEDIUM')
             
-            # ✅ VALIDAR QUE SEA UN NÚMERO VÁLIDO
+            # Validar valores
             if max_vulnerabilidades is None:
-                print(f"⚠️ max_vulnerabilidades es None, usando valor por defecto: 10")
                 max_vulnerabilidades = 10
             
             try:
                 max_vulnerabilidades = int(max_vulnerabilidades)
             except (ValueError, TypeError):
-                print(f"⚠️ max_vulnerabilidades no es válido: {max_vulnerabilidades}, usando 10")
                 max_vulnerabilidades = 10
             
-            print(f"✅ Proyecto encontrado: límite = {max_vulnerabilidades}")
-            print(f"✅ Datos completos del proyecto: {proyecto_data}")
+            severidades_validas = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
+            if max_severidad not in severidades_validas:
+                max_severidad = 'MEDIUM'
+            
+            print(f"✅ Proyecto encontrado: límite = {max_vulnerabilidades}, severidad máxima = {max_severidad}")
             
             return {
                 'excede_limite': vulnerabilidades_encontradas > max_vulnerabilidades,
                 'limite_configurado': max_vulnerabilidades,
+                'max_severidad_configurada': max_severidad,
                 'vulnerabilidades_encontradas': vulnerabilidades_encontradas,
                 'diferencia': vulnerabilidades_encontradas - max_vulnerabilidades,
-                'proyecto_encontrado': True
-            }
-        elif response.status_code == 404:
-            print(f"⚠️ Proyecto {proyecto_id} no encontrado (404)")
-            return {
-                'excede_limite': False,
-                'limite_configurado': None,
-                'vulnerabilidades_encontradas': vulnerabilidades_encontradas,
-                'diferencia': 0,
-                'proyecto_encontrado': False,
-                'error': 'Proyecto no encontrado'
-            }
-        elif response.status_code == 403:
-            print(f"🚫 Sin permisos para acceder al proyecto {proyecto_id} (403)")
-            return {
-                'excede_limite': False,
-                'limite_configurado': None,
-                'vulnerabilidades_encontradas': vulnerabilidades_encontradas,
-                'diferencia': 0,
-                'proyecto_encontrado': False,
-                'error': 'Sin permisos para acceder al proyecto'
+                'proyecto_encontrado': True,
+                'proyecto_data': proyecto_data
             }
         else:
             print(f"❌ Error HTTP {response.status_code}: {response.text}")
             return {
                 'excede_limite': False,
                 'limite_configurado': None,
+                'max_severidad_configurada': None,
                 'vulnerabilidades_encontradas': vulnerabilidades_encontradas,
                 'diferencia': 0,
                 'proyecto_encontrado': False,
-                'error': f'Error HTTP {response.status_code}'
+                'error': f'Error HTTP {response.status_code}: {response.text}'
             }
             
-    except requests.exceptions.Timeout:
-        print(f"⏰ Timeout consultando proyecto {proyecto_id}")
-        return {
-            'excede_limite': False,
-            'limite_configurado': None,
-            'vulnerabilidades_encontradas': vulnerabilidades_encontradas,
-            'diferencia': 0,
-            'proyecto_encontrado': False,
-            'error': 'Timeout en consulta'
-        }
-    except requests.exceptions.ConnectionError:
-        print(f"🔌 Error de conexión consultando proyecto {proyecto_id}")
-        return {
-            'excede_limite': False,
-            'limite_configurado': None,
-            'vulnerabilidades_encontradas': vulnerabilidades_encontradas,
-            'diferencia': 0,
-            'proyecto_encontrado': False,
-            'error': 'Error de conexión con API'
-        }
     except Exception as e:
-        print(f"❌ Error inesperado verificando límites del proyecto {proyecto_id}: {e}")
+        print(f"❌ Error inesperado: {e}")
         import traceback
         traceback.print_exc()
         return {
             'excede_limite': False,
             'limite_configurado': None,
+            'max_severidad_configurada': None,
             'vulnerabilidades_encontradas': vulnerabilidades_encontradas,
             'diferencia': 0,
             'proyecto_encontrado': False,
@@ -1053,15 +1070,17 @@ def upload_sbom():
         file = request.files['file']
         mensaje = request.form.get('mensaje', 'Analiza este archivo SBOM con consulta a NVD')
         proyecto_id = request.form.get('proyecto_id', '')
-        # ✅ OBTENER LÍMITE DIRECTAMENTE DEL FORMULARIO
+        # ✅ OBTENER AMBOS LÍMITES DEL FORMULARIO
         limite_vulnerabilidades = request.form.get('limite_vulnerabilidades', '10')
+        max_severidad = request.form.get('max_severidad', 'MEDIUM').upper()
         
         try:
             limite_vulnerabilidades = int(limite_vulnerabilidades)
         except (ValueError, TypeError):
             limite_vulnerabilidades = 10
         
-        print(f"📥 Archivo: {file.filename}, Proyecto: {proyecto_id}, Límite: {limite_vulnerabilidades}")
+        print(f"📥 Archivo: {file.filename}, Proyecto: {proyecto_id}")
+        print(f"🎯 Límite vulnerabilidades: {limite_vulnerabilidades}, Severidad máxima: {max_severidad}")
         
         if file.filename == '':
             return jsonify({"error": "No se ha seleccionado ningún archivo"}), 400
@@ -1117,7 +1136,7 @@ def upload_sbom():
                 sbom_data = asyncio.run(enriquecer_sbom_con_nvd(sbom_data))
                 print("✅ Enriquecimiento NVD completado")
             
-            # ✅ VERIFICAR LÍMITES SIN CONSULTAR API - USAR LÍMITE DEL FORMULARIO
+            # ✅ VERIFICAR LÍMITES - USAR LÍMITES DEL FORMULARIO
             limites_check = None
             contexto_proyecto = ""
 
@@ -1125,87 +1144,161 @@ def upload_sbom():
                 vulnerabilidades_nvd = sbom_data.get('vulnerabilidades_nvd', [])
                 total_vulnerabilidades = len(vulnerabilidades_nvd)
                 
-                print(f"🔒 Verificando límites para proyecto {proyecto_id}: {total_vulnerabilidades} vulnerabilidades encontradas")
+                print(f"🔒 Verificando límites para proyecto {proyecto_id}")
+                print(f"📊 {total_vulnerabilidades} vulnerabilidades encontradas")
                 print(f"🎯 Límite configurado: {limite_vulnerabilidades}")
+                print(f"🔺 Severidad máxima: {max_severidad}")
                 
-                # ✅ CREAR LIMITES_CHECK MANUALMENTE SIN API
+                # ✅ DEFINIR JERARQUÍA DE SEVERIDADES
+                severidades_jerarquia = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
+                indice_max_severidad = severidades_jerarquia.index(max_severidad) if max_severidad in severidades_jerarquia else 1  # Default MEDIUM
+                
+                # ✅ FILTRAR VULNERABILIDADES QUE EXCEDEN LA SEVERIDAD MÁXIMA
+                vulnerabilidades_exceden_severidad = []
+                for vuln in vulnerabilidades_nvd:
+                    sev_vuln = vuln.get('severidad', 'UNKNOWN')
+                    if sev_vuln in severidades_jerarquia:
+                        indice_vuln = severidades_jerarquia.index(sev_vuln)
+                        # Si el índice de la vulnerabilidad es mayor, significa que es más severa
+                        if indice_vuln > indice_max_severidad:
+                            vulnerabilidades_exceden_severidad.append(vuln)
+                
+                # ✅ CREAR LIMITES_CHECK COMPLETO
+                excede_limite_cantidad = total_vulnerabilidades > limite_vulnerabilidades
+                excede_limite_severidad = len(vulnerabilidades_exceden_severidad) > 0
+                excede_algún_limite = excede_limite_cantidad or excede_limite_severidad
+                
                 limites_check = {
-                    'excede_limite': total_vulnerabilidades > limite_vulnerabilidades,
+                    'excede_limite': excede_algún_limite,
+                    'excede_limite_cantidad': excede_limite_cantidad,
+                    'excede_limite_severidad': excede_limite_severidad,
                     'limite_configurado': limite_vulnerabilidades,
+                    'max_severidad_configurada': max_severidad,
                     'vulnerabilidades_encontradas': total_vulnerabilidades,
-                    'diferencia': total_vulnerabilidades - limite_vulnerabilidades,
+                    'vulnerabilidades_exceden_severidad': len(vulnerabilidades_exceden_severidad),
+                    'diferencia_cantidad': total_vulnerabilidades - limite_vulnerabilidades,
+                    'diferencia_severidad': len(vulnerabilidades_exceden_severidad),
                     'proyecto_encontrado': True
                 }
                 
-                print(f"🔒 Límites calculados: {limites_check}")
+                print(f"🔒 Límites calculados:")
+                print(f"   - Excede cantidad: {excede_limite_cantidad}")
+                print(f"   - Excede severidad: {excede_limite_severidad}")
+                print(f"   - Vulnerabilidades críticas: {len(vulnerabilidades_exceden_severidad)}")
                 
                 # ✅ GENERAR CONTEXTO ESPECÍFICO PARA LA IA
                 contexto_proyecto = f"\n\n🎯 **CONFIGURACIÓN DEL PROYECTO:**\n"
-                contexto_proyecto += f"- Límite máximo de vulnerabilidades configurado: **{limite_vulnerabilidades}**\n"
-                contexto_proyecto += f"- Vulnerabilidades encontradas en el SBOM: **{total_vulnerabilidades}**\n"
+                contexto_proyecto += f"- Límite máximo de vulnerabilidades: **{limite_vulnerabilidades}**\n"
+                contexto_proyecto += f"- Severidad máxima aceptada: **{max_severidad}**\n"
+                contexto_proyecto += f"- Vulnerabilidades encontradas: **{total_vulnerabilidades}**\n"
+                contexto_proyecto += f"- Vulnerabilidades que exceden severidad: **{len(vulnerabilidades_exceden_severidad)}**\n"
                 
-                if limites_check['excede_limite']:
-                    diferencia = limites_check['diferencia']
-                    contexto_proyecto += f"- ⚠️ **ESTADO: LÍMITE EXCEDIDO** por {diferencia} vulnerabilidades\n"
-                    contexto_proyecto += f"- 🚨 **ACCIÓN REQUERIDA**: El SBOM NO cumple con los estándares de seguridad del proyecto\n"
+                # ✅ ANÁLISIS DE ESTADO DEL PROYECTO
+                if excede_algún_limite:
+                    contexto_proyecto += f"\n🚨 **ESTADO: NO CUMPLE CON LOS ESTÁNDARES DEL PROYECTO**\n"
                     
-                    # Categorizar nivel de exceso
-                    if diferencia <= 5:
-                        contexto_proyecto += f"- 📊 **Nivel de exceso**: MODERADO (+{diferencia})\n"
-                    elif diferencia <= 15:
-                        contexto_proyecto += f"- 📊 **Nivel de exceso**: ALTO (+{diferencia})\n"
-                    else:
-                        contexto_proyecto += f"- 📊 **Nivel de exceso**: CRÍTICO (+{diferencia})\n"
+                    if excede_limite_cantidad:
+                        diferencia_cantidad = limites_check['diferencia_cantidad']
+                        contexto_proyecto += f"- ⚠️ **LÍMITE DE CANTIDAD EXCEDIDO** por {diferencia_cantidad} vulnerabilidades\n"
+                        
+                        # Categorizar nivel de exceso de cantidad
+                        if diferencia_cantidad <= 5:
+                            contexto_proyecto += f"- 📊 **Exceso de cantidad**: MODERADO (+{diferencia_cantidad})\n"
+                        elif diferencia_cantidad <= 15:
+                            contexto_proyecto += f"- 📊 **Exceso de cantidad**: ALTO (+{diferencia_cantidad})\n"
+                        else:
+                            contexto_proyecto += f"- 📊 **Exceso de cantidad**: CRÍTICO (+{diferencia_cantidad})\n"
+                    
+                    if excede_limite_severidad:
+                        contexto_proyecto += f"- 🔺 **LÍMITE DE SEVERIDAD EXCEDIDO**: {len(vulnerabilidades_exceden_severidad)} vulnerabilidades superan {max_severidad}\n"
+                        
+                        # Detallar severidades que exceden el límite
+                        severidades_criticas = {}
+                        for vuln in vulnerabilidades_exceden_severidad:
+                            sev = vuln.get('severidad', 'UNKNOWN')
+                            severidades_criticas[sev] = severidades_criticas.get(sev, 0) + 1
+                        
+                        contexto_proyecto += f"- 📈 **Severidades críticas encontradas:**\n"
+                        for sev in ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']:
+                            if sev in severidades_criticas:
+                                icono = {'CRITICAL': '🔴', 'HIGH': '🟠', 'MEDIUM': '🟡', 'LOW': '🟢'}.get(sev, '⚪')
+                                contexto_proyecto += f"  • {icono} **{sev}**: {severidades_criticas[sev]} vulnerabilidades\n"
+                
                 else:
-                    margen_restante = limite_vulnerabilidades - total_vulnerabilidades
-                    contexto_proyecto += f"- ✅ **ESTADO: DENTRO DEL LÍMITE**\n"
-                    contexto_proyecto += f"- 📊 **Margen disponible**: {margen_restante} vulnerabilidades adicionales\n"
+                    margen_cantidad = limite_vulnerabilidades - total_vulnerabilidades
+                    contexto_proyecto += f"\n✅ **ESTADO: CUMPLE CON TODOS LOS ESTÁNDARES DEL PROYECTO**\n"
+                    contexto_proyecto += f"- 📊 **Margen de cantidad**: {margen_cantidad} vulnerabilidades adicionales permitidas\n"
+                    contexto_proyecto += f"- 🔺 **Severidad**: Todas las vulnerabilidades están en nivel {max_severidad} o inferior\n"
                     
-                    # Evaluar proximidad al límite
+                    # Evaluar proximidad a los límites
                     if limite_vulnerabilidades > 0:
                         porcentaje_usado = (total_vulnerabilidades / limite_vulnerabilidades) * 100
                         if porcentaje_usado >= 80:
-                            contexto_proyecto += f"- ⚠️ **Advertencia**: Usando {porcentaje_usado:.1f}% del límite (muy cerca del máximo)\n"
+                            contexto_proyecto += f"- ⚠️ **Advertencia**: Usando {porcentaje_usado:.1f}% del límite de cantidad (muy cerca del máximo)\n"
                         elif porcentaje_usado >= 60:
-                            contexto_proyecto += f"- 🔄 **Atención**: Usando {porcentaje_usado:.1f}% del límite (monitoreo recomendado)\n"
+                            contexto_proyecto += f"- 🔄 **Atención**: Usando {porcentaje_usado:.1f}% del límite de cantidad (monitoreo recomendado)\n"
                         else:
-                            contexto_proyecto += f"- 🟢 **Estado saludable**: Usando {porcentaje_usado:.1f}% del límite\n"
+                            contexto_proyecto += f"- 🟢 **Estado saludable**: Usando {porcentaje_usado:.1f}% del límite de cantidad\n"
                 
-                # ✅ AÑADIR INFORMACIÓN SOBRE SEVERIDADES SI EXCEDE LÍMITE
-                if limites_check['excede_limite'] and sbom_data.get('vulnerabilidades_nvd'):
-                    severidades = {}
+                # ✅ DISTRIBUCIÓN COMPLETA DE SEVERIDADES
+                if sbom_data.get('vulnerabilidades_nvd'):
+                    severidades_todas = {}
                     for vuln in sbom_data['vulnerabilidades_nvd']:
                         sev = vuln.get('severidad', 'UNKNOWN')
-                        severidades[sev] = severidades.get(sev, 0) + 1
+                        severidades_todas[sev] = severidades_todas.get(sev, 0) + 1
                     
-                    contexto_proyecto += f"\n📈 **Distribución de severidades que causan el exceso:**\n"
+                    contexto_proyecto += f"\n📈 **Distribución completa de severidades:**\n"
                     for sev in ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'UNKNOWN']:
-                        if sev in severidades:
+                        if sev in severidades_todas:
                             icono = {'CRITICAL': '🔴', 'HIGH': '🟠', 'MEDIUM': '🟡', 'LOW': '🟢', 'UNKNOWN': '⚪'}.get(sev, '⚪')
-                            contexto_proyecto += f"• {icono} **{sev}**: {severidades[sev]} vulnerabilidades\n"
+                            # Marcar si excede el límite
+                            estado = ""
+                            if sev in severidades_jerarquia and severidades_jerarquia.index(sev) > indice_max_severidad:
+                                estado = " ❌ (EXCEDE LÍMITE)"
+                            elif sev == max_severidad:
+                                estado = " ⚠️ (EN EL LÍMITE)"
+                            elif sev in severidades_jerarquia and severidades_jerarquia.index(sev) < indice_max_severidad:
+                                estado = " ✅ (ACEPTABLE)"
+                            
+                            contexto_proyecto += f"• {icono} **{sev}**: {severidades_todas[sev]} vulnerabilidades{estado}\n"
                 
                 # ✅ RECOMENDACIONES ESPECÍFICAS SEGÚN EL ESTADO
                 contexto_proyecto += f"\n💡 **RECOMENDACIONES BASADAS EN LA CONFIGURACIÓN DEL PROYECTO:**\n"
                 
-                if limites_check['excede_limite']:
-                    contexto_proyecto += f"• 🎯 **Objetivo**: Reducir {limites_check['diferencia']} vulnerabilidades para cumplir límite\n"
-                    contexto_proyecto += f"• 🔧 Priorizar parches para vulnerabilidades CRITICAL y HIGH\n"
-                    contexto_proyecto += f"• 📦 Actualizar dependencias con vulnerabilidades conocidas\n"
-                    contexto_proyecto += f"• 🛡️ Implementar controles de mitigación temporales\n"
-                    contexto_proyecto += f"• 📊 Considerar si el límite de {limite_vulnerabilidades} es apropiado para este proyecto\n"
+                if excede_algún_limite:
+                    if excede_limite_cantidad and excede_limite_severidad:
+                        contexto_proyecto += f"• 🎯 **PRIORIDAD MÁXIMA**: El proyecto viola AMBOS límites (cantidad Y severidad)\n"
+                        contexto_proyecto += f"• 🔥 **ACCIÓN INMEDIATA**: Resolver las {len(vulnerabilidades_exceden_severidad)} vulnerabilidades críticas primero\n"
+                        contexto_proyecto += f"• 📊 **OBJETIVO DUAL**: Reducir {limites_check['diferencia_cantidad']} vulnerabilidades Y eliminar severidades > {max_severidad}\n"
+                    elif excede_limite_severidad:
+                        contexto_proyecto += f"• 🔺 **PRIORIDAD ALTA**: Resolver {len(vulnerabilidades_exceden_severidad)} vulnerabilidades de severidad crítica\n"
+                        contexto_proyecto += f"• 🎯 **OBJETIVO**: Reducir todas las vulnerabilidades {max_severidad} o inferior\n"
+                        contexto_proyecto += f"• ✅ **POSITIVO**: La cantidad total ({total_vulnerabilidades}) está dentro del límite\n"
+                    elif excede_limite_cantidad:
+                        contexto_proyecto += f"• 📊 **PRIORIDAD MEDIA**: Reducir {limites_check['diferencia_cantidad']} vulnerabilidades para cumplir límite\n"
+                        contexto_proyecto += f"• ✅ **POSITIVO**: Todas las severidades están en nivel aceptable\n"
+                        contexto_proyecto += f"• 🔄 **ESTRATEGIA**: Enfocar en vulnerabilidades de menor impacto primero\n"
+                    
+                    contexto_proyecto += f"• 🔧 **Acciones específicas:**\n"
+                    contexto_proyecto += f"  - Priorizar parches para vulnerabilidades CRITICAL y HIGH\n"
+                    contexto_proyecto += f"  - Actualizar dependencias con vulnerabilidades conocidas\n"
+                    contexto_proyecto += f"  - Implementar controles de mitigación temporales\n"
+                    contexto_proyecto += f"  - Evaluar si los límites actuales son apropiados para este proyecto\n"
                 else:
-                    contexto_proyecto += f"• ✅ El SBOM cumple con los estándares de seguridad configurados\n"
-                    contexto_proyecto += f"• 🔍 Mantener monitoreo proactivo de nuevas vulnerabilidades\n"
-                    contexto_proyecto += f"• 📈 Considerar reducir vulnerabilidades existentes para mejorar postura de seguridad\n"
-                    if margen_restante <= 3:
-                        contexto_proyecto += f"• ⚠️ Margen pequeño: establecer alertas para nuevas vulnerabilidades\n"
+                    contexto_proyecto += f"• ✅ **El SBOM cumple con TODOS los estándares de seguridad configurados**\n"
+                    contexto_proyecto += f"• 🔍 **Mantener monitoreo proactivo** de nuevas vulnerabilidades\n"
+                    contexto_proyecto += f"• 📈 **Considerar mejorar** la postura de seguridad aún más\n"
+                    contexto_proyecto += f"• 🎯 **Mejora continua**: Evaluar reducir vulnerabilidades existentes\n"
+                    
+                    if margen_cantidad <= 3:
+                        contexto_proyecto += f"• ⚠️ **Margen pequeño**: Establecer alertas para nuevas vulnerabilidades\n"
 
             # Obtener usuario y historial
             user_id = obtener_usuario_id(request)
             if user_id not in historial_conversaciones:
                 historial_conversaciones[user_id] = []
             
-            # ✅ GENERAR RESPUESTA CON GEMINI INCLUYENDO CONTEXTO DEL PROYECTO
+            # ✅ GENERAR RESPUESTA CON GEMINI INCLUYENDO CONTEXTO COMPLETO
             if model and isinstance(sbom_data, dict):
                 try:
                     # ✅ PROMPT COMPLETO CON CONTEXTO DE LÍMITES
@@ -1216,47 +1309,52 @@ def upload_sbom():
                     instrucciones_ia = f"\n\n🤖 **INSTRUCCIONES PARA EL ANÁLISIS:**\n"
 
                     if limites_check and limites_check.get('proyecto_encontrado', False):
-                        limite = limites_check['limite_configurado']
+                        limite_cantidad = limites_check['limite_configurado']
+                        limite_severidad = limites_check['max_severidad_configurada']
                         vulnerabilidades = limites_check['vulnerabilidades_encontradas']
                         
-                        instrucciones_ia += f"1. **CONTEXTO DEL PROYECTO**: Este proyecto tiene configurado un límite máximo de **{limite}** vulnerabilidades\n"
+                        instrucciones_ia += f"1. **CONTEXTO DEL PROYECTO**: Este proyecto tiene configurado:\n"
+                        instrucciones_ia += f"   - Límite máximo: **{limite_cantidad}** vulnerabilidades\n"
+                        instrucciones_ia += f"   - Severidad máxima: **{limite_severidad}**\n"
                         instrucciones_ia += f"2. **ESTADO ACTUAL**: Se encontraron **{vulnerabilidades}** vulnerabilidades en el SBOM\n"
                         
                         if limites_check['excede_limite']:
-                            diferencia = limites_check['diferencia']
-                            instrucciones_ia += f"3. **🚨 SITUACIÓN CRÍTICA**: El proyecto EXCEDE el límite por **{diferencia}** vulnerabilidades\n"
-                            instrucciones_ia += f"4. **PRIORIDAD ALTA**: Enfócate en las vulnerabilidades más críticas que DEBEN resolverse\n"
-                            instrucciones_ia += f"5. **PLAN DE ACCIÓN**: Proporciona un plan específico para reducir a **{limite}** o menos vulnerabilidades\n"
-                            instrucciones_ia += f"6. **RECOMENDACIONES**: Prioriza por severidad (CRITICAL > HIGH > MEDIUM > LOW)\n"
-                            instrucciones_ia += f"7. **OBJETIVO**: Identificar las **{diferencia}** vulnerabilidades menos críticas que se pueden resolver más fácilmente\n"
-                        else:
-                            margen = limite - vulnerabilidades
-                            porcentaje = round((vulnerabilidades / limite) * 100, 1) if limite > 0 else 0
-                            instrucciones_ia += f"3. **✅ ESTADO CONFORME**: El proyecto CUMPLE con el límite establecido\n"
-                            instrucciones_ia += f"4. **MARGEN DISPONIBLE**: {margen} vulnerabilidades adicionales permitidas\n"
-                            instrucciones_ia += f"5. **USO DEL LÍMITE**: {porcentaje}% del límite utilizado\n"
-                            instrucciones_ia += f"6. **RECOMENDACIONES**: Mantener vigilancia y considerar mejorar aún más la seguridad\n"
+                            if limites_check['excede_limite_cantidad'] and limites_check['excede_limite_severidad']:
+                                instrucciones_ia += f"3. **🚨 SITUACIÓN CRÍTICA**: El proyecto EXCEDE AMBOS LÍMITES\n"
+                                instrucciones_ia += f"4. **DOBLE VIOLACIÓN**: +{limites_check['diferencia_cantidad']} vulnerabilidades Y {limites_check['vulnerabilidades_exceden_severidad']} vulnerabilidades críticas\n"
+                                instrucciones_ia += f"5. **PRIORIDAD MÁXIMA**: Enfócate en vulnerabilidades que exceden {limite_severidad} primero\n"
+                            elif limites_check['excede_limite_severidad']:
+                                instrucciones_ia += f"3. **🔺 SITUACIÓN DE SEVERIDAD CRÍTICA**: {limites_check['vulnerabilidades_exceden_severidad']} vulnerabilidades exceden {limite_severidad}\n"
+                                instrucciones_ia += f"4. **PRIORIDAD ALTA**: Resolver vulnerabilidades críticas inmediatamente\n"
+                                instrucciones_ia += f"5. **POSITIVO**: La cantidad total está dentro del límite\n"
+                            elif limites_check['excede_limite_cantidad']:
+                                instrucciones_ia += f"3. **📊 EXCESO DE CANTIDAD**: El proyecto excede por {limites_check['diferencia_cantidad']} vulnerabilidades\n"
+                                instrucciones_ia += f"4. **POSITIVO**: Todas las severidades están en nivel aceptable\n"
+                                instrucciones_ia += f"5. **ESTRATEGIA**: Reducir vulnerabilidades de menor impacto\n"
                             
-                            if porcentaje >= 80:
-                                instrucciones_ia += f"7. **⚠️ ADVERTENCIA**: Muy cerca del límite ({porcentaje}%), considerar reducir vulnerabilidades proactivamente\n"
-                            elif porcentaje >= 60:
-                                instrucciones_ia += f"7. **🔄 MONITOREO**: Uso moderado del límite, mantener seguimiento regular\n"
-                            else:
-                                instrucciones_ia += f"7. **🟢 ESTADO SALUDABLE**: Uso bajo del límite, excelente postura de seguridad\n"
+                            instrucciones_ia += f"6. **PLAN DE ACCIÓN**: Proporciona un plan específico para cumplir AMBOS límites\n"
+                            instrucciones_ia += f"7. **RECOMENDACIONES**: Prioriza por severidad y luego por facilidad de resolución\n"
+                        else:
+                            margen_cantidad = limite_cantidad - vulnerabilidades
+                            instrucciones_ia += f"3. **✅ ESTADO CONFORME**: El proyecto CUMPLE con AMBOS límites\n"
+                            instrucciones_ia += f"4. **MARGEN DISPONIBLE**: {margen_cantidad} vulnerabilidades adicionales permitidas\n"
+                            instrucciones_ia += f"5. **SEVERIDAD CONFORME**: Todas las vulnerabilidades están en {limite_severidad} o inferior\n"
+                            instrucciones_ia += f"6. **RECOMENDACIONES**: Mantener vigilancia y considerar mejorar la seguridad\n"
                     else:
                         instrucciones_ia += f"1. **CONTEXTO**: No se pudo obtener la configuración específica del proyecto\n"
                         instrucciones_ia += f"2. **ANÁLISIS GENERAL**: Proporciona recomendaciones generales de seguridad\n"
                         instrucciones_ia += f"3. **EVALUACIÓN**: Analiza el nivel de riesgo basado en las vulnerabilidades encontradas\n"
 
                     instrucciones_ia += f"\n🎯 **FORMATO DE RESPUESTA REQUERIDO:**\n"
-                    instrucciones_ia += f"• Inicia con un **RESUMEN EJECUTIVO** que mencione el cumplimiento/incumplimiento del límite\n"
-                    instrucciones_ia += f"• Usa **negrita** para destacar el estado respecto al límite configurado\n"
+                    instrucciones_ia += f"• Inicia con un **RESUMEN EJECUTIVO** que mencione el cumplimiento de AMBOS límites\n"
+                    instrucciones_ia += f"• Usa **negrita** para destacar el estado respecto a los límites configurados\n"
+                    instrucciones_ia += f"• Separa claramente las violaciones de CANTIDAD vs SEVERIDAD\n"
                     instrucciones_ia += f"• Proporciona **recomendaciones específicas** priorizadas según la situación del proyecto\n"
-                    instrucciones_ia += f"• Incluye una **evaluación de riesgo** considerando el contexto del límite del proyecto\n"
+                    instrucciones_ia += f"• Incluye una **evaluación de riesgo** considerando ambos contextos del proyecto\n"
                     
                     prompt_final = prompt_completo + instrucciones_ia
                     
-                    print(f"🧠 Enviando análisis SBOM con contexto de proyecto a Gemini...")
+                    print(f"🧠 Enviando análisis SBOM con contexto completo de proyecto a Gemini...")
                     
                     response = model.generate_content(prompt_final)
                     response_text = response.text
@@ -1264,7 +1362,7 @@ def upload_sbom():
                 except Exception as e:
                     print(f"❌ Error con Gemini: {e}")
                     
-                    # ✅ RESPUESTA DE FALLBACK CON CONTEXTO DE LÍMITES
+                    # ✅ RESPUESTA DE FALLBACK CON CONTEXTO COMPLETO
                     nvd_info = sbom_data.get('resumen', {}).get('nvd_analysis', {})
                     vulns_count = nvd_info.get('total_vulnerabilidades_nvd', 0)
 
@@ -1273,37 +1371,53 @@ def upload_sbom():
                     response_text += f"📊 **Resultados del análisis:**\n"
                     response_text += f"• Vulnerabilidades encontradas: **{vulns_count}**\n"
 
-                    # ✅ VERIFICAR QUE LIMITES_CHECK Y LIMITE_CONFIGURADO SEAN VÁLIDOS
-                    if (limites_check and 
-                        limites_check.get('proyecto_encontrado', False) and 
-                        limites_check.get('limite_configurado') is not None):
-                        
-                        limite_configurado = limites_check['limite_configurado']
-                        response_text += f"• Límite configurado para tu proyecto: **{limite_configurado}**\n"
+                    if (limites_check and limites_check.get('proyecto_encontrado', False)):
+                        response_text += f"• Límite de cantidad configurado: **{limites_check['limite_configurado']}**\n"
+                        response_text += f"• Severidad máxima configurada: **{limites_check['max_severidad_configurada']}**\n"
                         
                         if limites_check['excede_limite']:
-                            response_text += f"• ⚠️ **LÍMITE EXCEDIDO** por **{limites_check['diferencia']}** vulnerabilidades\n"
-                            response_text += f"• 🎯 **Acción requerida**: Reducir vulnerabilidades para cumplir estándar del proyecto\n"
+                            if limites_check['excede_limite_cantidad'] and limites_check['excede_limite_severidad']:
+                                response_text += f"• 🚨 **AMBOS LÍMITES EXCEDIDOS**\n"
+                                response_text += f"• 📊 Exceso de cantidad: **+{limites_check['diferencia_cantidad']}** vulnerabilidades\n"
+                                response_text += f"• 🔺 Vulnerabilidades críticas: **{limites_check['vulnerabilidades_exceden_severidad']}**\n"
+                            elif limites_check['excede_limite_severidad']:
+                                response_text += f"• 🔺 **LÍMITE DE SEVERIDAD EXCEDIDO**: {limites_check['vulnerabilidades_exceden_severidad']} vulnerabilidades críticas\n"
+                                response_text += f"• ✅ Cantidad dentro del límite\n"
+                            elif limites_check['excede_limite_cantidad']:
+                                response_text += f"• 📊 **LÍMITE DE CANTIDAD EXCEDIDO** por **{limites_check['diferencia_cantidad']}**\n"
+                                response_text += f"• ✅ Severidades dentro del límite\n"
                         else:
-                            margen = limite_configurado - vulns_count
-                            response_text += f"• ✅ **DENTRO DEL LÍMITE** - Margen disponible: **{margen}**\n"
-                            response_text += f"• 🟢 **Estado**: El SBOM cumple con los estándares de seguridad del proyecto\n"
+                            response_text += f"• ✅ **CUMPLE AMBOS LÍMITES**\n"
+                            response_text += f"• 🟢 Estado: El SBOM cumple con los estándares de seguridad del proyecto\n"
                     else:
                         response_text += f"• ⚠️ No se pudo verificar límites del proyecto\n"
 
                     response_text += f"\n¿Qué aspecto específico del análisis te gustaría explorar?"
             else:
-                # ✅ RESPUESTA BÁSICA CON CONTEXTO DE LÍMITES
+                # ✅ RESPUESTA BÁSICA CON CONTEXTO COMPLETO
                 response_text = f"He recibido y procesado tu archivo SBOM con consulta a NVD.\n\n"
                 if limites_check:
                     if limites_check['excede_limite']:
-                        response_text += f"⚠️ **IMPORTANTE**: Se encontraron **{limites_check['vulnerabilidades_encontradas']}** vulnerabilidades, "
-                        response_text += f"excediendo el límite de **{limites_check['limite_configurado']}** configurado para tu proyecto por **{limites_check['diferencia']}** vulnerabilidades.\n\n"
-                        response_text += f"🎯 **Tu proyecto requiere acción** para cumplir con los estándares de seguridad establecidos.\n"
+                        response_text += f"⚠️ **IMPORTANTE**: Se encontraron **{limites_check['vulnerabilidades_encontradas']}** vulnerabilidades.\n\n"
+                        
+                        if limites_check['excede_limite_cantidad'] and limites_check['excede_limite_severidad']:
+                            response_text += f"🚨 **DOBLE VIOLACIÓN**: Tu proyecto excede AMBOS límites configurados:\n"
+                            response_text += f"• Cantidad: {limites_check['vulnerabilidades_encontradas']}/{limites_check['limite_configurado']} (+{limites_check['diferencia_cantidad']})\n"
+                            response_text += f"• Severidad: {limites_check['vulnerabilidades_exceden_severidad']} vulnerabilidades > {limites_check['max_severidad_configurada']}\n"
+                        elif limites_check['excede_limite_severidad']:
+                            response_text += f"🔺 **LÍMITE DE SEVERIDAD EXCEDIDO**: {limites_check['vulnerabilidades_exceden_severidad']} vulnerabilidades superan {limites_check['max_severidad_configurada']}\n"
+                            response_text += f"✅ **Cantidad OK**: {limites_check['vulnerabilidades_encontradas']}/{limites_check['limite_configurado']}\n"
+                        elif limites_check['excede_limite_cantidad']:
+                            response_text += f"📊 **LÍMITE DE CANTIDAD EXCEDIDO**: {limites_check['vulnerabilidades_encontradas']}/{limites_check['limite_configurado']} (+{limites_check['diferencia_cantidad']})\n"
+                            response_text += f"✅ **Severidad OK**: Todas ≤ {limites_check['max_severidad_configurada']}\n"
+                        
+                        response_text += f"\n🎯 **Tu proyecto requiere acción** para cumplir con los estándares establecidos.\n"
                     else:
                         response_text += f"✅ **EXCELENTE**: Se encontraron **{limites_check['vulnerabilidades_encontradas']}** vulnerabilidades, "
-                        response_text += f"dentro del límite de **{limites_check['limite_configurado']}** configurado para tu proyecto.\n\n"
-                        response_text += f"🟢 **Tu proyecto cumple** con los estándares de seguridad establecidos.\n"
+                        response_text += f"cumpliendo AMBOS límites configurados:\n"
+                        response_text += f"• Cantidad: {limites_check['vulnerabilidades_encontradas']}/{limites_check['limite_configurado']}\n"
+                        response_text += f"• Severidad: Todas ≤ {limites_check['max_severidad_configurada']}\n\n"
+                        response_text += f"🟢 **Tu proyecto cumple** con todos los estándares de seguridad establecidos.\n"
                 
                 response_text += f"\n¿En qué puedo ayudarte con este análisis de seguridad?"
             
@@ -1326,7 +1440,7 @@ def upload_sbom():
                 "validacion": mensaje_validacion
             }
             
-            # ✅ AÑADIR INFORMACIÓN DE NVD Y LÍMITES
+            # ✅ AÑADIR INFORMACIÓN COMPLETA DE NVD Y LÍMITES
             if isinstance(sbom_data, dict) and 'vulnerabilidades_nvd' in sbom_data:
                 nvd_analysis = sbom_data.get('resumen', {}).get('nvd_analysis', {})
                 sbom_info['nvd_analysis'] = {
@@ -1335,30 +1449,50 @@ def upload_sbom():
                     'componentes_vulnerables': nvd_analysis.get('componentes_con_vulnerabilidades', 0)
                 }
                 
-                # ✅ AÑADIR INFORMACIÓN DE LÍMITES DEL PROYECTO
+                # ✅ INFORMACIÓN COMPLETA DE LÍMITES DEL PROYECTO
                 if limites_check:
+                    estado_final = 'CRÍTICO'
+                    if limites_check['excede_limite_cantidad'] and limites_check['excede_limite_severidad']:
+                        estado_final = 'CRÍTICO - DOBLE VIOLACIÓN'
+                    elif limites_check['excede_limite_severidad']:
+                        estado_final = 'CRÍTICO - SEVERIDAD'
+                    elif limites_check['excede_limite_cantidad']:
+                        estado_final = 'CRÍTICO - CANTIDAD'
+                    else:
+                        estado_final = 'ACEPTABLE'
+                    
                     sbom_info['limites_proyecto'] = {
                         'limite_configurado': limites_check['limite_configurado'],
+                        'max_severidad_configurada': limites_check['max_severidad_configurada'],
                         'vulnerabilidades_encontradas': limites_check['vulnerabilidades_encontradas'],
+                        'vulnerabilidades_exceden_severidad': limites_check['vulnerabilidades_exceden_severidad'],
                         'excede_limite': limites_check['excede_limite'],
-                        'diferencia': limites_check['diferencia'],
-                        'estado': 'CRÍTICO' if limites_check['excede_limite'] else 'ACEPTABLE'
+                        'excede_limite_cantidad': limites_check['excede_limite_cantidad'],
+                        'excede_limite_severidad': limites_check['excede_limite_severidad'],
+                        'diferencia_cantidad': limites_check['diferencia_cantidad'],
+                        'diferencia_severidad': limites_check['diferencia_severidad'],
+                        'estado': estado_final
                     }
             
             return jsonify({
                 "message": response_text,
                 "sbom_info": sbom_info,
                 "file_processed": True,
-                # ✅ INFORMACIÓN ADICIONAL PARA EL FRONTEND
+                # ✅ INFORMACIÓN COMPLETA PARA EL FRONTEND
                 "security_alert": limites_check['excede_limite'] if (limites_check and limites_check.get('proyecto_encontrado', False)) else False,
                 "proyecto_id": proyecto_id,
-                # ✅ NUEVO: Información detallada de límites para el frontend
+                # ✅ INFORMACIÓN DETALLADA DE LÍMITES PARA EL FRONTEND
                 "limites_info": {
-                    "limite_configurado": limites_check['limite_configurado'] if (limites_check and limites_check.get('proyecto_encontrado', False) and limites_check.get('limite_configurado') is not None) else None,
+                    "limite_configurado": limites_check['limite_configurado'] if (limites_check and limites_check.get('proyecto_encontrado', False)) else None,
+                    "max_severidad_configurada": limites_check['max_severidad_configurada'] if (limites_check and limites_check.get('proyecto_encontrado', False)) else None,
                     "vulnerabilidades_encontradas": limites_check['vulnerabilidades_encontradas'] if limites_check else 0,
+                    "vulnerabilidades_exceden_severidad": limites_check['vulnerabilidades_exceden_severidad'] if limites_check else 0,
                     "excede_limite": limites_check['excede_limite'] if (limites_check and limites_check.get('proyecto_encontrado', False)) else False,
-                    "diferencia": limites_check['diferencia'] if (limites_check and limites_check.get('proyecto_encontrado', False)) else 0,
-                    "margen_disponible": (limites_check['limite_configurado'] - limites_check['vulnerabilidades_encontradas']) if (limites_check and limites_check.get('proyecto_encontrado', False) and not limites_check['excede_limite'] and limites_check.get('limite_configurado') is not None) else 0,
+                    "excede_limite_cantidad": limites_check['excede_limite_cantidad'] if (limites_check and limites_check.get('proyecto_encontrado', False)) else False,
+                    "excede_limite_severidad": limites_check['excede_limite_severidad'] if (limites_check and limites_check.get('proyecto_encontrado', False)) else False,
+                    "diferencia_cantidad": limites_check['diferencia_cantidad'] if (limites_check and limites_check.get('proyecto_encontrado', False)) else 0,
+                    "diferencia_severidad": limites_check['diferencia_severidad'] if (limites_check and limites_check.get('proyecto_encontrado', False)) else 0,
+                    "margen_disponible": (limites_check['limite_configurado'] - limites_check['vulnerabilidades_encontradas']) if (limites_check and limites_check.get('proyecto_encontrado', False) and not limites_check['excede_limite_cantidad']) else 0,
                     "porcentaje_usado": round((limites_check['vulnerabilidades_encontradas'] / limites_check['limite_configurado']) * 100, 1) if (limites_check and limites_check.get('proyecto_encontrado', False) and limites_check.get('limite_configurado', 0) > 0) else 0
                 } if limites_check else None
             }), 200
@@ -1372,64 +1506,82 @@ def upload_sbom():
         traceback.print_exc()
         return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
 
-@app.route('/debug/proyecto/<proyecto_id>', methods=['GET'])
-def debug_proyecto(proyecto_id):
-    """Endpoint temporal para debug de configuración de proyecto"""
-    try:
-        print(f"🔍 DEBUG: Proyecto ID recibido: {proyecto_id}")
-        print(f"🍪 DEBUG: Cookies en request: {dict(request.cookies)}")
-        
-        limites_info = verificar_limites_proyecto(proyecto_id, 0)
-        
-        return jsonify({
-            "proyecto_id": proyecto_id,
-            "limites_info": limites_info,
-            "cookies_disponibles": dict(request.cookies),
-            "headers": dict(request.headers)
-        })
-    except Exception as e:
-        print(f"❌ Error en debug: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({
-            "error": str(e),
-            "proyecto_id": proyecto_id
-        }), 500
-
 @app.route('/chat/mensajes', methods=['POST'])
 def chat_mensajes():
     try:
         data = request.json
         mensaje = data.get('message', '')
-        proyecto_id = data.get('proyecto_id', '')  # ✅ Obtener ID del proyecto
-        proyecto_nombre = data.get('proyecto_nombre', '')  # ✅ Obtener nombre del proyecto
+        proyecto_id = data.get('proyecto_id', '')  
+        proyecto_nombre = data.get('proyecto_nombre', '')  
         
         if not mensaje:
             return jsonify({"error": "Mensaje vacío"}), 400
         
         user_id = obtener_usuario_id(request)
         
-        # ✅ OBTENER CONTEXTO DEL PROYECTO SI ESTÁ DISPONIBLE
+        # ✅ OBTENER CONTEXTO COMPLETO DEL PROYECTO
         contexto_proyecto = ""
         if proyecto_id:
             try:
+                print(f"🎯 Obteniendo contexto para proyecto: {proyecto_id}")
                 proyecto_info = verificar_limites_proyecto(proyecto_id, 0)  # 0 vulnerabilidades para obtener solo info del proyecto
                 
-                # ✅ VERIFICAR QUE SE ENCONTRÓ EL PROYECTO
+                # ✅ VERIFICAR QUE SE ENCONTRÓ EL PROYECTO Y TIENE CONFIGURACIÓN COMPLETA
                 if proyecto_info.get('proyecto_encontrado', False) and proyecto_info.get('limite_configurado') is not None:
+                    limite_vuln = proyecto_info['limite_configurado']
+                    max_sev = proyecto_info.get('max_severidad_configurada', 'MEDIUM')
+                    
+                    # ✅ GENERAR CONTEXTO RICO PARA LA IA
                     contexto_proyecto = f"\n\n🎯 **CONTEXTO DEL PROYECTO ACTUAL:**\n"
-                    contexto_proyecto += f"- Proyecto: **{proyecto_nombre}**\n"
-                    contexto_proyecto += f"- Límite máximo de vulnerabilidades: **{proyecto_info['limite_configurado']}**\n"
-                    contexto_proyecto += f"- Configuración de seguridad: {'Alta' if proyecto_info['limite_configurado'] <= 5 else 'Estándar' if proyecto_info['limite_configurado'] <= 15 else 'Permisiva'}\n"
-                    contexto_proyecto += f"\n💡 **Cuando analices vulnerabilidades o SBOM, considera este límite como referencia para tus recomendaciones.**\n"
+                    contexto_proyecto += f"- **Proyecto:** {proyecto_nombre}\n"
+                    contexto_proyecto += f"- **ID:** {proyecto_id}\n"
+                    contexto_proyecto += f"- **Límite máximo de vulnerabilidades:** {limite_vuln}\n"
+                    contexto_proyecto += f"- **Severidad máxima aceptada:** {max_sev}\n"
+                    
+                    # ✅ CLASIFICAR NIVEL DE SEGURIDAD
+                    if limite_vuln <= 5 and max_sev in ['LOW', 'MEDIUM']:
+                        nivel_seguridad = "🔒 **ALTA SEGURIDAD**"
+                        descripcion_seguridad = "Configuración muy restrictiva"
+                    elif limite_vuln <= 15 and max_sev in ['LOW', 'MEDIUM', 'HIGH']:
+                        nivel_seguridad = "🛡️ **SEGURIDAD ESTÁNDAR**"
+                        descripcion_seguridad = "Configuración equilibrada"
+                    else:
+                        nivel_seguridad = "⚠️ **SEGURIDAD BÁSICA**"
+                        descripcion_seguridad = "Configuración permisiva"
+                    
+                    contexto_proyecto += f"- **Nivel de seguridad:** {nivel_seguridad} ({descripcion_seguridad})\n"
+                    
+                    # ✅ ORIENTACIONES ESPECÍFICAS PARA LA IA
+                    contexto_proyecto += f"\n💡 **INSTRUCCIONES PARA EL ASISTENTE:**\n"
+                    contexto_proyecto += f"• Cuando analices vulnerabilidades o SBOM, **SIEMPRE** considera estos límites\n"
+                    contexto_proyecto += f"• Si encuentras vulnerabilidades, evalúa si exceden: {limite_vuln} cantidad O {max_sev} severidad\n"
+                    contexto_proyecto += f"• Proporciona recomendaciones específicas basadas en esta configuración\n"
+                    contexto_proyecto += f"• Menciona el estado de cumplimiento respecto a los límites del proyecto\n"
+                    
+                    # ✅ GUÍAS DE SEVERIDAD
+                    severidades_jerarquia = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
+                    max_sev_index = severidades_jerarquia.index(max_sev) if max_sev in severidades_jerarquia else 1
+                    
+                    contexto_proyecto += f"\n📊 **CONFIGURACIÓN DE SEVERIDAD:**\n"
+                    contexto_proyecto += f"• **Severidades ACEPTABLES:** {', '.join(severidades_jerarquia[:max_sev_index + 1])}\n"
+                    contexto_proyecto += f"• **Severidades CRÍTICAS:** {', '.join(severidades_jerarquia[max_sev_index + 1:]) if max_sev_index < len(severidades_jerarquia) - 1 else 'Ninguna'}\n"
+                    
+                    print(f"✅ Contexto del proyecto generado: {len(contexto_proyecto)} caracteres")
+                    
                 else:
                     error_msg = proyecto_info.get('error', 'Error desconocido')
                     print(f"⚠️ No se pudo obtener contexto del proyecto {proyecto_id}: {error_msg}")
-                    contexto_proyecto = f"\n\n⚠️ **Nota:** No se pudo obtener la configuración específica del proyecto ({error_msg})\n"
+                    contexto_proyecto = f"\n\n⚠️ **ADVERTENCIA:** No se pudo obtener la configuración del proyecto ({error_msg})\n"
+                    contexto_proyecto += f"• Proporciona recomendaciones generales de seguridad\n"
+                    contexto_proyecto += f"• Sugiere verificar la configuración del proyecto\n"
                     
             except Exception as e:
                 print(f"⚠️ Error obteniendo contexto del proyecto: {e}")
-                contexto_proyecto = f"\n\n⚠️ **Nota:** Error obteniendo configuración del proyecto\n"
+                import traceback
+                traceback.print_exc()
+                contexto_proyecto = f"\n\n❌ **ERROR:** No se pudo obtener configuración del proyecto\n"
+                contexto_proyecto += f"• Error técnico: {str(e)}\n"
+                contexto_proyecto += f"• Proporciona recomendaciones generales de seguridad\n"
         
         # Inicializar historial si no existe
         if user_id not in historial_conversaciones:
@@ -1441,9 +1593,10 @@ def chat_mensajes():
             try:
                 # ✅ GENERAR CONTEXTO COMPLETO INCLUYENDO PROYECTO
                 contexto_previo = formatear_historial_para_ai(historial_usuario)
-                prompt_completo = contexto_previo + contexto_proyecto + f"\n\nUsuario: {mensaje}"
+                prompt_completo = contexto_previo + contexto_proyecto + f"\n\n**Usuario:** {mensaje}"
                 
                 print(f"🧠 Enviando mensaje con contexto de proyecto a Gemini...")
+                print(f"📝 Contexto total: {len(prompt_completo)} caracteres")
                 
                 response = model.generate_content(prompt_completo)
                 response_text = response.text
@@ -1468,6 +1621,8 @@ def chat_mensajes():
         
     except Exception as e:
         print(f"❌ Error en chat_mensajes: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": "Error interno del servidor"}), 500
 
 # ✅ ENDPOINT DE HEALTH CHECK

@@ -6,30 +6,54 @@
 {% block content %}
 <div class="container mt-5">
     <h1 class="text-center mb-4">Editar Proyecto</h1>
-    <div class="card shadow-sm mx-auto" id="proyecto-editar-container">
-        <!-- Formulario para editar el proyecto -->
+    <div class="card shadow-sm mx-auto" style="max-width: 600px;" id="proyecto-editar-container">
+        <!-- Formulario para editar el proyecto se genera dinámicamente -->
     </div>
 </div>
 {% endblock %}
 {% block scripts %}
 <script>
-// ✅ SCRIPT PARA ACTUALIZAR EL INDICADOR DE NIVEL DE SEGURIDAD
+// ✅ SCRIPT UNIFICADO PARA ACTUALIZAR EL INDICADOR DE NIVEL DE SEGURIDAD
 function updateSecurityLevel() {
     const maxVulnInput = document.getElementById('max_vulnerabilidades');
+    const maxSevInput = document.getElementById('max_severidad');
     const securityIndicator = document.getElementById('security-level-indicator');
     const securityText = document.getElementById('security-level-text');
+    const severityDisplay = document.getElementById('severity-display');
+    const quantityDisplay = document.getElementById('quantity-display');
 
     if (!maxVulnInput || !securityIndicator || !securityText) return;
 
-    const value = parseInt(maxVulnInput.value) || 0;
+    const vulnValue = parseInt(maxVulnInput.value) || 0;
+    const sevValue = maxSevInput ? maxSevInput.value : 'MEDIUM';
+    
+    // Actualizar displays si existen
+    if (quantityDisplay) {
+        quantityDisplay.textContent = vulnValue;
+    }
+    
+    if (severityDisplay) {
+        const severityMap = {
+            'LOW': '🟢 LOW',
+            'MEDIUM': '🟡 MEDIUM', 
+            'HIGH': '🟠 HIGH',
+            'CRITICAL': '🔴 CRITICAL'
+        };
+        severityDisplay.textContent = severityMap[sevValue] || '🟡 MEDIUM';
+    }
     
     // Remover clases anteriores
     securityIndicator.className = 'security-level';
     
-    if (value <= 5) {
+    // Determinar nivel de seguridad combinado
+    const isRestrictiveSeverity = ['LOW', 'MEDIUM'].includes(sevValue);
+    const isLowQuantity = vulnValue <= 5;
+    const isMediumQuantity = vulnValue <= 15;
+    
+    if (isLowQuantity && isRestrictiveSeverity) {
         securityIndicator.classList.add('high');
         securityText.innerHTML = '<i class="fas fa-shield-alt me-1"></i>Alta Seguridad';
-    } else if (value <= 15) {
+    } else if (isMediumQuantity && (isRestrictiveSeverity || sevValue === 'HIGH')) {
         securityIndicator.classList.add('medium');
         securityText.innerHTML = '<i class="fas fa-shield-halved me-1"></i>Seguridad Estándar';
     } else {
@@ -45,8 +69,13 @@ document.addEventListener('DOMContentLoaded', function() {
         mutations.forEach(function(mutation) {
             if (mutation.type === 'childList') {
                 const maxVulnInput = document.getElementById('max_vulnerabilidades');
+                const maxSevInput = document.getElementById('max_severidad');
+                
                 if (maxVulnInput) {
                     maxVulnInput.addEventListener('input', updateSecurityLevel);
+                    if (maxSevInput) {
+                        maxSevInput.addEventListener('change', updateSecurityLevel);
+                    }
                     updateSecurityLevel(); // Actualizar al cargar
                     observer.disconnect(); // Dejar de observar
                 }

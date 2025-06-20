@@ -519,34 +519,54 @@ function mostrarInformacionSBOM(sbomInfo, limitesInfo = null) {
         mensaje += `• Vulnerabilidades encontradas: ${nvd.vulnerabilidades_encontradas}\n`;
         mensaje += `• Componentes vulnerables: ${nvd.componentes_vulnerables}\n`;
         
-        // ✅ AÑADIR INFORMACIÓN DE LÍMITES DEL PROYECTO
+        // ✅ ARREGLAR INFORMACIÓN DE LÍMITES DEL PROYECTO
         if (limitesInfo && limitesInfo.limite_configurado !== null) {
             mensaje += `• **Límite configurado para el proyecto:** ${limitesInfo.limite_configurado}\n`;
+            mensaje += `• **Severidad máxima configurada:** ${limitesInfo.max_severidad_configurada}\n`;
             
             if (limitesInfo.excede_limite) {
-                mensaje += `• ⚠️ **LÍMITE EXCEDIDO** por **${limitesInfo.diferencia}** vulnerabilidades\n`;
+                // ✅ USAR LOS CAMPOS CORRECTOS
+                if (limitesInfo.excede_limite_cantidad && limitesInfo.excede_limite_severidad) {
+                    mensaje += `• 🚨 **AMBOS LÍMITES EXCEDIDOS**\n`;
+                    mensaje += `• 📊 **Límite de cantidad excedido** por **${limitesInfo.diferencia_cantidad}** vulnerabilidades\n`;
+                    mensaje += `• 🔺 **Límite de severidad excedido**: **${limitesInfo.vulnerabilidades_exceden_severidad}** vulnerabilidades críticas\n`;
+                } else if (limitesInfo.excede_limite_severidad) {
+                    mensaje += `• 🔺 **LÍMITE DE SEVERIDAD EXCEDIDO**: **${limitesInfo.vulnerabilidades_exceden_severidad}** vulnerabilidades críticas\n`;
+                    mensaje += `• ✅ **Cantidad dentro del límite**: ${limitesInfo.vulnerabilidades_encontradas}/${limitesInfo.limite_configurado}\n`;
+                } else if (limitesInfo.excede_limite_cantidad) {
+                    mensaje += `• ⚠️ **LÍMITE DE CANTIDAD EXCEDIDO** por **${limitesInfo.diferencia_cantidad}** vulnerabilidades\n`;
+                    mensaje += `• ✅ **Severidad dentro del límite**: Todas ≤ ${limitesInfo.max_severidad_configurada}\n`;
+                }
+                
                 mensaje += `• 🚨 **Estado:** NO CUMPLE con los estándares de seguridad del proyecto\n`;
             } else {
-                mensaje += `• ✅ **DENTRO DEL LÍMITE** - Margen disponible: **${limitesInfo.margen_disponible}** vulnerabilidades\n`;
-                mensaje += `• 🟢 **Estado:** CUMPLE con los estándares de seguridad del proyecto (${limitesInfo.porcentaje_usado}% usado)\n`;
+                const margen = limitesInfo.limite_configurado - limitesInfo.vulnerabilidades_encontradas;
+                mensaje += `• ✅ **CUMPLE AMBOS LÍMITES**\n`;
+                mensaje += `• 📊 **Margen disponible**: ${margen} vulnerabilidades adicionales\n`;
+                mensaje += `• 🔺 **Severidad conforme**: Todas ≤ ${limitesInfo.max_severidad_configurada}\n`;
+                mensaje += `• 🟢 **Estado:** CUMPLE con todos los estándares de seguridad del proyecto\n`;
             }
         }
         
         // ✅ MENSAJE CONTEXTUALIZADO SEGÚN LOS LÍMITES
         if (limitesInfo && limitesInfo.limite_configurado !== null) {
             if (limitesInfo.excede_limite) {
-                mensaje += `\n🚨 **CRÍTICO:** El proyecto supera el límite de seguridad establecido. Se requiere acción inmediata.`;
-            } else if (nvd.vulnerabilidades_encontradas > 0) {
-                mensaje += `\n⚠️ **Se encontraron vulnerabilidades de seguridad, pero están dentro del límite permitido.** Revisa el análisis detallado abajo.`;
+                if (limitesInfo.excede_limite_cantidad && limitesInfo.excede_limite_severidad) {
+                    mensaje += `\n🚨 **CRÍTICO**: El proyecto viola AMBOS límites (cantidad Y severidad). Se requiere acción inmediata.`;
+                } else if (limitesInfo.excede_limite_severidad) {
+                    mensaje += `\n🔺 **ALTA PRIORIDAD**: Resolver vulnerabilidades críticas inmediatamente.`;
+                } else if (limitesInfo.excede_limite_cantidad) {
+                    mensaje += `\n📊 **ACCIÓN REQUERIDA**: Reducir ${limitesInfo.diferencia_cantidad} vulnerabilidades para cumplir el límite.`;
+                }
             } else {
-                mensaje += `\n✅ **Excelente:** No se encontraron vulnerabilidades conocidas y cumple con los estándares del proyecto.`;
+                mensaje += `\n🟢 **EXCELENTE**: El proyecto cumple con todos los estándares de seguridad establecidos.`;
             }
         } else {
             // Mensaje original si no hay información de límites
             if (nvd.vulnerabilidades_encontradas > 0) {
-                mensaje += `\n⚠️ **Se encontraron vulnerabilidades de seguridad.** Revisa el análisis detallado abajo.`;
+                mensaje += `\n⚠️ Se encontraron vulnerabilidades. Revisa el análisis detallado para evaluar el riesgo.`;
             } else {
-                mensaje += `\n✅ **No se encontraron vulnerabilidades conocidas.**`;
+                mensaje += `\n✅ No se encontraron vulnerabilidades conocidas en los componentes analizados.`;
             }
         }
     }
@@ -582,13 +602,15 @@ async function manejarArchivoSBOM(event) {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('proyecto_id', proyectoActualChat.id);
-        // ✅ ENVIAR EL LÍMITE DIRECTAMENTE
-        formData.append('limite_vulnerabilidades', proyectoActualChat.max_vulnerabilidades); 
+        // ✅ ENVIAR LOS LÍMITES DIRECTAMENTE DESDE EL OBJETO PROYECTO
+        formData.append('limite_vulnerabilidades', proyectoActualChat.max_vulnerabilidades || 10); 
+        formData.append('max_severidad', proyectoActualChat.max_severidad || 'MEDIUM');
         formData.append('mensaje', `Analiza este archivo SBOM del proyecto ${proyectoActualChat.nombre}`);
         
+        // ✅ ASEGURAR QUE SE ENVÍEN LAS COOKIES
         const response = await fetch(`${API_BASE_URL_CHAT}/chat/upload-sbom`, {
             method: 'POST',
-            credentials: 'include',
+            credentials: 'include', // ✅ IMPORTANTE: incluir cookies
             body: formData
         });
         
@@ -612,8 +634,9 @@ async function manejarArchivoSBOM(event) {
         if (data.limites_info) {
             const limites = data.limites_info;
             if (limites.excede_limite) {
+                // ✅ CAMBIAR 'diferencia' por 'diferencia_cantidad'
                 mostrarToast(
-                    `⚠️ LÍMITE EXCEDIDO: ${limites.vulnerabilidades_encontradas}/${limites.limite_configurado} vulnerabilidades (+${limites.diferencia})`, 
+                    `⚠️ LÍMITE EXCEDIDO: ${limites.vulnerabilidades_encontradas}/${limites.limite_configurado} vulnerabilidades (+${limites.diferencia_cantidad})`, 
                     "danger", 
                     8000
                 );

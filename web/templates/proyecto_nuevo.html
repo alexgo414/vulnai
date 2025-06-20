@@ -19,7 +19,7 @@
                     <textarea id="descripcion" name="descripcion" class="form-control" rows="4" placeholder="Describe brevemente el proyecto"></textarea>
                 </div>
 
-                <!-- ✅ NUEVA SECCIÓN DE CONFIGURACIÓN DE SEGURIDAD -->
+                <!-- ✅ SECCIÓN DE CONFIGURACIÓN DE SEGURIDAD UNIFICADA -->
                 <div class="mb-4">
                     <h6 class="border-bottom pb-2 mb-3">
                         <i class="fas fa-shield-alt me-2 text-warning"></i>
@@ -45,28 +45,70 @@
                         </div>
                     </div>
 
-                    <!-- ✅ INDICADORES VISUALES -->
+                    <div class="mb-3">
+                        <label for="max_severidad" class="form-label">
+                            <strong>Severidad máxima aceptada:</strong>
+                        </label>
+                        <div class="input-group">
+                            <select id="max_severidad" name="max_severidad" class="form-control" required>
+                                <option value="LOW">🟢 LOW - Baja</option>
+                                <option value="MEDIUM" selected>🟡 MEDIUM - Media</option>
+                                <option value="HIGH">🟠 HIGH - Alta</option>
+                                <option value="CRITICAL">🔴 CRITICAL - Crítica</option>
+                            </select>
+                            <span class="input-group-text">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </span>
+                        </div>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Define la severidad máxima de vulnerabilidades que se considerarán aceptables.
+                            Las vulnerabilidades por encima de este nivel se marcarán como críticas.
+                            <strong>Valor recomendado: MEDIUM</strong>
+                        </div>
+                    </div>
+
+                    <!-- ✅ GUÍAS UNIFICADAS -->
                     <div class="alert alert-info mb-3">
                         <h6 class="alert-heading">
                             <i class="fas fa-lightbulb me-2"></i>Guía de configuración:
                         </h6>
-                        <ul class="mb-0">
-                            <li><strong>0-5 vulnerabilidades:</strong> Proyecto de alta seguridad</li>
-                            <li><strong>6-15 vulnerabilidades:</strong> Proyecto de seguridad estándar</li>
-                            <li><strong>16+ vulnerabilidades:</strong> Proyecto en desarrollo/testing</li>
-                        </ul>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>📊 Vulnerabilidades:</strong>
+                                <ul class="mb-2">
+                                    <li><strong>0-5:</strong> Proyecto de alta seguridad</li>
+                                    <li><strong>6-15:</strong> Proyecto de seguridad estándar</li>
+                                    <li><strong>16+:</strong> Proyecto en desarrollo/testing</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>🔺 Severidad:</strong>
+                                <ul class="mb-0">
+                                    <li><strong>CRITICAL:</strong> Solo vulnerabilidades críticas son inaceptables (más permisivo)</li>
+                                    <li><strong>HIGH:</strong> Vulnerabilidades altas y críticas son inaceptables</li>
+                                    <li><strong>MEDIUM:</strong> Vulnerabilidades medias, altas y críticas son inaceptables (recomendado)</li>
+                                    <li><strong>LOW:</strong> Cualquier vulnerabilidad es inaceptable (más restrictivo)</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- ✅ PREVIEW DEL NIVEL DE SEGURIDAD -->
                     <div class="security-level-preview">
                         <label class="form-label">
-                            <strong>Nivel de seguridad:</strong>
+                            <strong>Configuración de seguridad:</strong>
                         </label>
                         <div id="security-level-indicator" class="security-level high">
                             <span class="security-badge">
                                 <i class="fas fa-shield-alt me-1"></i>
                                 <span id="security-level-text">Alta Seguridad</span>
                             </span>
+                        </div>
+                        <div class="severity-level-preview mt-2">
+                            <small class="text-muted">
+                                <strong>Máximo:</strong> <span id="severity-display">🟡 MEDIUM</span> •
+                                <strong>Cantidad:</strong> <span id="quantity-display">10</span> vulnerabilidades
+                            </small>
                         </div>
                     </div>
                 </div>
@@ -82,22 +124,41 @@
 {% endblock %}
 {% block scripts %}
 <script>
-// ✅ SCRIPT PARA ACTUALIZAR EL INDICADOR DE NIVEL DE SEGURIDAD
 document.addEventListener('DOMContentLoaded', function() {
     const maxVulnInput = document.getElementById('max_vulnerabilidades');
+    const maxSevInput = document.getElementById('max_severidad');
     const securityIndicator = document.getElementById('security-level-indicator');
     const securityText = document.getElementById('security-level-text');
+    const severityDisplay = document.getElementById('severity-display');
+    const quantityDisplay = document.getElementById('quantity-display');
 
     function updateSecurityLevel() {
-        const value = parseInt(maxVulnInput.value) || 0;
+        const vulnValue = parseInt(maxVulnInput.value) || 0;
+        const sevValue = maxSevInput.value;
         
-        // Remover clases anteriores
+        // Actualizar displays
+        quantityDisplay.textContent = vulnValue;
+        
+        const severityMap = {
+            'LOW': '🟢 LOW',
+            'MEDIUM': '🟡 MEDIUM', 
+            'HIGH': '🟠 HIGH',
+            'CRITICAL': '🔴 CRITICAL'
+        };
+        severityDisplay.textContent = severityMap[sevValue] || '🟡 MEDIUM';
+        
+        // Determinar nivel de seguridad combinado
         securityIndicator.className = 'security-level';
         
-        if (value <= 5) {
+        // Lógica combinada: número bajo + severidad restrictiva = alta seguridad
+        const isRestrictiveSeverity = ['LOW', 'MEDIUM'].includes(sevValue);
+        const isLowQuantity = vulnValue <= 5;
+        const isMediumQuantity = vulnValue <= 15;
+        
+        if (isLowQuantity && isRestrictiveSeverity) {
             securityIndicator.classList.add('high');
             securityText.innerHTML = '<i class="fas fa-shield-alt me-1"></i>Alta Seguridad';
-        } else if (value <= 15) {
+        } else if (isMediumQuantity && (isRestrictiveSeverity || sevValue === 'HIGH')) {
             securityIndicator.classList.add('medium');
             securityText.innerHTML = '<i class="fas fa-shield-halved me-1"></i>Seguridad Estándar';
         } else {
@@ -106,8 +167,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Actualizar al cambiar el valor
+    // Actualizar al cambiar cualquier valor
     maxVulnInput.addEventListener('input', updateSecurityLevel);
+    maxSevInput.addEventListener('change', updateSecurityLevel);
     
     // Actualizar al cargar
     updateSecurityLevel();
