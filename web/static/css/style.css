@@ -238,16 +238,10 @@
     border: none; /* Quitamos el borde predeterminado */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave */
     transition: transform 0.2s; /* Animación al pasar el mouse */
-    transform: scale(0.8);
     transition: opacity 1.5s ease-out, transform 1.5s ease-out;
     max-width: 20rem; /* Ancho máximo de la tarjeta */
 }
 
-/* Clase para mostrar la tarjeta con efecto pop-up */
-.card-pop-visible {
-    opacity: 1;
-    transform: scale(1);
-}
 
 .card-header {
     background-color: #2c3e50;

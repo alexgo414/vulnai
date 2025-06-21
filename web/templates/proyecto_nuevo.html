@@ -2,11 +2,12 @@
 {% block title %}Crear nuevo proyecto{% endblock %}
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/perfil.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/proyecto.css') }}">
 {% endblock %}
 {% block content %}
 <div class="container mt-5">
     <h1 class="text-center mb-4">Crear nuevo proyecto</h1>
-    <div class="card shadow-sm mx-auto" style="max-width: 600px;">
+    <div class="card shadow-sm mx-auto" style="max-width: 700px;">
         <div class="card-body">
             <form id="crear-proyecto-form">
                 <div class="mb-3">
@@ -19,12 +20,19 @@
                     <textarea id="descripcion" name="descripcion" class="form-control" rows="4" placeholder="Describe brevemente el proyecto"></textarea>
                 </div>
 
-                <!-- ✅ SECCIÓN DE CONFIGURACIÓN DE SEGURIDAD UNIFICADA -->
+                <!-- ✅ SECCIÓN DE CONFIGURACIÓN DE SEGURIDAD SIN RECOMENDACIONES -->
                 <div class="mb-4">
-                    <h6 class="border-bottom pb-2 mb-3">
-                        <i class="fas fa-shield-alt me-2 text-warning"></i>
-                        Configuración de Seguridad
-                    </h6>
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                        <h6 class="mb-0">
+                            <i class="fas fa-shield-alt me-2 text-warning"></i>
+                            Configuración de Seguridad
+                        </h6>
+                        <!-- ✅ BOTÓN PARA ABRIR GUÍA LATERAL -->
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="toggleSidebarGuide()">
+                            <i class="fas fa-question-circle me-1"></i>
+                            Guía de configuración
+                        </button>
+                    </div>
                     
                     <div class="mb-3">
                         <label for="max_vulnerabilidades" class="form-label">
@@ -36,12 +44,6 @@
                             <span class="input-group-text">
                                 <i class="fas fa-bug"></i>
                             </span>
-                        </div>
-                        <div class="form-text">
-                            <i class="fas fa-info-circle me-1"></i>
-                            Define cuántas vulnerabilidades como máximo puede tener un archivo SBOM 
-                            para ser considerado aceptable en este proyecto. 
-                            <strong>Valor recomendado: 10</strong>
                         </div>
                     </div>
 
@@ -60,38 +62,6 @@
                                 <i class="fas fa-exclamation-triangle"></i>
                             </span>
                         </div>
-                        <div class="form-text">
-                            <i class="fas fa-info-circle me-1"></i>
-                            Define la severidad máxima de vulnerabilidades que se considerarán aceptables.
-                            Las vulnerabilidades por encima de este nivel se marcarán como críticas.
-                            <strong>Valor recomendado: MEDIUM</strong>
-                        </div>
-                    </div>
-
-                    <!-- ✅ GUÍAS UNIFICADAS -->
-                    <div class="alert alert-info mb-3">
-                        <h6 class="alert-heading">
-                            <i class="fas fa-lightbulb me-2"></i>Guía de configuración:
-                        </h6>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <strong>📊 Vulnerabilidades:</strong>
-                                <ul class="mb-2">
-                                    <li><strong>0-5:</strong> Proyecto de alta seguridad</li>
-                                    <li><strong>6-15:</strong> Proyecto de seguridad estándar</li>
-                                    <li><strong>16+:</strong> Proyecto en desarrollo/testing</li>
-                                </ul>
-                            </div>
-                            <div class="col-md-6">
-                                <strong>🔺 Severidad:</strong>
-                                <ul class="mb-0">
-                                    <li><strong>CRITICAL:</strong> Solo vulnerabilidades críticas son inaceptables (más permisivo)</li>
-                                    <li><strong>HIGH:</strong> Vulnerabilidades altas y críticas son inaceptables</li>
-                                    <li><strong>MEDIUM:</strong> Vulnerabilidades medias, altas y críticas son inaceptables (recomendado)</li>
-                                    <li><strong>LOW:</strong> Cualquier vulnerabilidad es inaceptable (más restrictivo)</li>
-                                </ul>
-                            </div>
-                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -105,14 +75,9 @@
                                 <i class="fas fa-calculator"></i>
                             </span>
                         </div>
-                        <div class="form-text">
-                            <i class="fas fa-info-circle me-1"></i>
-                            Define la suma máxima de grados de severidad permitida. Cada vulnerabilidad tiene un grado del 1 al 10 basado en su score CVSS.
-                            <strong>Valor recomendado: 50</strong>
-                        </div>
                     </div>
 
-                    <!-- ✅ ACTUALIZAR PREVIEW DE SEGURIDAD -->
+                    <!-- ✅ PREVIEW DE SEGURIDAD -->
                     <div class="security-level-preview">
                         <label class="form-label">
                             <strong>Configuración de seguridad:</strong>
@@ -133,7 +98,7 @@
                     </div>
                 </div>
 
-                <!-- ✅ NUEVA SECCIÓN: CRITERIOS DE SOLUCIONABILIDAD -->
+                <!-- ✅ SECCIÓN DE CRITERIOS DE SOLUCIONABILIDAD SIN RECOMENDACIONES -->
                 <div class="mb-4">
                     <h6 class="border-bottom pb-2 mb-3">
                         <i class="fas fa-tools me-2 text-info"></i>
@@ -148,8 +113,8 @@
                             </label>
                             <div class="input-group">
                                 <input type="range" id="peso_severidad" name="peso_severidad" 
-                                    class="form-range" min="0" max="100" value="70" 
-                                    oninput="updatePesoDisplay()">
+                                       class="form-range" min="0" max="100" value="70" 
+                                       oninput="updatePesoDisplay()">
                                 <span class="input-group-text" style="min-width: 60px;">
                                     <span id="peso-severidad-display">70</span>%
                                 </span>
@@ -162,19 +127,13 @@
                             </label>
                             <div class="input-group">
                                 <input type="range" id="peso_solucionabilidad" name="peso_solucionabilidad" 
-                                    class="form-range" min="0" max="100" value="30" 
-                                    oninput="updatePesoDisplay()">
+                                       class="form-range" min="0" max="100" value="30" 
+                                       oninput="updatePesoDisplay()">
                                 <span class="input-group-text" style="min-width: 60px;">
                                     <span id="peso-solucionabilidad-display">30</span>%
                                 </span>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="form-text mb-3">
-                        <i class="fas fa-balance-scale me-1"></i>
-                        Define cómo priorizar vulnerabilidades: más peso en severidad = prioriza vulnerabilidades críticas; 
-                        más peso en solucionabilidad = prioriza vulnerabilidades fáciles de resolver.
                     </div>
                     
                     <!-- Umbrales de solucionabilidad -->
@@ -184,8 +143,7 @@
                                 <strong>Umbral "Fácil de resolver" (puntos):</strong>
                             </label>
                             <input type="number" id="umbral_facil" name="umbral_solucionabilidad_facil" 
-                                class="form-control" value="75" min="50" max="100">
-                            <div class="form-text">Vulnerabilidades con ≥ estos puntos se consideran fáciles de resolver</div>
+                                   class="form-control" value="75" min="50" max="100">
                         </div>
                         
                         <div class="col-md-6">
@@ -193,8 +151,7 @@
                                 <strong>Umbral "Dificultad media" (puntos):</strong>
                             </label>
                             <input type="number" id="umbral_media" name="umbral_solucionabilidad_media" 
-                                class="form-control" value="50" min="25" max="75">
-                            <div class="form-text">Vulnerabilidades entre este valor y el umbral fácil</div>
+                                   class="form-control" value="50" min="25" max="75">
                         </div>
                     </div>
                     
@@ -204,46 +161,46 @@
                         
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="priori_vectores_red" 
-                                name="priori_vectores_red" checked>
+                                   name="priori_vectores_red" checked>
                             <label class="form-check-label" for="priori_vectores_red">
                                 <i class="fas fa-network-wired text-danger me-1"></i>
-                                Priorizar vulnerabilidades de **vector de red** (acceso remoto)
+                                Priorizar vulnerabilidades de vector de red (acceso remoto)
                             </label>
                         </div>
                         
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="priori_sin_parches" 
-                                name="priori_sin_parches" checked>
+                                   name="priori_sin_parches" checked>
                             <label class="form-check-label" for="priori_sin_parches">
                                 <i class="fas fa-exclamation-triangle text-warning me-1"></i>
-                                Priorizar vulnerabilidades **sin parches oficiales** disponibles
+                                Priorizar vulnerabilidades sin parches oficiales disponibles
                             </label>
                         </div>
                         
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="priori_exploit_publico" 
-                                name="priori_exploit_publico" checked>
+                                   name="priori_exploit_publico" checked>
                             <label class="form-check-label" for="priori_exploit_publico">
                                 <i class="fas fa-bug text-danger me-1"></i>
-                                Priorizar vulnerabilidades con **exploits públicos** disponibles
+                                Priorizar vulnerabilidades con exploits públicos disponibles
                             </label>
                         </div>
                         
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="incluir_temporal_fixes" 
-                                name="incluir_temporal_fixes" checked>
+                                   name="incluir_temporal_fixes" checked>
                             <label class="form-check-label" for="incluir_temporal_fixes">
                                 <i class="fas fa-band-aid text-info me-1"></i>
-                                Incluir vulnerabilidades con **soluciones temporales** como solucionables
+                                Incluir vulnerabilidades con soluciones temporales como solucionables
                             </label>
                         </div>
                         
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="excluir_privilegios_altos" 
-                                name="excluir_privilegios_altos">
+                                   name="excluir_privilegios_altos">
                             <label class="form-check-label" for="excluir_privilegios_altos">
                                 <i class="fas fa-shield-alt text-success me-1"></i>
-                                Excluir vulnerabilidades que requieren **privilegios administrativos** (menor prioridad)
+                                Excluir vulnerabilidades que requieren privilegios administrativos
                             </label>
                         </div>
                     </div>
@@ -282,27 +239,265 @@
         </div>
     </div>
 </div>
+
+<!-- ✅ SIDEBAR DE GUÍA LATERAL -->
+<div class="sidebar-guide" id="sidebar-guide">
+    <div class="sidebar-guide-header">
+        <h5 class="sidebar-guide-title">
+            <i class="fas fa-shield-alt me-2"></i>
+            Guía de Configuración de Seguridad
+        </h5>
+        <button type="button" class="btn-close-sidebar" onclick="toggleSidebarGuide()">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    
+    <div class="sidebar-guide-content">
+        <!-- Sección 1: Configuración de Seguridad -->
+        <div class="guide-section-sidebar">
+            <h6 class="guide-section-title">
+                <i class="fas fa-bug me-2"></i>
+                Número máximo de vulnerabilidades
+            </h6>
+            
+            <p>Este parámetro define cuántas vulnerabilidades puede contener un archivo SBOM antes de considerarse inaceptable para el proyecto.</p>
+            
+            <div class="guide-recommendations">
+                <h6>Valores recomendados:</h6>
+                <ul>
+                    <li><strong>1-5 vulnerabilidades:</strong> Ideal para proyectos críticos (sistemas financieros, médicos, infraestructura)</li>
+                    <li><strong>6-15 vulnerabilidades:</strong> Aceptable para la mayoría de aplicaciones empresariales</li>
+                    <li><strong>16-50 vulnerabilidades:</strong> Para proyectos en desarrollo o entornos de pruebas</li>
+                    <li><strong>Más de 50:</strong> Solo recomendado para análisis exploratorios o proyectos heredados</li>
+                </ul>
+            </div>
+            
+            <div class="guide-example">
+                <strong>💡 Ejemplo práctico:</strong><br>
+                Si configuras máximo 10 vulnerabilidades, cuando subas un SBOM con 15 vulnerabilidades, 
+                el sistema te alertará que excede el límite y te mostrará las 10 más críticas para priorizar.
+            </div>
+            
+            <div class="guide-tip">
+                <strong>🎯 Recomendación:</strong> Comienza con 10 vulnerabilidades y ajusta según tus necesidades. 
+                Proyectos más críticos deberían usar valores más bajos (3-5).
+            </div>
+        </div>
+
+        <!-- Sección 2: Severidad máxima -->
+        <div class="guide-section-sidebar">
+            <h6 class="guide-section-title">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Severidad máxima aceptada
+            </h6>
+            
+            <p>Define el nivel más alto de severidad que tu proyecto puede tolerar:</p>
+            
+            <div class="guide-recommendations">
+                <h6>Niveles de severidad:</h6>
+                <ul>
+                    <li><strong>🟢 LOW:</strong> Solo vulnerabilidades menores. Ideal para sistemas ultra-críticos donde cualquier riesgo debe ser minimizado</li>
+                    <li><strong>🟡 MEDIUM:</strong> Permite vulnerabilidades bajas y medias. Recomendado para la mayoría de aplicaciones productivas</li>
+                    <li><strong>🟠 HIGH:</strong> Incluye vulnerabilidades importantes. Para proyectos con mayor tolerancia al riesgo o en desarrollo</li>
+                    <li><strong>🔴 CRITICAL:</strong> Permite todo tipo de vulnerabilidades. Solo para análisis completos o auditorías exhaustivas</li>
+                </ul>
+            </div>
+            
+            <div class="guide-warning">
+                <strong>⚠️ Importante:</strong> Si seleccionas MEDIUM, las vulnerabilidades HIGH y CRITICAL serán 
+                marcadas como inaceptables y aparecerán destacadas en rojo en tu análisis. Esto te permitirá 
+                identificar rápidamente los componentes que requieren atención inmediata.
+            </div>
+        </div>
+
+        <!-- Sección 3: Grado combinado -->
+        <div class="guide-section-sidebar">
+            <h6 class="guide-section-title">
+                <i class="fas fa-calculator me-2"></i>
+                Grado de severidad combinado
+            </h6>
+            
+            <p>Sistema de puntuación que suma los grados individuales de todas las vulnerabilidades para evaluar el riesgo total del proyecto:</p>
+            
+            <div class="guide-recommendations">
+                <h6>Escala de grados por severidad:</h6>
+                <ul>
+                    <li><strong>Grado 1-3:</strong> Vulnerabilidades LOW (score CVSS 0.1-3.9)</li>
+                    <li><strong>Grado 4-6:</strong> Vulnerabilidades MEDIUM (score CVSS 4.0-6.9)</li>
+                    <li><strong>Grado 7-8:</strong> Vulnerabilidades HIGH (score CVSS 7.0-8.9)</li>
+                    <li><strong>Grado 9-10:</strong> Vulnerabilidades CRITICAL (score CVSS 9.0-10.0)</li>
+                </ul>
+            </div>
+            
+            <div class="guide-example">
+                <strong>💡 Ejemplo de cálculo:</strong><br>
+                Un SBOM con:<br>
+                • 5 vulnerabilidades MEDIUM (grado 5 cada una) = 5×5 = 25 puntos<br>
+                • 2 vulnerabilidades HIGH (grado 7 cada una) = 2×7 = 14 puntos<br>
+                • 1 vulnerabilidad CRITICAL (grado 9) = 1×9 = 9 puntos<br>
+                <strong>Total: 25 + 14 + 9 = 48 puntos</strong><br>
+                Si tu límite es 50, estarías dentro del rango aceptable.
+            </div>
+        </div>
+
+        <!-- Sección 4: Sistema de solucionabilidad -->
+        <div class="guide-section-sidebar">
+            <h6 class="guide-section-title">
+                <i class="fas fa-balance-scale me-2"></i>
+                Sistema de pesos de priorización
+            </h6>
+            
+            <p>El sistema calcula una prioridad final para cada vulnerabilidad usando la fórmula:</p>
+            
+            <div class="guide-formula">
+                <strong>Prioridad = (Peso_Severidad% × Severidad) + (Peso_Solucionabilidad% × Solucionabilidad)</strong>
+            </div>
+            
+            <div class="guide-recommendations">
+                <h6>Estrategias de configuración:</h6>
+                <ul>
+                    <li><strong>Enfoque en Severidad (70/30):</strong> Prioriza las vulnerabilidades más peligrosas primero, ideal para sistemas críticos</li>
+                    <li><strong>Enfoque Balanceado (60/40):</strong> Equilibrio entre peligro y facilidad de resolución, bueno para la mayoría</li>
+                    <li><strong>Enfoque en Solucionabilidad (40/60):</strong> Prioriza resolver muchas vulnerabilidades rápido, para equipos con recursos limitados</li>
+                    <li><strong>Quick Wins (30/70):</strong> Maximiza el número de vulnerabilidades resueltas, para demostrar progreso rápido</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Sección 5: Umbrales de solucionabilidad -->
+        <div class="guide-section-sidebar">
+            <h6 class="guide-section-title">
+                <i class="fas fa-chart-line me-2"></i>
+                Umbrales de solucionabilidad
+            </h6>
+            
+            <p>Define cómo clasificar la dificultad de resolver cada vulnerabilidad:</p>
+            
+            <div class="guide-example">
+                <strong>🎯 Configuración típica:</strong><br>
+                • <strong>≥75 puntos:</strong> 🟢 Fácil (parche disponible, fácil de aplicar)<br>
+                • <strong>50-74 puntos:</strong> 🟡 Media (requiere algo de esfuerzo)<br>
+                • <strong>&lt;50 puntos:</strong> 🔴 Difícil (sin parche, requiere workarounds)
+            </div>
+            
+            <div class="guide-recommendations">
+                <h6>Factores que afectan la solucionabilidad:</h6>
+                <ul>
+                    <li><strong>+30 puntos:</strong> Si hay parche oficial disponible</li>
+                    <li><strong>+20 puntos:</strong> Si hay solución temporal (workaround)</li>
+                    <li><strong>+15 puntos:</strong> Si no requiere privilegios administrativos</li>
+                    <li><strong>+10 puntos:</strong> Si tiene baja complejidad de explotación</li>
+                    <li><strong>-15 puntos:</strong> Si no hay solución conocida</li>
+                    <li><strong>-10 puntos:</strong> Si requiere cambios arquitectónicos</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Sección 6: Criterios de alta prioridad -->
+        <div class="guide-section-sidebar">
+            <h6 class="guide-section-title">
+                <i class="fas fa-flag me-2"></i>
+                Criterios de alta prioridad
+            </h6>
+            
+            <div class="guide-subsection-sidebar">
+                <h6>🌐 Vector de Red:</h6>
+                <p>Las vulnerabilidades accesibles remotamente son más peligrosas porque pueden ser explotadas 
+                sin acceso físico al sistema.</p>
+                <div class="guide-example">
+                    <strong>Ejemplos:</strong> Vulnerabilidades en servidores web, APIs públicas, servicios de red expuestos.
+                </div>
+            </div>
+            
+            <div class="guide-subsection-sidebar">
+                <h6>⚠️ Sin Parches Oficiales:</h6>
+                <p>Vulnerabilidades para las que el vendor aún no ha publicado un parche oficial.</p>
+                <div class="guide-example">
+                    <strong>Implicación:</strong> Requieren soluciones temporales o mitigaciones hasta que se publique el parche oficial.
+                </div>
+            </div>
+            
+            <div class="guide-subsection-sidebar">
+                <h6>🐛 Exploits Públicos:</h6>
+                <p>Vulnerabilidades para las que ya existen herramientas o código de explotación disponible públicamente.</p>
+                <div class="guide-example">
+                    <strong>Riesgo:</strong> Tienen mayor probabilidad de ser explotadas por atacantes malintencionados.
+                </div>
+            </div>
+            
+            <div class="guide-subsection-sidebar">
+                <h6>🩹 Soluciones Temporales:</h6>
+                <p>Incluye vulnerabilidades que tienen workarounds o mitigaciones temporales disponibles.</p>
+                <div class="guide-example">
+                    <strong>Ventaja:</strong> Pueden ser parcialmente mitigadas mientras se espera una solución definitiva.
+                </div>
+            </div>
+            
+            <div class="guide-subsection-sidebar">
+                <h6>🛡️ Privilegios Administrativos:</h6>
+                <p>Excluye vulnerabilidades que requieren acceso de administrador para ser explotadas.</p>
+                <div class="guide-example">
+                    <strong>Justificación:</strong> Son menos probables de ser explotadas por atacantes externos sin acceso privilegiado.
+                </div>
+            </div>
+            
+            <div class="guide-warning">
+                <strong>⚠️ Importante:</strong> Los criterios marcados aumentan automáticamente la prioridad 
+                de las vulnerabilidades que los cumplen, independientemente de los pesos configurados.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ OVERLAY PARA CERRAR SIDEBAR -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebarGuide()"></div>
 {% endblock %}
+
 {% block scripts %}
 <script>
+// ✅ FUNCIÓN PARA MANEJAR SIDEBAR LATERAL
+function toggleSidebarGuide() {
+    const sidebar = document.getElementById('sidebar-guide');
+    const overlay = document.getElementById('sidebar-overlay');
+    
+    if (sidebar.classList.contains('show')) {
+        sidebar.classList.remove('show');
+        overlay.classList.remove('show');
+        document.body.classList.remove('sidebar-open');
+    } else {
+        sidebar.classList.add('show');
+        overlay.classList.add('show');
+        document.body.classList.add('sidebar-open');
+    }
+}
+
+// ✅ CERRAR SIDEBAR CON ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const sidebar = document.getElementById('sidebar-guide');
+        if (sidebar.classList.contains('show')) {
+            toggleSidebarGuide();
+        }
+    }
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     const maxVulnInput = document.getElementById('max_vulnerabilidades');
     const maxSevInput = document.getElementById('max_severidad');
-    const maxGradoInput = document.getElementById('max_grado_combinado');  // ✅ NUEVO
+    const maxGradoInput = document.getElementById('max_grado_combinado');
     const securityIndicator = document.getElementById('security-level-indicator');
     const securityText = document.getElementById('security-level-text');
     const severityDisplay = document.getElementById('severity-display');
     const quantityDisplay = document.getElementById('quantity-display');
-    const gradeDisplay = document.getElementById('grade-display');  // ✅ NUEVO
+    const gradeDisplay = document.getElementById('grade-display');
 
     function updateSecurityLevel() {
         const vulnValue = parseInt(maxVulnInput.value) || 0;
         const sevValue = maxSevInput.value;
-        const gradeValue = parseInt(maxGradoInput.value) || 50;  // ✅ NUEVO
+        const gradeValue = parseInt(maxGradoInput.value) || 50;
         
-        // Actualizar displays
         quantityDisplay.textContent = vulnValue;
-        gradeDisplay.textContent = gradeValue;  // ✅ NUEVO
+        gradeDisplay.textContent = gradeValue;
         
         const severityMap = {
             'LOW': '🟢 LOW',
@@ -312,16 +507,14 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         severityDisplay.textContent = severityMap[sevValue] || '🟡 MEDIUM';
         
-        // ✅ DETERMINAR NIVEL DE SEGURIDAD COMBINADO (incluyendo grado)
         securityIndicator.className = 'security-level';
         
         const isRestrictiveSeverity = ['LOW', 'MEDIUM'].includes(sevValue);
         const isLowQuantity = vulnValue <= 5;
         const isMediumQuantity = vulnValue <= 15;
-        const isLowGrade = gradeValue <= 30;  // ✅ NUEVO
-        const isMediumGrade = gradeValue <= 70;  // ✅ NUEVO
+        const isLowGrade = gradeValue <= 30;
+        const isMediumGrade = gradeValue <= 70;
         
-        // ✅ NUEVA LÓGICA: Considerar los 3 factores
         if (isLowQuantity && isRestrictiveSeverity && isLowGrade) {
             securityIndicator.classList.add('high');
             securityText.innerHTML = '<i class="fas fa-shield-alt me-1"></i>Alta Seguridad';
@@ -334,20 +527,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // ✅ FUNCIÓN GLOBAL PARA PESOS
     window.updatePesoDisplay = function() {
         const pesoSev = document.getElementById('peso_severidad').value;
         const pesoSol = document.getElementById('peso_solucionabilidad').value;
         
-        // Actualizar displays
         document.getElementById('peso-severidad-display').textContent = pesoSev;
         document.getElementById('peso-solucionabilidad-display').textContent = pesoSol;
         
-        // Actualizar preview
         document.getElementById('preview-peso-sev').textContent = pesoSev;
         document.getElementById('preview-peso-sol').textContent = pesoSol;
         
-        // Auto-ajustar para que sumen 100%
         const total = parseInt(pesoSev) + parseInt(pesoSol);
         if (total !== 100) {
             const diff = 100 - total;
@@ -359,7 +548,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const newValue = Math.max(0, Math.min(100, parseInt(otherSlider.value) + diff));
             otherSlider.value = newValue;
             
-            // Actualizar displays después del ajuste
             setTimeout(window.updatePesoDisplay, 10);
         }
     }
@@ -374,14 +562,12 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('preview-umbral-medio-2').textContent = umbralMedio;
     }
 
-    // ✅ AGREGAR EVENT LISTENER PARA EL NUEVO CAMPO
     maxVulnInput.addEventListener('input', updateSecurityLevel);
     maxSevInput.addEventListener('change', updateSecurityLevel);
     maxGradoInput.addEventListener('input', updateSecurityLevel);
     document.getElementById('umbral_facil').addEventListener('input', updateUmbralDisplay);
     document.getElementById('umbral_media').addEventListener('input', updateUmbralDisplay);
     
-    // Actualizar al cargar
     updateSecurityLevel();
     window.updatePesoDisplay();
     updateUmbralDisplay();

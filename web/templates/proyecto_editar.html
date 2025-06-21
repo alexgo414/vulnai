@@ -1,41 +1,279 @@
 {% extends "layout.html" %}
-{% block title %}Editar Proyecto{% endblock %}
+{% block title %}Editar proyecto{% endblock %}
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/perfil.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/proyecto.css') }}">
 {% endblock %}
 {% block content %}
 <div class="container mt-5">
-    <h1 class="text-center mb-4">Editar Proyecto</h1>
-    <div class="card shadow-sm mx-auto" style="max-width: 600px;" id="proyecto-editar-container">
+    <h1 class="text-center mb-4">Editar proyecto</h1>
+    <div class="card shadow-sm mx-auto" style="max-width: 700px;" id="proyecto-editar-container">
         <!-- Formulario para editar el proyecto se genera dinámicamente -->
     </div>
 </div>
+
+<!-- ✅ SIDEBAR DE GUÍA LATERAL (IGUAL QUE EN PROYECTO_NUEVO.HTML) -->
+<div class="sidebar-guide" id="sidebar-guide">
+    <div class="sidebar-guide-header">
+        <h5 class="sidebar-guide-title">
+            <i class="fas fa-shield-alt me-2"></i>
+            Guía de Configuración de Seguridad
+        </h5>
+        <button type="button" class="btn-close-sidebar" onclick="toggleSidebarGuide()">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    
+    <div class="sidebar-guide-content">
+        <!-- Sección 1: Configuración de Seguridad -->
+        <div class="guide-section-sidebar">
+            <h6 class="guide-section-title">
+                <i class="fas fa-bug me-2"></i>
+                Número máximo de vulnerabilidades
+            </h6>
+            
+            <p>Este parámetro define cuántas vulnerabilidades puede contener un archivo SBOM antes de considerarse inaceptable para el proyecto.</p>
+            
+            <div class="guide-recommendations">
+                <h6>Valores recomendados:</h6>
+                <ul>
+                    <li><strong>1-5 vulnerabilidades:</strong> Ideal para proyectos críticos (sistemas financieros, médicos, infraestructura)</li>
+                    <li><strong>6-15 vulnerabilidades:</strong> Aceptable para la mayoría de aplicaciones empresariales</li>
+                    <li><strong>16-50 vulnerabilidades:</strong> Para proyectos en desarrollo o entornos de pruebas</li>
+                    <li><strong>Más de 50:</strong> Solo recomendado para análisis exploratorios o proyectos heredados</li>
+                </ul>
+            </div>
+            
+            <div class="guide-example">
+                <strong>💡 Ejemplo práctico:</strong><br>
+                Si configuras máximo 10 vulnerabilidades, cuando subas un SBOM con 15 vulnerabilidades, 
+                el sistema te alertará que excede el límite y te mostrará las 10 más críticas para priorizar.
+            </div>
+            
+            <div class="guide-tip">
+                <strong>🎯 Recomendación:</strong> Comienza con 10 vulnerabilidades y ajusta según tus necesidades. 
+                Proyectos más críticos deberían usar valores más bajos (3-5).
+            </div>
+        </div>
+
+        <!-- Sección 2: Severidad máxima -->
+        <div class="guide-section-sidebar">
+            <h6 class="guide-section-title">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Severidad máxima aceptada
+            </h6>
+            
+            <p>Define el nivel más alto de severidad que tu proyecto puede tolerar:</p>
+            
+            <div class="guide-recommendations">
+                <h6>Niveles de severidad:</h6>
+                <ul>
+                    <li><strong>🟢 LOW:</strong> Solo vulnerabilidades menores. Ideal para sistemas ultra-críticos donde cualquier riesgo debe ser minimizado</li>
+                    <li><strong>🟡 MEDIUM:</strong> Permite vulnerabilidades bajas y medias. Recomendado para la mayoría de aplicaciones productivas</li>
+                    <li><strong>🟠 HIGH:</strong> Incluye vulnerabilidades importantes. Para proyectos con mayor tolerancia al riesgo o en desarrollo</li>
+                    <li><strong>🔴 CRITICAL:</strong> Permite todo tipo de vulnerabilidades. Solo para análisis completos o auditorías exhaustivas</li>
+                </ul>
+            </div>
+            
+            <div class="guide-warning">
+                <strong>⚠️ Importante:</strong> Si seleccionas MEDIUM, las vulnerabilidades HIGH y CRITICAL serán 
+                marcadas como inaceptables y aparecerán destacadas en rojo en tu análisis. Esto te permitirá 
+                identificar rápidamente los componentes que requieren atención inmediata.
+            </div>
+        </div>
+
+        <!-- Sección 3: Grado combinado -->
+        <div class="guide-section-sidebar">
+            <h6 class="guide-section-title">
+                <i class="fas fa-calculator me-2"></i>
+                Grado de severidad combinado
+            </h6>
+            
+            <p>Sistema de puntuación que suma los grados individuales de todas las vulnerabilidades para evaluar el riesgo total del proyecto:</p>
+            
+            <div class="guide-recommendations">
+                <h6>Escala de grados por severidad:</h6>
+                <ul>
+                    <li><strong>Grado 1-3:</strong> Vulnerabilidades LOW (score CVSS 0.1-3.9)</li>
+                    <li><strong>Grado 4-6:</strong> Vulnerabilidades MEDIUM (score CVSS 4.0-6.9)</li>
+                    <li><strong>Grado 7-8:</strong> Vulnerabilidades HIGH (score CVSS 7.0-8.9)</li>
+                    <li><strong>Grado 9-10:</strong> Vulnerabilidades CRITICAL (score CVSS 9.0-10.0)</li>
+                </ul>
+            </div>
+            
+            <div class="guide-example">
+                <strong>💡 Ejemplo de cálculo:</strong><br>
+                Un SBOM con:<br>
+                • 5 vulnerabilidades MEDIUM (grado 5 cada una) = 5×5 = 25 puntos<br>
+                • 2 vulnerabilidades HIGH (grado 7 cada una) = 2×7 = 14 puntos<br>
+                • 1 vulnerabilidad CRITICAL (grado 9) = 1×9 = 9 puntos<br>
+                <strong>Total: 25 + 14 + 9 = 48 puntos</strong><br>
+                Si tu límite es 50, estarías dentro del rango aceptable.
+            </div>
+        </div>
+
+        <!-- Sección 4: Sistema de solucionabilidad -->
+        <div class="guide-section-sidebar">
+            <h6 class="guide-section-title">
+                <i class="fas fa-balance-scale me-2"></i>
+                Sistema de pesos de priorización
+            </h6>
+            
+            <p>El sistema calcula una prioridad final para cada vulnerabilidad usando la fórmula:</p>
+            
+            <div class="guide-formula">
+                <strong>Prioridad = (Peso_Severidad% × Severidad) + (Peso_Solucionabilidad% × Solucionabilidad)</strong>
+            </div>
+            
+            <div class="guide-recommendations">
+                <h6>Estrategias de configuración:</h6>
+                <ul>
+                    <li><strong>Enfoque en Severidad (70/30):</strong> Prioriza las vulnerabilidades más peligrosas primero, ideal para sistemas críticos</li>
+                    <li><strong>Enfoque Balanceado (60/40):</strong> Equilibrio entre peligro y facilidad de resolución, bueno para la mayoría</li>
+                    <li><strong>Enfoque en Solucionabilidad (40/60):</strong> Prioriza resolver muchas vulnerabilidades rápido, para equipos con recursos limitados</li>
+                    <li><strong>Quick Wins (30/70):</strong> Maximiza el número de vulnerabilidades resueltas, para demostrar progreso rápido</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Sección 5: Umbrales de solucionabilidad -->
+        <div class="guide-section-sidebar">
+            <h6 class="guide-section-title">
+                <i class="fas fa-chart-line me-2"></i>
+                Umbrales de solucionabilidad
+            </h6>
+            
+            <p>Define cómo clasificar la dificultad de resolver cada vulnerabilidad:</p>
+            
+            <div class="guide-example">
+                <strong>🎯 Configuración típica:</strong><br>
+                • <strong>≥75 puntos:</strong> 🟢 Fácil (parche disponible, fácil de aplicar)<br>
+                • <strong>50-74 puntos:</strong> 🟡 Media (requiere algo de esfuerzo)<br>
+                • <strong>&lt;50 puntos:</strong> 🔴 Difícil (sin parche, requiere workarounds)
+            </div>
+            
+            <div class="guide-recommendations">
+                <h6>Factores que afectan la solucionabilidad:</h6>
+                <ul>
+                    <li><strong>+30 puntos:</strong> Si hay parche oficial disponible</li>
+                    <li><strong>+20 puntos:</strong> Si hay solución temporal (workaround)</li>
+                    <li><strong>+15 puntos:</strong> Si no requiere privilegios administrativos</li>
+                    <li><strong>+10 puntos:</strong> Si tiene baja complejidad de explotación</li>
+                    <li><strong>-15 puntos:</strong> Si no hay solución conocida</li>
+                    <li><strong>-10 puntos:</strong> Si requiere cambios arquitectónicos</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Sección 6: Criterios de alta prioridad -->
+        <div class="guide-section-sidebar">
+            <h6 class="guide-section-title">
+                <i class="fas fa-flag me-2"></i>
+                Criterios de alta prioridad
+            </h6>
+            
+            <div class="guide-subsection-sidebar">
+                <h6>🌐 Vector de Red:</h6>
+                <p>Las vulnerabilidades accesibles remotamente son más peligrosas porque pueden ser explotadas 
+                sin acceso físico al sistema.</p>
+                <div class="guide-example">
+                    <strong>Ejemplos:</strong> Vulnerabilidades en servidores web, APIs públicas, servicios de red expuestos.
+                </div>
+            </div>
+            
+            <div class="guide-subsection-sidebar">
+                <h6>⚠️ Sin Parches Oficiales:</h6>
+                <p>Vulnerabilidades para las que el vendor aún no ha publicado un parche oficial.</p>
+                <div class="guide-example">
+                    <strong>Implicación:</strong> Requieren soluciones temporales o mitigaciones hasta que se publique el parche oficial.
+                </div>
+            </div>
+            
+            <div class="guide-subsection-sidebar">
+                <h6>🐛 Exploits Públicos:</h6>
+                <p>Vulnerabilidades para las que ya existen herramientas o código de explotación disponible públicamente.</p>
+                <div class="guide-example">
+                    <strong>Riesgo:</strong> Tienen mayor probabilidad de ser explotadas por atacantes malintencionados.
+                </div>
+            </div>
+            
+            <div class="guide-subsection-sidebar">
+                <h6>🩹 Soluciones Temporales:</h6>
+                <p>Incluye vulnerabilidades que tienen workarounds o mitigaciones temporales disponibles.</p>
+                <div class="guide-example">
+                    <strong>Ventaja:</strong> Pueden ser parcialmente mitigadas mientras se espera una solución definitiva.
+                </div>
+            </div>
+            
+            <div class="guide-subsection-sidebar">
+                <h6>🛡️ Privilegios Administrativos:</h6>
+                <p>Excluye vulnerabilidades que requieren acceso de administrador para ser explotadas.</p>
+                <div class="guide-example">
+                    <strong>Justificación:</strong> Son menos probables de ser explotadas por atacantes externos sin acceso privilegiado.
+                </div>
+            </div>
+            
+            <div class="guide-warning">
+                <strong>⚠️ Importante:</strong> Los criterios marcados aumentan automáticamente la prioridad 
+                de las vulnerabilidades que los cumplen, independientemente de los pesos configurados.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ OVERLAY PARA CERRAR SIDEBAR -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebarGuide()"></div>
 {% endblock %}
+
 {% block scripts %}
 <script>
-// ✅ SCRIPT UNIFICADO PARA ACTUALIZAR EL INDICADOR DE NIVEL DE SEGURIDAD
+// ✅ FUNCIÓN PARA MANEJAR SIDEBAR LATERAL
+function toggleSidebarGuide() {
+    const sidebar = document.getElementById('sidebar-guide');
+    const overlay = document.getElementById('sidebar-overlay');
+    
+    if (sidebar.classList.contains('show')) {
+        sidebar.classList.remove('show');
+        overlay.classList.remove('show');
+        document.body.classList.remove('sidebar-open');
+    } else {
+        sidebar.classList.add('show');
+        overlay.classList.add('show');
+        document.body.classList.add('sidebar-open');
+    }
+}
+
+// ✅ CERRAR SIDEBAR CON ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const sidebar = document.getElementById('sidebar-guide');
+        if (sidebar.classList.contains('show')) {
+            toggleSidebarGuide();
+        }
+    }
+});
+
+// ✅ RESTO DE FUNCIONES JAVASCRIPT (sin cambios)
 function updateSecurityLevel() {
     const maxVulnInput = document.getElementById('max_vulnerabilidades');
     const maxSevInput = document.getElementById('max_severidad');
-    const maxGradoInput = document.getElementById('max_grado_combinado'); // ✅ NUEVO
+    const maxGradoInput = document.getElementById('max_grado_combinado');
     const securityIndicator = document.getElementById('security-level-indicator');
     const securityText = document.getElementById('security-level-text');
     const severityDisplay = document.getElementById('severity-display');
     const quantityDisplay = document.getElementById('quantity-display');
-    const gradeDisplay = document.getElementById('grade-display'); // ✅ NUEVO
+    const gradeDisplay = document.getElementById('grade-display');
 
     if (!maxVulnInput || !securityIndicator || !securityText) return;
 
     const vulnValue = parseInt(maxVulnInput.value) || 0;
     const sevValue = maxSevInput ? maxSevInput.value : 'MEDIUM';
-    const gradeValue = parseInt(maxGradoInput?.value) || 50; // ✅ NUEVO (con ?. para evitar errores)
+    const gradeValue = parseInt(maxGradoInput?.value) || 50;
     
-    // Actualizar displays si existen
     if (quantityDisplay) {
         quantityDisplay.textContent = vulnValue;
     }
     
-    // ✅ ACTUALIZAR DISPLAY DEL GRADO COMBINADO
     if (gradeDisplay) {
         gradeDisplay.textContent = gradeValue;
     }
@@ -50,17 +288,14 @@ function updateSecurityLevel() {
         severityDisplay.textContent = severityMap[sevValue] || '🟡 MEDIUM';
     }
     
-    // Remover clases anteriores
     securityIndicator.className = 'security-level';
     
-    // ✅ DETERMINAR NIVEL DE SEGURIDAD COMBINADO (incluyendo grado)
     const isRestrictiveSeverity = ['LOW', 'MEDIUM'].includes(sevValue);
     const isLowQuantity = vulnValue <= 5;
     const isMediumQuantity = vulnValue <= 15;
-    const isLowGrade = gradeValue <= 30; // ✅ NUEVO
-    const isMediumGrade = gradeValue <= 70; // ✅ NUEVO
+    const isLowGrade = gradeValue <= 30;
+    const isMediumGrade = gradeValue <= 70;
     
-    // ✅ NUEVA LÓGICA: Considerar los 3 factores
     if (isLowQuantity && isRestrictiveSeverity && isLowGrade) {
         securityIndicator.classList.add('high');
         securityText.innerHTML = '<i class="fas fa-shield-alt me-1"></i>Alta Seguridad';
@@ -73,7 +308,6 @@ function updateSecurityLevel() {
     }
 }
 
-// ✅ FUNCIÓN GLOBAL PARA PESOS (EDICIÓN)
 window.updatePesoDisplay = function() {
     const pesoSevInput = document.getElementById('peso_severidad');
     const pesoSolInput = document.getElementById('peso_solucionabilidad');
@@ -83,21 +317,18 @@ window.updatePesoDisplay = function() {
     const pesoSev = pesoSevInput.value;
     const pesoSol = pesoSolInput.value;
     
-    // Actualizar displays
     const pesoSevDisplay = document.getElementById('peso-severidad-display');
     const pesoSolDisplay = document.getElementById('peso-solucionabilidad-display');
     
     if (pesoSevDisplay) pesoSevDisplay.textContent = pesoSev;
     if (pesoSolDisplay) pesoSolDisplay.textContent = pesoSol;
     
-    // Actualizar preview
     const previewSev = document.getElementById('preview-peso-sev');
     const previewSol = document.getElementById('preview-peso-sol');
     
     if (previewSev) previewSev.textContent = pesoSev;
     if (previewSol) previewSol.textContent = pesoSol;
     
-    // Auto-ajustar para que sumen 100%
     const total = parseInt(pesoSev) + parseInt(pesoSol);
     if (total !== 100 && event && event.target) {
         const diff = 100 - total;
@@ -110,13 +341,11 @@ window.updatePesoDisplay = function() {
             const newValue = Math.max(0, Math.min(100, parseInt(otherSlider.value) + diff));
             otherSlider.value = newValue;
             
-            // Actualizar displays después del ajuste
             setTimeout(window.updatePesoDisplay, 10);
         }
     }
 }
 
-// ✅ FUNCIÓN PARA UMBRALES (EDICIÓN)
 function updateUmbralDisplay() {
     const umbralFacilInput = document.getElementById('umbral_facil');
     const umbralMedioInput = document.getElementById('umbral_media');
@@ -126,7 +355,6 @@ function updateUmbralDisplay() {
     const umbralFacil = umbralFacilInput.value;
     const umbralMedio = umbralMedioInput.value;
     
-    // Actualizar preview
     const previewFacil = document.getElementById('preview-umbral-facil');
     const previewFacil2 = document.getElementById('preview-umbral-facil-2');
     const previewMedio = document.getElementById('preview-umbral-medio');
@@ -138,17 +366,15 @@ function updateUmbralDisplay() {
     if (previewMedio2) previewMedio2.textContent = umbralMedio;
 }
 
-// ✅ FUNCIÓN PARA CONFIGURAR EVENT LISTENERS DINÁMICOS
 function setupDynamicEventListeners() {
     const maxVulnInput = document.getElementById('max_vulnerabilidades');
     const maxSevInput = document.getElementById('max_severidad');
-    const maxGradoInput = document.getElementById('max_grado_combinado'); // ✅ NUEVO
+    const maxGradoInput = document.getElementById('max_grado_combinado');
     const pesoSevInput = document.getElementById('peso_severidad');
     const pesoSolInput = document.getElementById('peso_solucionabilidad');
     const umbralFacilInput = document.getElementById('umbral_facil');
     const umbralMedioInput = document.getElementById('umbral_media');
     
-    // Event listeners para seguridad
     if (maxVulnInput) {
         maxVulnInput.addEventListener('input', updateSecurityLevel);
     }
@@ -156,13 +382,10 @@ function setupDynamicEventListeners() {
         maxSevInput.addEventListener('change', updateSecurityLevel);
     }
     
-    // ✅ EVENT LISTENER PARA GRADO COMBINADO
     if (maxGradoInput) {
         maxGradoInput.addEventListener('input', updateSecurityLevel);
-        console.log("✅ Event listener para grado combinado configurado");
     }
     
-    // Event listeners para pesos
     if (pesoSevInput) {
         pesoSevInput.addEventListener('input', window.updatePesoDisplay);
     }
@@ -170,7 +393,6 @@ function setupDynamicEventListeners() {
         pesoSolInput.addEventListener('input', window.updatePesoDisplay);
     }
     
-    // Event listeners para umbrales
     if (umbralFacilInput) {
         umbralFacilInput.addEventListener('input', updateUmbralDisplay);
     }
@@ -178,29 +400,20 @@ function setupDynamicEventListeners() {
         umbralMedioInput.addEventListener('input', updateUmbralDisplay);
     }
     
-    // Actualizar displays iniciales
     updateSecurityLevel();
     window.updatePesoDisplay();
     updateUmbralDisplay();
-    
-    console.log("✅ Todos los event listeners configurados correctamente");
 }
 
-// Aplicar cuando se cargue dinámicamente el formulario
 document.addEventListener('DOMContentLoaded', function() {
-    // Observer para detectar cuando se añade el formulario
     const observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             if (mutation.type === 'childList') {
                 const maxVulnInput = document.getElementById('max_vulnerabilidades');
                 
                 if (maxVulnInput) {
-                    console.log("🔄 Formulario de edición cargado dinámicamente");
-                    
-                    // ✅ CONFIGURAR TODOS LOS EVENT LISTENERS
                     setupDynamicEventListeners();
-                    
-                    observer.disconnect(); // Dejar de observar
+                    observer.disconnect();
                 }
             }
         });

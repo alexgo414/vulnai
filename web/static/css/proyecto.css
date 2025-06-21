@@ -1,0 +1,443 @@
+/* ==================== ESTILOS EXISTENTES PARA GUÍAS DESPLEGABLES ==================== */
+.guide-section {
+    margin: 1rem 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f8fafc;
+}
+
+.guide-header {
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-bottom: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.guide-header:hover {
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+}
+
+.guide-header.active {
+    background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%);
+    color: #5b21b6;
+}
+
+.guide-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.guide-toggle {
+    transition: transform 0.3s ease;
+    color: #64748b;
+}
+
+.guide-toggle.rotated {
+    transform: rotate(180deg);
+    color: #5b21b6;
+}
+
+.guide-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.4s ease;
+    background: white;
+}
+
+.guide-content.show {
+    max-height: 1000px;
+    padding: 1.5rem;
+}
+
+/* ==================== SIDEBAR LATERAL PARA GUÍAS ==================== */
+.sidebar-guide {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 500px;
+    height: 100vh;
+    background: #ffffff;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+    transform: translateX(100%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1050;
+    overflow-y: auto;
+    border-left: 1px solid #e2e8f0;
+}
+
+.sidebar-guide.show {
+    transform: translateX(0);
+}
+
+.sidebar-guide-header {
+    position: sticky;
+    top: 0;
+    background: linear-gradient(135deg, #18bc9c 0%, #16a085 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 1051;
+}
+
+.sidebar-guide-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.btn-close-sidebar {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+}
+
+.btn-close-sidebar:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+.sidebar-guide-content {
+    padding: 2rem;
+    padding-bottom: 4rem;
+}
+
+.guide-section-sidebar {
+    margin-bottom: 2.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.guide-section-sidebar:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.guide-section-title {
+    color: #1e293b;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.guide-section-title i {
+    color: #18bc9c;
+    font-size: 1.2rem;
+}
+
+.guide-subsection-sidebar {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    border-left: 4px solid #18bc9c;
+}
+
+.guide-subsection-sidebar h6 {
+    color: #374151;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.guide-subsection-sidebar p {
+    color: #4b5563;
+    line-height: 1.6;
+    margin-bottom: 0.5rem;
+}
+
+.guide-recommendations {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 1px solid #7dd3fc;
+    border-left: 4px solid #0ea5e9;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 8px;
+}
+
+.guide-recommendations h6 {
+    color: #0c4a6e;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
+}
+
+.guide-recommendations ul {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+.guide-recommendations li {
+    color: #0369a1;
+    line-height: 1.6;
+    margin-bottom: 0.5rem;
+}
+
+.guide-recommendations li strong {
+    color: #0c4a6e;
+}
+
+.guide-example {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 1px solid #86efac;
+    border-left: 4px solid #22c55e;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.guide-example strong {
+    color: #15803d;
+}
+
+.guide-tip {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border: 1px solid #fcd34d;
+    border-left: 4px solid #f59e0b;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.guide-tip strong {
+    color: #92400e;
+}
+
+.guide-warning {
+    background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+    border: 1px solid #fca5a5;
+    border-left: 4px solid #ef4444;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.guide-warning strong {
+    color: #991b1b;
+}
+
+.guide-formula {
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    border: 1px solid #d1d5db;
+    border-left: 4px solid #6b7280;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.95rem;
+    text-align: center;
+    color: #374151;
+}
+
+/* ==================== OVERLAY PARA SIDEBAR ==================== */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1040;
+    backdrop-filter: blur(2px);
+}
+
+.sidebar-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ==================== BLOQUEAR SCROLL CUANDO SIDEBAR ESTÁ ABIERTO ==================== */
+body.sidebar-open {
+    overflow: hidden;
+}
+
+/* ==================== RESPONSIVE PARA SIDEBAR ==================== */
+@media (max-width: 768px) {
+    .sidebar-guide {
+        width: 100%;
+        right: 0;
+    }
+    
+    .sidebar-guide-header {
+        padding: 1rem 1.5rem;
+    }
+    
+    .sidebar-guide-title {
+        font-size: 1.1rem;
+    }
+    
+    .sidebar-guide-content {
+        padding: 1.5rem;
+    }
+    
+    .guide-section-sidebar {
+        margin-bottom: 2rem;
+    }
+    
+    .guide-recommendations,
+    .guide-example,
+    .guide-tip,
+    .guide-warning,
+    .guide-formula {
+        margin: 0.75rem 0;
+        padding: 0.75rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .sidebar-guide-header {
+        padding: 0.75rem 1rem;
+    }
+    
+    .sidebar-guide-title {
+        font-size: 1rem;
+    }
+    
+    .sidebar-guide-content {
+        padding: 1rem;
+    }
+    
+    .guide-section-title {
+        font-size: 1rem;
+    }
+    
+    .btn-close-sidebar {
+        width: 36px;
+        height: 36px;
+    }
+}
+
+/* ==================== ANIMACIONES SUAVES ==================== */
+.sidebar-guide,
+.sidebar-overlay {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.sidebar-guide.show {
+    animation: slideInFromRight 0.4s ease-out;
+}
+
+/* ==================== SCROLLBAR PERSONALIZADO PARA SIDEBAR ==================== */
+.sidebar-guide::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar-guide::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.sidebar-guide::-webkit-scrollbar-thumb {
+    background: #18bc9c;
+    border-radius: 3px;
+}
+
+.sidebar-guide::-webkit-scrollbar-thumb:hover {
+    background: #16a085;
+}
+
+/* ==================== ESTILOS PARA BOTÓN DE GUÍA ==================== */
+.btn-outline-info {
+    border-color: #18bc9c;
+    color: #18bc9c;
+    transition: all 0.2s ease;
+}
+
+.btn-outline-info:hover {
+    background-color: #18bc9c;
+    border-color: #18bc9c;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(24, 188, 156, 0.2);
+}
+
+/* ==================== MEJORAS EN ELEMENTOS EXISTENTES ==================== */
+.security-level-preview {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.security-level {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 2px solid;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.security-level.high {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border-color: #28a745;
+    color: #155724;
+}
+
+.security-level.medium {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border-color: #ffc107;
+    color: #856404;
+}
+
+.security-level.low {
+    background: linear-gradient(135deg, #f8d7da 0%, #f1b0b7 100%);
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+.security-badge {
+    font-weight: 600;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.security-badge i {
+    font-size: 1.2rem;
+}

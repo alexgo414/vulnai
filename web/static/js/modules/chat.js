@@ -7,6 +7,31 @@ let chatMensajes = null;
 let messageInput = null;
 let sendButton = null;
 
+window.limpiarChat = function() {
+    if (!proyectoActualChat) {
+        mostrarToast("Selecciona un proyecto primero", "warning");
+        return;
+    }
+    
+    Swal.fire({
+        title: '¿Limpiar chat?',
+        text: 'Esto eliminará todos los mensajes del chat actual.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, limpiar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            limpiarChatSilencioso();
+            agregarMensajeAlChat(
+                `Chat limpiado. Continuemos hablando sobre "${proyectoActualChat.nombre}".`, 
+                'bot'
+            );
+            mostrarToast("Chat limpiado con éxito", "success");
+        }
+    });
+}
+
 function configurarChat(chatMensajes, messageInput, sendButton) {
     sendButton.addEventListener('click', () => {
         const messageText = messageInput.value.trim();

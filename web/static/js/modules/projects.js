@@ -89,16 +89,23 @@ export async function editarProyecto(proyectoId) {
                 <textarea id="descripcion" name="descripcion" class="form-control" rows="4">${proyecto.descripcion || ''}</textarea>
             </div>
 
-            <!-- ✅ SECCIÓN DE CONFIGURACIÓN DE SEGURIDAD -->
+            <!-- ✅ SECCIÓN DE CONFIGURACIÓN DE SEGURIDAD SIN RECOMENDACIONES -->
             <div class="mb-4">
-                <h6 class="border-bottom pb-2 mb-3">
-                    <i class="fas fa-shield-alt me-2 text-warning"></i>
-                    Configuración de Seguridad
-                </h6>
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                    <h6 class="mb-0">
+                        <i class="fas fa-shield-alt me-2 text-warning"></i>
+                        Configuración de Seguridad
+                    </h6>
+                    <!-- ✅ BOTÓN PARA ABRIR GUÍA LATERAL -->
+                    <button type="button" class="btn btn-outline-info btn-sm" onclick="toggleSidebarGuide()">
+                        <i class="fas fa-question-circle me-1"></i>
+                        Guía de configuración
+                    </button>
+                </div>
                 
                 <div class="mb-3">
                     <label for="max_vulnerabilidades" class="form-label">
-                        <strong>Máximo de vulnerabilidades aceptadas:</strong>
+                        <strong>Máximo de vulnerabilidades aceptadas en SBOM:</strong>
                     </label>
                     <div class="input-group">
                         <input type="number" id="max_vulnerabilidades" name="max_vulnerabilidades" 
@@ -126,7 +133,6 @@ export async function editarProyecto(proyectoId) {
                     </div>
                 </div>
 
-                <!-- ✅ AÑADIR CAMPO DE GRADO COMBINADO (ESTE ERA EL QUE FALTABA) -->
                 <div class="mb-3">
                     <label for="max_grado_combinado" class="form-label">
                         <strong>Grado máximo de severidad combinado:</strong>
@@ -137,11 +143,6 @@ export async function editarProyecto(proyectoId) {
                         <span class="input-group-text">
                             <i class="fas fa-calculator"></i>
                         </span>
-                    </div>
-                    <div class="form-text">
-                        <i class="fas fa-info-circle me-1"></i>
-                        Define la suma máxima de grados de severidad permitida. Cada vulnerabilidad tiene un grado del 1 al 10 basado en su score CVSS.
-                        <strong>Valor recomendado: 50</strong>
                     </div>
                 </div>
 
@@ -166,7 +167,7 @@ export async function editarProyecto(proyectoId) {
                 </div>
             </div>
 
-            <!-- ✅ SECCIÓN DE CRITERIOS DE SOLUCIONABILIDAD -->
+            <!-- ✅ SECCIÓN DE CRITERIOS DE SOLUCIONABILIDAD SIN RECOMENDACIONES -->
             <div class="mb-4">
                 <h6 class="border-bottom pb-2 mb-3">
                     <i class="fas fa-tools me-2 text-info"></i>
@@ -204,7 +205,7 @@ export async function editarProyecto(proyectoId) {
                     </div>
                 </div>
                 
-                <!-- Umbrales -->
+                <!-- Umbrales de solucionabilidad -->
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="umbral_facil" class="form-label">
@@ -232,7 +233,7 @@ export async function editarProyecto(proyectoId) {
                                name="priori_vectores_red" ${proyecto.priori_vectores_red !== false ? 'checked' : ''}>
                         <label class="form-check-label" for="priori_vectores_red">
                             <i class="fas fa-network-wired text-danger me-1"></i>
-                            Priorizar vulnerabilidades de vector de red
+                            Priorizar vulnerabilidades de vector de red (acceso remoto)
                         </label>
                     </div>
                     
@@ -241,7 +242,7 @@ export async function editarProyecto(proyectoId) {
                                name="priori_sin_parches" ${proyecto.priori_sin_parches !== false ? 'checked' : ''}>
                         <label class="form-check-label" for="priori_sin_parches">
                             <i class="fas fa-exclamation-triangle text-warning me-1"></i>
-                            Priorizar vulnerabilidades sin parches oficiales
+                            Priorizar vulnerabilidades sin parches oficiales disponibles
                         </label>
                     </div>
                     
@@ -250,7 +251,7 @@ export async function editarProyecto(proyectoId) {
                                name="priori_exploit_publico" ${proyecto.priori_exploit_publico !== false ? 'checked' : ''}>
                         <label class="form-check-label" for="priori_exploit_publico">
                             <i class="fas fa-bug text-danger me-1"></i>
-                            Priorizar vulnerabilidades con exploits públicos
+                            Priorizar vulnerabilidades con exploits públicos disponibles
                         </label>
                     </div>
                     
@@ -259,7 +260,7 @@ export async function editarProyecto(proyectoId) {
                                name="incluir_temporal_fixes" ${proyecto.incluir_temporal_fixes !== false ? 'checked' : ''}>
                         <label class="form-check-label" for="incluir_temporal_fixes">
                             <i class="fas fa-band-aid text-info me-1"></i>
-                            Incluir vulnerabilidades con soluciones temporales
+                            Incluir vulnerabilidades con soluciones temporales como solucionables
                         </label>
                     </div>
                     
@@ -268,11 +269,11 @@ export async function editarProyecto(proyectoId) {
                                name="excluir_privilegios_altos" ${proyecto.excluir_privilegios_altos === true ? 'checked' : ''}>
                         <label class="form-check-label" for="excluir_privilegios_altos">
                             <i class="fas fa-shield-alt text-success me-1"></i>
-                            Excluir vulnerabilidades que requieren privilegios administrativos
+                            Excluir vulnerabilidades que requieren privilegios administrativos (menor prioridad)
                         </label>
                     </div>
                 </div>
-
+                
                 <!-- Preview de la configuración -->
                 <div class="alert alert-light border mb-3">
                     <h6 class="alert-heading">
@@ -305,8 +306,13 @@ export async function editarProyecto(proyectoId) {
             </div>
         </form>
     `;
+
+    // ❌ REMOVER TODA LA GENERACIÓN DEL SIDEBAR DESDE JAVASCRIPT
+    // Ya no se genera aquí, está en el HTML
+
     document.getElementById("proyecto-editar-container").appendChild(formContainer);
 
+    // ✅ CONFIGURAR EVENTOS DE FORMULARIO (sin cambios)
     const form = formContainer.querySelector("form");
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -315,7 +321,7 @@ export async function editarProyecto(proyectoId) {
         const descripcion = document.getElementById("descripcion").value;
         const maxVulnerabilidades = document.getElementById("max_vulnerabilidades").value;
         const maxSeveridad = document.getElementById("max_severidad").value;
-        const maxGradoCombinado = document.getElementById("max_grado_combinado").value; // ✅ AHORA SÍ EXISTE
+        const maxGradoCombinado = document.getElementById("max_grado_combinado").value;
         
         // ✅ EXTRAER CAMPOS DE SOLUCIONABILIDAD
         const pesoSeveridad = parseInt(document.getElementById("peso_severidad").value) || 70;
@@ -335,7 +341,7 @@ export async function editarProyecto(proyectoId) {
                 descripcion,
                 max_vulnerabilidades: maxVulnerabilidades ? parseInt(maxVulnerabilidades) : proyecto.max_vulnerabilidades,
                 max_severidad: maxSeveridad || proyecto.max_severidad,
-                max_grado_severidad_combinado: maxGradoCombinado ? parseInt(maxGradoCombinado) : proyecto.max_grado_severidad_combinado, // ✅ AHORA SÍ FUNCIONA
+                max_grado_severidad_combinado: maxGradoCombinado ? parseInt(maxGradoCombinado) : proyecto.max_grado_severidad_combinado,
                 peso_severidad: pesoSeveridad,
                 peso_solucionabilidad: pesoSolucionabilidad,
                 umbral_solucionabilidad_facil: umbralFacil,
@@ -366,29 +372,38 @@ export async function editarProyecto(proyectoId) {
 }
 
 export async function eliminarProyecto(proyectoId, elementoDOM) {
-    if (!confirm("¿Estás seguro de que deseas eliminar este proyecto?")) {
-        return;
-    }
-    try {
-        const response = await fetchWithCredentials(`${API_BASE_URL}/proyectos/${proyectoId}`, {
-            method: "DELETE"
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Error al eliminar proyecto: ${response.statusText}`);
-        }
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: "Esta acción eliminará el proyecto y no podrás recuperarlo.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            try {
+                const response = await fetchWithCredentials(`${API_BASE_URL}/proyectos/${proyectoId}`, {
+                    method: "DELETE"
+                });
 
-        guardarAlertaParaSiguientePagina("Proyecto eliminado con éxito", "success");
-        // Recargar la pagina
-        window.location.reload();
+                if (!response.ok) {
+                    throw new Error(`Error al eliminar el proyecto: ${response.statusText}`);
+                }
 
-        if (elementoDOM) {
-            elementoDOM.remove(); // Elimina el proyecto del DOM
+                // Eliminar el elemento del DOM
+                if (elementoDOM) {
+                    elementoDOM.remove();
+                }
+
+                mostrarToast("Proyecto eliminado con éxito", "success");
+            } catch (error) {
+                console.error("Error al eliminar el proyecto:", error);
+                mostrarToast("Hubo un error al eliminar el proyecto", "danger");
+            }
         }
-    } catch (error) {
-        console.error(error);
-        mostrarToast("Hubo un error al eliminar el proyecto.", "danger");
-    }
+    });
 }
 
 export async function obtenerProyectos() {
@@ -430,12 +445,17 @@ export function renderizarProyectos(proyectos, usuarios) {
         proyectosContainer.innerHTML = `
             <div class="col-12">
                 <div class="empty-state">
-                    <i class="fas fa-folder-open"></i>
-                    <h3>No hay proyectos</h3>
-                    <p>Crea tu primer proyecto para comenzar</p>
-                    <a href="/perfil/proyecto_nuevo" class="btn btn-primary">
-                        <i class="fas fa-plus me-1"></i>Crear Proyecto
-                    </a>
+                    <div class="empty-state-icon">
+                        <i class="fas fa-folder-plus"></i>
+                    </div>
+                    <h3>¡Comienza tu primer proyecto!</h3>
+                    <p>Los proyectos te permiten organizar y analizar tus archivos SBOM con criterios de seguridad personalizados</p>
+                    <div class="empty-state-actions">
+                        <a href="/perfil/proyecto_nuevo" class="btn-create-project">
+                            <i class="fas fa-plus"></i>
+                            <span>Crear mi primer proyecto</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         `;

@@ -287,33 +287,34 @@ function renderizarUsuarios(usuarios) {
 }
 
 export async function eliminarUsuario(userId) {
-    if (!confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
-        return;
-    }
-    console.log("Eliminando usuario con ID:", userId);
-    try {
-        const response = await fetchWithCredentials(`${API_BASE_URL}/usuarios/${userId}`, {
-            method: "DELETE"
-        });
-        
-        const resultado = await response.json();
-        if (!response.ok) {
-            // Mostrar mensaje claro si tiene proyectos asociados
-            if (resultado.message && resultado.message.includes("proyectos asociados")) {
-                mostrarToast("No se puede eliminar el usuario porque tiene proyectos asociados. Elimine primero los proyectos de este usuario.", "danger");
-            } else if (resultado.message && resultado.message.includes("administrador")) {
-                mostrarToast("No se puede eliminar el usuario administrador.", "danger");
-            } else {
-                mostrarToast(resultado.message || response.statusText, "danger");
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: "Esta acción no se puede deshacer.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            try {
+                const response = await fetchWithCredentials(`${API_BASE_URL}/usuarios/${userId}`, {
+                    method: "DELETE"
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error al eliminar el usuario: ${response.statusText}`);
+                }
+
+                mostrarToast("Usuario eliminado con éxito", "success");
+                obtenerUsuarios();
+            } catch (error) {
+                console.error(error);
+                mostrarToast("Hubo un error al eliminar el usuario", "danger");
             }
-            throw new Error(resultado.message || response.statusText);
         }
-        console.log("Usuario eliminado:", resultado);
-        mostrarToast("Usuario eliminado con éxito", "success");
-        obtenerUsuarios(); // Actualizar la lista de usuarios
-    } catch (error) {
-        console.error(error);
-    }
+    });
 }
 
 export async function obtenerUsuarioPorId(usuarioId) {
