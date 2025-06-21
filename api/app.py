@@ -96,6 +96,16 @@ class Proyecto(db.Model):
     max_vulnerabilidades = db.Column(db.Integer, default=10, nullable=False)
     max_severidad = db.Column(db.String(20), default="MEDIUM", nullable=True)
 
+    priori_vectores_red = db.Column(db.Boolean, default=True, nullable=False)  # Priorizar vulns de red
+    priori_sin_parches = db.Column(db.Boolean, default=True, nullable=False)   # Priorizar sin parches oficiales
+    priori_exploit_publico = db.Column(db.Boolean, default=True, nullable=False)  # Priorizar con exploits públicos
+    peso_severidad = db.Column(db.Integer, default=70, nullable=False)  # Peso severidad (0-100)
+    peso_solucionabilidad = db.Column(db.Integer, default=30, nullable=False)  # Peso solucionabilidad (0-100)
+    umbral_solucionabilidad_facil = db.Column(db.Integer, default=75, nullable=False)  # 75+ = Fácil
+    umbral_solucionabilidad_media = db.Column(db.Integer, default=50, nullable=False)  # 50-74 = Media
+    incluir_temporal_fixes = db.Column(db.Boolean, default=True, nullable=False)  # Incluir fixes temporales
+    excluir_privilegios_altos = db.Column(db.Boolean, default=False, nullable=False)  # Excluir que requieren privilegios altos
+
 class Usuario(UserMixin, db.Model):
     __tablename__ = 'usuarios'
     id = db.Column(db.String(36), primary_key=True)
@@ -431,7 +441,17 @@ class ProyectoResource(Resource):
                     "fecha_modificacion": proyecto.fecha_modificacion.isoformat(),
                     "usuario_id": proyecto.usuario_id,
                     "max_vulnerabilidades": proyecto.max_vulnerabilidades,
-                    "max_severidad": proyecto.max_severidad
+                    "max_severidad": proyecto.max_severidad,
+
+                    "priori_vectores_red": proyecto.priori_vectores_red,
+                    "priori_sin_parches": proyecto.priori_sin_parches,
+                    "priori_exploit_publico": proyecto.priori_exploit_publico,
+                    "peso_severidad": proyecto.peso_severidad,
+                    "peso_solucionabilidad": proyecto.peso_solucionabilidad,
+                    "umbral_solucionabilidad_facil": proyecto.umbral_solucionabilidad_facil,
+                    "umbral_solucionabilidad_media": proyecto.umbral_solucionabilidad_media,
+                    "incluir_temporal_fixes": proyecto.incluir_temporal_fixes,
+                    "excluir_privilegios_altos": proyecto.excluir_privilegios_altos
                     
                 }
             else:
@@ -450,7 +470,17 @@ class ProyectoResource(Resource):
                     "fecha_modificacion": proyecto.fecha_modificacion.isoformat(),
                     "usuario_id": proyecto.usuario_id,
                     "max_vulnerabilidades": proyecto.max_vulnerabilidades,
-                    "max_severidad": proyecto.max_severidad
+                    "max_severidad": proyecto.max_severidad,
+
+                    "priori_vectores_red": proyecto.priori_vectores_red,
+                    "priori_sin_parches": proyecto.priori_sin_parches,
+                    "priori_exploit_publico": proyecto.priori_exploit_publico,
+                    "peso_severidad": proyecto.peso_severidad,
+                    "peso_solucionabilidad": proyecto.peso_solucionabilidad,
+                    "umbral_solucionabilidad_facil": proyecto.umbral_solucionabilidad_facil,
+                    "umbral_solucionabilidad_media": proyecto.umbral_solucionabilidad_media,
+                    "incluir_temporal_fixes": proyecto.incluir_temporal_fixes,
+                    "excluir_privilegios_altos": proyecto.excluir_privilegios_altos
                 }
                 for proyecto in proyectos
             ]
@@ -467,7 +497,17 @@ class ProyectoResource(Resource):
                 fecha_modificacion=date.today(),
                 usuario_id=flask_praetorian.current_user().id,
                 max_vulnerabilidades=data.get("max_vulnerabilidades", 10),
-                max_severidad=data.get("max_severidad", "MEDIUM")
+                max_severidad=data.get("max_severidad", "MEDIUM"),
+
+                priori_vectores_red=data.get("priori_vectores_red", True),
+                priori_sin_parches=data.get("priori_sin_parches", True),
+                priori_exploit_publico=data.get("priori_exploit_publico", True),
+                peso_severidad=data.get("peso_severidad", 70),
+                peso_solucionabilidad=data.get("peso_solucionabilidad", 30),
+                umbral_solucionabilidad_facil=data.get("umbral_solucionabilidad_facil", 75),
+                umbral_solucionabilidad_media=data.get("umbral_solucionabilidad_media", 50),
+                incluir_temporal_fixes=data.get("incluir_temporal_fixes", True),
+                excluir_privilegios_altos=data.get("excluir_privilegios_altos", False)
             )
             db.session.add(new_proyecto)
             db.session.commit()
@@ -484,7 +524,6 @@ class ProyectoResource(Resource):
             if not proyecto:
                 return {"message": "Proyecto no encontrado"}, 404
                 
-            # ✅ VERIFICAR PERMISOS: admin o propietario del proyecto
             if "admin" not in user.rolenames and proyecto.usuario_id != user.id:
                 return {"message": "No autorizado para editar este proyecto"}, 403
                 
@@ -492,66 +531,42 @@ class ProyectoResource(Resource):
             if not data:
                 return {"message": "No se enviaron datos"}, 400
             
-            print(f"🔧 Actualizando proyecto {proyecto_id} con datos: {data}")
-            
-            # ✅ ACTUALIZAR CAMPOS (TODOS OPCIONALES)
+            # Actualizar campos básicos (código existente)
             if "nombre" in data and data["nombre"]:
-                if len(data["nombre"]) > 40:
-                    return {"message": "El nombre no puede tener más de 40 caracteres"}, 400
                 proyecto.nombre = data["nombre"].strip()
-                
             if "descripcion" in data:
-                # La descripción puede ser vacía
                 proyecto.descripcion = data["descripcion"].strip() if data["descripcion"] else None
-                
             if "max_vulnerabilidades" in data:
-                max_vuln = data["max_vulnerabilidades"]
-                if max_vuln is not None:
-                    try:
-                        max_vuln_int = int(max_vuln)
-                        if max_vuln_int < 0:
-                            return {"message": "El máximo de vulnerabilidades no puede ser negativo"}, 400
-                        if max_vuln_int > 1000:
-                            return {"message": "El máximo de vulnerabilidades no puede ser mayor a 1000"}, 400
-                        proyecto.max_vulnerabilidades = max_vuln_int
-                        print(f"✅ max_vulnerabilidades actualizado a: {proyecto.max_vulnerabilidades}")
-                    except (ValueError, TypeError):
-                        return {"message": "El máximo de vulnerabilidades debe ser un número válido"}, 400
-            
-            # ✅ NUEVO: ACTUALIZAR SEVERIDAD MÁXIMA
+                proyecto.max_vulnerabilidades = max(0, int(data["max_vulnerabilidades"]))
             if "max_severidad" in data:
-                max_sev = data["max_severidad"]
-                if max_sev is not None:
-                    severidades_validas = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
-                    max_sev_upper = max_sev.strip().upper()
-                    
-                    if max_sev_upper not in severidades_validas:
-                        return {"message": f"Severidad inválida. Debe ser una de: {', '.join(severidades_validas)}"}, 400
-                    
-                    proyecto.max_severidad = max_sev_upper
-                    print(f"✅ max_severidad actualizado a: {proyecto.max_severidad}")
+                proyecto.max_severidad = data["max_severidad"].upper()
+            
+            # ✅ ACTUALIZAR CAMPOS DE SOLUCIONABILIDAD
+            if "priori_vectores_red" in data:
+                proyecto.priori_vectores_red = bool(data["priori_vectores_red"])
+            if "priori_sin_parches" in data:
+                proyecto.priori_sin_parches = bool(data["priori_sin_parches"])
+            if "priori_exploit_publico" in data:
+                proyecto.priori_exploit_publico = bool(data["priori_exploit_publico"])
+            if "peso_severidad" in data:
+                proyecto.peso_severidad = max(0, min(100, int(data["peso_severidad"])))
+            if "peso_solucionabilidad" in data:
+                proyecto.peso_solucionabilidad = max(0, min(100, int(data["peso_solucionabilidad"])))
+            if "umbral_solucionabilidad_facil" in data:
+                proyecto.umbral_solucionabilidad_facil = max(50, min(100, int(data["umbral_solucionabilidad_facil"])))
+            if "umbral_solucionabilidad_media" in data:
+                proyecto.umbral_solucionabilidad_media = max(25, min(75, int(data["umbral_solucionabilidad_media"])))
+            if "incluir_temporal_fixes" in data:
+                proyecto.incluir_temporal_fixes = bool(data["incluir_temporal_fixes"])
+            if "excluir_privilegios_altos" in data:
+                proyecto.excluir_privilegios_altos = bool(data["excluir_privilegios_altos"])
             
             proyecto.fecha_modificacion = date.today()
             db.session.commit()
             
-            print(f"✅ Proyecto actualizado: {proyecto.nombre}, max_vulnerabilidades: {proyecto.max_vulnerabilidades}, max_severidad: {proyecto.max_severidad}")
-            
-            return {
-                "message": "Proyecto actualizado con éxito",
-                "proyecto": {
-                    "id": proyecto.id,
-                    "nombre": proyecto.nombre,
-                    "descripcion": proyecto.descripcion,
-                    "max_vulnerabilidades": proyecto.max_vulnerabilidades,
-                    "max_severidad": proyecto.max_severidad,  # ✅ INCLUIR EN RESPUESTA
-                    "fecha_modificacion": proyecto.fecha_modificacion.isoformat()
-                }
-            }, 200
+            return {"message": "Proyecto actualizado con éxito"}, 200
             
         except Exception as e:
-            print(f"❌ Error actualizando proyecto: {str(e)}")
-            import traceback
-            traceback.print_exc()
             db.session.rollback()
             return {"message": f"Error interno del servidor: {str(e)}"}, 500
 

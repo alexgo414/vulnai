@@ -112,6 +112,147 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- ✅ NUEVA SECCIÓN: CRITERIOS DE SOLUCIONABILIDAD -->
+                <div class="mb-4">
+                    <h6 class="border-bottom pb-2 mb-3">
+                        <i class="fas fa-tools me-2 text-info"></i>
+                        Criterios de Solucionabilidad
+                    </h6>
+                    
+                    <!-- Pesos para priorización -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="peso_severidad" class="form-label">
+                                <strong>Peso de Severidad (%):</strong>
+                            </label>
+                            <div class="input-group">
+                                <input type="range" id="peso_severidad" name="peso_severidad" 
+                                    class="form-range" min="0" max="100" value="70" 
+                                    oninput="updatePesoDisplay()">
+                                <span class="input-group-text" style="min-width: 60px;">
+                                    <span id="peso-severidad-display">70</span>%
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="peso_solucionabilidad" class="form-label">
+                                <strong>Peso de Solucionabilidad (%):</strong>
+                            </label>
+                            <div class="input-group">
+                                <input type="range" id="peso_solucionabilidad" name="peso_solucionabilidad" 
+                                    class="form-range" min="0" max="100" value="30" 
+                                    oninput="updatePesoDisplay()">
+                                <span class="input-group-text" style="min-width: 60px;">
+                                    <span id="peso-solucionabilidad-display">30</span>%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-text mb-3">
+                        <i class="fas fa-balance-scale me-1"></i>
+                        Define cómo priorizar vulnerabilidades: más peso en severidad = prioriza vulnerabilidades críticas; 
+                        más peso en solucionabilidad = prioriza vulnerabilidades fáciles de resolver.
+                    </div>
+                    
+                    <!-- Umbrales de solucionabilidad -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="umbral_facil" class="form-label">
+                                <strong>Umbral "Fácil de resolver" (puntos):</strong>
+                            </label>
+                            <input type="number" id="umbral_facil" name="umbral_solucionabilidad_facil" 
+                                class="form-control" value="75" min="50" max="100">
+                            <div class="form-text">Vulnerabilidades con ≥ estos puntos se consideran fáciles de resolver</div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="umbral_media" class="form-label">
+                                <strong>Umbral "Dificultad media" (puntos):</strong>
+                            </label>
+                            <input type="number" id="umbral_media" name="umbral_solucionabilidad_media" 
+                                class="form-control" value="50" min="25" max="75">
+                            <div class="form-text">Vulnerabilidades entre este valor y el umbral fácil</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Criterios de priorización -->
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Criterios de alta prioridad:</strong></label>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="priori_vectores_red" 
+                                name="priori_vectores_red" checked>
+                            <label class="form-check-label" for="priori_vectores_red">
+                                <i class="fas fa-network-wired text-danger me-1"></i>
+                                Priorizar vulnerabilidades de **vector de red** (acceso remoto)
+                            </label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="priori_sin_parches" 
+                                name="priori_sin_parches" checked>
+                            <label class="form-check-label" for="priori_sin_parches">
+                                <i class="fas fa-exclamation-triangle text-warning me-1"></i>
+                                Priorizar vulnerabilidades **sin parches oficiales** disponibles
+                            </label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="priori_exploit_publico" 
+                                name="priori_exploit_publico" checked>
+                            <label class="form-check-label" for="priori_exploit_publico">
+                                <i class="fas fa-bug text-danger me-1"></i>
+                                Priorizar vulnerabilidades con **exploits públicos** disponibles
+                            </label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="incluir_temporal_fixes" 
+                                name="incluir_temporal_fixes" checked>
+                            <label class="form-check-label" for="incluir_temporal_fixes">
+                                <i class="fas fa-band-aid text-info me-1"></i>
+                                Incluir vulnerabilidades con **soluciones temporales** como solucionables
+                            </label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="excluir_privilegios_altos" 
+                                name="excluir_privilegios_altos">
+                            <label class="form-check-label" for="excluir_privilegios_altos">
+                                <i class="fas fa-shield-alt text-success me-1"></i>
+                                Excluir vulnerabilidades que requieren **privilegios administrativos** (menor prioridad)
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Preview de la configuración -->
+                    <div class="alert alert-light border mb-3">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-eye me-2"></i>Vista previa de la configuración:
+                        </h6>
+                        <div id="config-preview">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small class="text-muted">
+                                        <strong>Fórmula de priorización:</strong><br>
+                                        Prioridad = (<span id="preview-peso-sev">70</span>% × Severidad) + (<span id="preview-peso-sol">30</span>% × Solucionabilidad)
+                                    </small>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted">
+                                        <strong>Clasificación de solucionabilidad:</strong><br>
+                                        • ≥<span id="preview-umbral-facil">75</span> pts: 🟢 Fácil<br>
+                                        • <span id="preview-umbral-medio">50</span>-<span id="preview-umbral-facil-2">74</span> pts: 🟡 Media<br>
+                                        • <<span id="preview-umbral-medio-2">50</span> pts: 🔴 Difícil
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
                 <div class="text-center">
                     <button type="submit" class="btn btn-primary">Crear</button>
@@ -150,7 +291,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Determinar nivel de seguridad combinado
         securityIndicator.className = 'security-level';
         
-        // Lógica combinada: número bajo + severidad restrictiva = alta seguridad
         const isRestrictiveSeverity = ['LOW', 'MEDIUM'].includes(sevValue);
         const isLowQuantity = vulnValue <= 5;
         const isMediumQuantity = vulnValue <= 15;
@@ -167,12 +307,56 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Actualizar al cambiar cualquier valor
+    // ✅ FUNCIÓN GLOBAL PARA PESOS
+    window.updatePesoDisplay = function() {
+        const pesoSev = document.getElementById('peso_severidad').value;
+        const pesoSol = document.getElementById('peso_solucionabilidad').value;
+        
+        // Actualizar displays
+        document.getElementById('peso-severidad-display').textContent = pesoSev;
+        document.getElementById('peso-solucionabilidad-display').textContent = pesoSol;
+        
+        // Actualizar preview
+        document.getElementById('preview-peso-sev').textContent = pesoSev;
+        document.getElementById('preview-peso-sol').textContent = pesoSol;
+        
+        // Auto-ajustar para que sumen 100%
+        const total = parseInt(pesoSev) + parseInt(pesoSol);
+        if (total !== 100) {
+            const diff = 100 - total;
+            const currentTarget = event.target.id;
+            const otherSlider = currentTarget === 'peso_severidad' ? 
+                            document.getElementById('peso_solucionabilidad') : 
+                            document.getElementById('peso_severidad');
+            
+            const newValue = Math.max(0, Math.min(100, parseInt(otherSlider.value) + diff));
+            otherSlider.value = newValue;
+            
+            // Actualizar displays después del ajuste
+            setTimeout(window.updatePesoDisplay, 10);
+        }
+    }
+
+    function updateUmbralDisplay() {
+        const umbralFacil = document.getElementById('umbral_facil').value;
+        const umbralMedio = document.getElementById('umbral_media').value;
+        
+        document.getElementById('preview-umbral-facil').textContent = umbralFacil;
+        document.getElementById('preview-umbral-facil-2').textContent = umbralFacil - 1;
+        document.getElementById('preview-umbral-medio').textContent = umbralMedio;
+        document.getElementById('preview-umbral-medio-2').textContent = umbralMedio;
+    }
+
+    // Event listeners
     maxVulnInput.addEventListener('input', updateSecurityLevel);
     maxSevInput.addEventListener('change', updateSecurityLevel);
+    document.getElementById('umbral_facil').addEventListener('input', updateUmbralDisplay);
+    document.getElementById('umbral_media').addEventListener('input', updateUmbralDisplay);
     
     // Actualizar al cargar
     updateSecurityLevel();
+    window.updatePesoDisplay();
+    updateUmbralDisplay();
 });
 </script>
 {% endblock %}

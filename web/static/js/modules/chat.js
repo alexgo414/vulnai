@@ -443,44 +443,6 @@ function agregarMensajeAlChat(mensaje, tipo) {
     scrollToBottom();
 }
 
-async function enviarMensajeAlServidor(messageText) {
-    try {
-        console.log("🚀 Enviando mensaje para proyecto:", proyectoActualChat.nombre);
-        
-        const response = await fetchWithCredentials(`${API_BASE_URL_CHAT}/chat/mensajes`, {
-            method: 'POST',
-            body: JSON.stringify({ 
-                message: messageText,
-                proyecto_id: proyectoActualChat.id,  // ✅ Incluir ID del proyecto
-                proyecto_nombre: proyectoActualChat.nombre  // ✅ Incluir nombre del proyecto
-            })
-        });
-
-        if (response.status === 401) {
-            mostrarToast("Tu sesión ha expirado", "danger");
-            setTimeout(() => window.location.href = "/login", 2000);
-            return;
-        }
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || `Error ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log("✅ Respuesta recibida:", data);
-
-        agregarMensajeAlChat(data.message, 'bot');
-        
-    } catch (error) {
-        console.error("❌ Error en el chat:", error);
-        agregarMensajeAlChat(
-            `🚫 Error: ${error.message}. Verifica tu conexión.`, 
-            'bot'
-        );
-    }
-}
-
 export function inicializarChat() {
     console.log("Inicializando chat...");
     
@@ -519,54 +481,46 @@ function mostrarInformacionSBOM(sbomInfo, limitesInfo = null) {
         mensaje += `• Vulnerabilidades encontradas: ${nvd.vulnerabilidades_encontradas}\n`;
         mensaje += `• Componentes vulnerables: ${nvd.componentes_vulnerables}\n`;
         
-        // ✅ ARREGLAR INFORMACIÓN DE LÍMITES DEL PROYECTO
-        if (limitesInfo && limitesInfo.limite_configurado !== null) {
-            mensaje += `• **Límite configurado para el proyecto:** ${limitesInfo.limite_configurado}\n`;
-            mensaje += `• **Severidad máxima configurada:** ${limitesInfo.max_severidad_configurada}\n`;
+        // ✅ MOSTRAR INFORMACIÓN DE FILTRADO CORRECTA
+        if (nvd.filtros_aplicados) {
+            mensaje += `\n**⚙️ Filtros del proyecto aplicados:**\n`;
+            mensaje += `• Umbral de seguridad: ${nvd.filtros_aplicados.umbral_seguridad} vulnerabilidades\n`;
+            mensaje += `• Severidad máxima permitida: ${nvd.filtros_aplicados.max_severidad_permitida}\n`;
             
-            if (limitesInfo.excede_limite) {
-                // ✅ USAR LOS CAMPOS CORRECTOS
-                if (limitesInfo.excede_limite_cantidad && limitesInfo.excede_limite_severidad) {
-                    mensaje += `• 🚨 **AMBOS LÍMITES EXCEDIDOS**\n`;
-                    mensaje += `• 📊 **Límite de cantidad excedido** por **${limitesInfo.diferencia_cantidad}** vulnerabilidades\n`;
-                    mensaje += `• 🔺 **Límite de severidad excedido**: **${limitesInfo.vulnerabilidades_exceden_severidad}** vulnerabilidades críticas\n`;
-                } else if (limitesInfo.excede_limite_severidad) {
-                    mensaje += `• 🔺 **LÍMITE DE SEVERIDAD EXCEDIDO**: **${limitesInfo.vulnerabilidades_exceden_severidad}** vulnerabilidades críticas\n`;
-                    mensaje += `• ✅ **Cantidad dentro del límite**: ${limitesInfo.vulnerabilidades_encontradas}/${limitesInfo.limite_configurado}\n`;
-                } else if (limitesInfo.excede_limite_cantidad) {
-                    mensaje += `• ⚠️ **LÍMITE DE CANTIDAD EXCEDIDO** por **${limitesInfo.diferencia_cantidad}** vulnerabilidades\n`;
-                    mensaje += `• ✅ **Severidad dentro del límite**: Todas ≤ ${limitesInfo.max_severidad_configurada}\n`;
-                }
-                
-                mensaje += `• 🚨 **Estado:** NO CUMPLE con los estándares de seguridad del proyecto\n`;
-            } else {
-                const margen = limitesInfo.limite_configurado - limitesInfo.vulnerabilidades_encontradas;
-                mensaje += `• ✅ **CUMPLE AMBOS LÍMITES**\n`;
-                mensaje += `• 📊 **Margen disponible**: ${margen} vulnerabilidades adicionales\n`;
-                mensaje += `• 🔺 **Severidad conforme**: Todas ≤ ${limitesInfo.max_severidad_configurada}\n`;
-                mensaje += `• 🟢 **Estado:** CUMPLE con todos los estándares de seguridad del proyecto\n`;
+            if (nvd.total_vulnerabilidades_brutas) {
+                mensaje += `• Total vulnerabilidades brutas encontradas: ${nvd.total_vulnerabilidades_brutas}\n`;
+                mensaje += `• Vulnerabilidades excluidas por severidad: ${nvd.vulnerabilidades_excluidas || 0}\n`;
             }
         }
         
-        // ✅ MENSAJE CONTEXTUALIZADO SEGÚN LOS LÍMITES
-        if (limitesInfo && limitesInfo.limite_configurado !== null) {
-            if (limitesInfo.excede_limite) {
-                if (limitesInfo.excede_limite_cantidad && limitesInfo.excede_limite_severidad) {
-                    mensaje += `\n🚨 **CRÍTICO**: El proyecto viola AMBOS límites (cantidad Y severidad). Se requiere acción inmediata.`;
-                } else if (limitesInfo.excede_limite_severidad) {
-                    mensaje += `\n🔺 **ALTA PRIORIDAD**: Resolver vulnerabilidades críticas inmediatamente.`;
-                } else if (limitesInfo.excede_limite_cantidad) {
-                    mensaje += `\n📊 **ACCIÓN REQUERIDA**: Reducir ${limitesInfo.diferencia_cantidad} vulnerabilidades para cumplir el límite.`;
-                }
-            } else {
-                mensaje += `\n🟢 **EXCELENTE**: El proyecto cumple con todos los estándares de seguridad establecidos.`;
-            }
+        // ✅ EVALUACIÓN DE SEGURIDAD DEL PROYECTO
+        const vulnerabilidades_encontradas = nvd.vulnerabilidades_encontradas; // ✅ NÚMERO REAL
+        const umbral_seguridad = nvd.filtros_aplicados?.umbral_seguridad || 10; // ✅ UMBRAL DE SEGURIDAD
+        
+        if (vulnerabilidades_encontradas === 0) {
+            mensaje += `\n✅ **Excelente:** No se encontraron vulnerabilidades dentro de los criterios del proyecto.`;
+        } else if (vulnerabilidades_encontradas <= umbral_seguridad) {
+            mensaje += `\n✅ **Proyecto seguro:** Se encontraron ${vulnerabilidades_encontradas} vulnerabilidades, lo cual está dentro del umbral de seguridad (${umbral_seguridad}).`;
         } else {
-            // Mensaje original si no hay información de límites
-            if (nvd.vulnerabilidades_encontradas > 0) {
-                mensaje += `\n⚠️ Se encontraron vulnerabilidades. Revisa el análisis detallado para evaluar el riesgo.`;
-            } else {
-                mensaje += `\n✅ No se encontraron vulnerabilidades conocidas en los componentes analizados.`;
+            mensaje += `\n🚨 **Proyecto en riesgo:** Se encontraron ${vulnerabilidades_encontradas} vulnerabilidades, superando el umbral de seguridad de ${umbral_seguridad}.`;
+        }
+        
+        // ✅ INFORMACIÓN DE EXCLUSIONES SI LAS HAY
+        if (nvd.vulnerabilidades_excluidas > 0) {
+            mensaje += `\n\n📊 **Vulnerabilidades excluidas por severidad:** ${nvd.vulnerabilidades_excluidas}`;
+            
+            if (nvd.severidades_excluidas_count) {
+                mensaje += `\n**Distribución de excluidas por severidad:**\n`;
+                for (const [severidad, cantidad] of Object.entries(nvd.severidades_excluidas_count)) {
+                    const emoji = {
+                        'CRITICAL': '🔴',
+                        'HIGH': '🟠', 
+                        'MEDIUM': '🟡',
+                        'LOW': '🟢',
+                        'UNKNOWN': '⚪'
+                    }[severidad] || '⚪';
+                    mensaje += `• ${emoji} ${severidad}: ${cantidad} (excluidas por severidad)\n`;
+                }
             }
         }
     }
@@ -574,6 +528,112 @@ function mostrarInformacionSBOM(sbomInfo, limitesInfo = null) {
     agregarMensajeAlChat(mensaje, 'bot');
 }
 
+// ✅ FUNCIÓN PARA MOSTRAR INDICADOR DE ESCRITURA
+function mostrarIndicadorEscribiendo() {
+    const indicadorId = 'typing-indicator';
+    
+    // Evitar duplicados
+    const existingIndicator = document.getElementById(indicadorId);
+    if (existingIndicator) {
+        existingIndicator.remove();
+    }
+    
+    const typingIndicator = document.createElement('div');
+    typingIndicator.id = indicadorId;
+    typingIndicator.className = 'message-group bot typing-indicator';
+    
+    typingIndicator.innerHTML = `
+        <div class="message-avatar bot">
+            <i class="fas fa-robot"></i>
+        </div>
+        <div class="message-content">
+            <div class="message-bubble bot typing-bubble">
+                <div class="typing-animation">
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                </div>
+                <span class="typing-text">La IA está escribiendo...</span>
+            </div>
+        </div>
+    `;
+    
+    chatMensajes.appendChild(typingIndicator);
+    scrollToBottom();
+    
+    return typingIndicator;
+}
+
+// ✅ FUNCIÓN PARA OCULTAR INDICADOR
+function ocultarIndicadorEscribiendo() {
+    const indicator = document.getElementById('typing-indicator');
+    if (indicator) {
+        // Animación suave de salida
+        indicator.style.opacity = '0';
+        indicator.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            if (indicator.parentNode) {
+                indicator.remove();
+            }
+        }, 200);
+    }
+}
+
+// ✅ MODIFICAR LA FUNCIÓN DE ENVÍO DE MENSAJES
+async function enviarMensajeAlServidor(messageText) {
+    // Mostrar indicador antes de enviar
+    const typingIndicator = mostrarIndicadorEscribiendo();
+    
+    try {
+        console.log("🚀 Enviando mensaje para proyecto:", proyectoActualChat.nombre);
+        
+        const response = await fetchWithCredentials(`${API_BASE_URL_CHAT}/chat/mensajes`, {
+            method: 'POST',
+            body: JSON.stringify({ 
+                message: messageText,
+                proyecto_id: proyectoActualChat.id,
+                proyecto_nombre: proyectoActualChat.nombre
+            })
+        });
+
+        if (response.status === 401) {
+            mostrarToast("Tu sesión ha expirado", "danger");
+            setTimeout(() => window.location.href = "/login", 2000);
+            return;
+        }
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Error ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("✅ Respuesta recibida:", data);
+
+        // ✅ OCULTAR INDICADOR ANTES DE MOSTRAR RESPUESTA
+        ocultarIndicadorEscribiendo();
+        
+        // Pequeña pausa para suavizar la transición
+        setTimeout(() => {
+            agregarMensajeAlChat(data.message, 'bot');
+        }, 100);
+        
+    } catch (error) {
+        console.error("❌ Error en el chat:", error);
+        
+        // ✅ OCULTAR INDICADOR EN CASO DE ERROR
+        ocultarIndicadorEscribiendo();
+        
+        setTimeout(() => {
+            agregarMensajeAlChat(
+                `🚫 Error: ${error.message}. Verifica tu conexión.`, 
+                'bot'
+            );
+        }, 100);
+    }
+}
+
+// ✅ MODIFICAR LA FUNCIÓN DE MANEJO DE SBOM
 async function manejarArchivoSBOM(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -599,18 +659,19 @@ async function manejarArchivoSBOM(event) {
     try {
         agregarMensajeAlChat(`📁 Subiendo archivo SBOM: ${file.name}...\n🔍 Consultando National Vulnerability Database...`, 'user');
         
+        // ✅ MOSTRAR INDICADOR PERSONALIZADO PARA SBOM
+        const typingIndicator = mostrarIndicadorProcesandoSBOM();
+        
         const formData = new FormData();
         formData.append('file', file);
         formData.append('proyecto_id', proyectoActualChat.id);
-        // ✅ ENVIAR LOS LÍMITES DIRECTAMENTE DESDE EL OBJETO PROYECTO
         formData.append('limite_vulnerabilidades', proyectoActualChat.max_vulnerabilidades || 10); 
         formData.append('max_severidad', proyectoActualChat.max_severidad || 'MEDIUM');
         formData.append('mensaje', `Analiza este archivo SBOM del proyecto ${proyectoActualChat.nombre}`);
         
-        // ✅ ASEGURAR QUE SE ENVÍEN LAS COOKIES
         const response = await fetch(`${API_BASE_URL_CHAT}/chat/upload-sbom`, {
             method: 'POST',
-            credentials: 'include', // ✅ IMPORTANTE: incluir cookies
+            credentials: 'include',
             body: formData
         });
         
@@ -620,45 +681,113 @@ async function manejarArchivoSBOM(event) {
         }
         
         const data = await response.json();
-        console.log("✅ Archivo SBOM procesado con límites del proyecto:", data);
+        console.log("✅ Archivo SBOM procesado:", data);
         
-        // ✅ MOSTRAR INFORMACIÓN DEL SBOM CON CONTEXTO DE LÍMITES
+        // ✅ OCULTAR INDICADOR DE PROCESAMIENTO
+        ocultarIndicadorEscribiendo();
+        
+        // ✅ MOSTRAR INFORMACIÓN DEL SBOM SIN ALERTAS
         if (data.sbom_info) {
-            mostrarInformacionSBOM(data.sbom_info, data.limites_info);
+            setTimeout(() => {
+                mostrarInformacionSBOM(data.sbom_info); // Sin segundo parámetro
+            }, 100);
         }
         
-        // ✅ RESPUESTA DE LA IA (ya viene con contexto de límites)
-        agregarMensajeAlChat(data.message, 'bot');
+        // ✅ RESPUESTA DE LA IA
+        setTimeout(() => {
+            agregarMensajeAlChat(data.message, 'bot');
+        }, 200);
         
-        // ✅ TOAST MEJORADO CON INFORMACIÓN DE LÍMITES
-        if (data.limites_info) {
-            const limites = data.limites_info;
-            if (limites.excede_limite) {
-                // ✅ CAMBIAR 'diferencia' por 'diferencia_cantidad'
-                mostrarToast(
-                    `⚠️ LÍMITE EXCEDIDO: ${limites.vulnerabilidades_encontradas}/${limites.limite_configurado} vulnerabilidades (+${limites.diferencia_cantidad})`, 
-                    "danger", 
-                    8000
-                );
-            } else {
-                const estado = limites.porcentaje_usado >= 80 ? "warning" : "success";
-                mostrarToast(
-                    `✅ Dentro del límite: ${limites.vulnerabilidades_encontradas}/${limites.limite_configurado} vulnerabilidades (${limites.porcentaje_usado}%)`, 
-                    estado, 
-                    6000
-                );
-            }
-        }
+        // ✅ TOAST SIMPLE DE ÉXITO
+        mostrarToast("Archivo SBOM procesado correctamente", "success", 3000);
         
         event.target.value = '';
         
     } catch (error) {
         console.error("❌ Error subiendo SBOM:", error);
-        agregarMensajeAlChat(
-            `🚫 Error procesando archivo SBOM: ${error.message}`, 
-            'bot'
-        );
+        
+        // ✅ OCULTAR INDICADOR EN CASO DE ERROR
+        ocultarIndicadorEscribiendo();
+        
+        setTimeout(() => {
+            agregarMensajeAlChat(
+                `🚫 Error procesando archivo SBOM: ${error.message}`, 
+                'bot'
+            );
+        }, 100);
         
         event.target.value = '';
     }
+}
+
+// ✅ INDICADOR ESPECIAL PARA PROCESAMIENTO DE SBOM
+function mostrarIndicadorProcesandoSBOM() {
+    const indicadorId = 'typing-indicator';
+    
+    // Evitar duplicados
+    const existingIndicator = document.getElementById(indicadorId);
+    if (existingIndicator) {
+        existingIndicator.remove();
+    }
+    
+    const typingIndicator = document.createElement('div');
+    typingIndicator.id = indicadorId;
+    typingIndicator.className = 'message-group bot typing-indicator';
+    
+    typingIndicator.innerHTML = `
+        <div class="message-avatar bot">
+            <i class="fas fa-robot"></i>
+        </div>
+        <div class="message-content">
+            <div class="message-bubble bot typing-bubble processing">
+                <div class="processing-animation">
+                    <i class="fas fa-cog fa-spin"></i>
+                    <i class="fas fa-file-code fa-pulse"></i>
+                    <i class="fas fa-shield-alt fa-beat"></i>
+                </div>
+                <span class="typing-text">Procesando SBOM y analizando vulnerabilidades...</span>
+                <div class="processing-steps">
+                    <div class="step active">📁 Leyendo archivo</div>
+                    <div class="step">🔍 Consultando NVD</div>
+                    <div class="step">🎯 Aplicando criterios</div>
+                    <div class="step">📊 Generando análisis</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    chatMensajes.appendChild(typingIndicator);
+    scrollToBottom();
+    
+    // ✅ ANIMAR PASOS DEL PROCESAMIENTO
+    animarPasosProcesamiento();
+    
+    return typingIndicator;
+}
+
+// ✅ FUNCIÓN PARA ANIMAR LOS PASOS
+function animarPasosProcesamiento() {
+    const steps = document.querySelectorAll('.processing-steps .step');
+    if (steps.length === 0) return;
+    
+    let currentStep = 0;
+    
+    const interval = setInterval(() => {
+        // Remover active de todos
+        steps.forEach(step => step.classList.remove('active'));
+        
+        // Agregar active al actual
+        if (currentStep < steps.length) {
+            steps[currentStep].classList.add('active');
+            currentStep++;
+        } else {
+            // Reiniciar el ciclo
+            currentStep = 0;
+        }
+    }, 1500); // Cambiar cada 1.5 segundos
+    
+    // Limpiar interval después de 10 segundos
+    setTimeout(() => {
+        clearInterval(interval);
+    }, 10000);
 }

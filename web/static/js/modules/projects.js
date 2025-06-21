@@ -12,6 +12,18 @@ export async function cargarFormularioCrearProyecto() {
         const descripcion = document.getElementById("descripcion").value;
         const maxVulnerabilidades = parseInt(document.getElementById("max_vulnerabilidades").value) || 10;
         const maxSeveridad = document.getElementById("max_severidad").value || 'MEDIUM';
+        
+        // ✅ EXTRAER CAMPOS DE SOLUCIONABILIDAD
+        const pesoSeveridad = parseInt(document.getElementById("peso_severidad").value) || 70;
+        const pesoSolucionabilidad = parseInt(document.getElementById("peso_solucionabilidad").value) || 30;
+        const umbralFacil = parseInt(document.getElementById("umbral_facil").value) || 75;
+        const umbralMedia = parseInt(document.getElementById("umbral_media").value) || 50;
+        
+        const prioriVectoresRed = document.getElementById("priori_vectores_red").checked;
+        const prioriSinParches = document.getElementById("priori_sin_parches").checked;
+        const prioriExploitPublico = document.getElementById("priori_exploit_publico").checked;
+        const incluirTemporalFixes = document.getElementById("incluir_temporal_fixes").checked;
+        const excluirPrivilegiosAltos = document.getElementById("excluir_privilegios_altos").checked;
 
         try {
             const response = await fetchWithCredentials(`${API_BASE_URL}/proyectos`, {
@@ -20,7 +32,17 @@ export async function cargarFormularioCrearProyecto() {
                     nombre, 
                     descripcion, 
                     max_vulnerabilidades: maxVulnerabilidades,
-                    max_severidad: maxSeveridad
+                    max_severidad: maxSeveridad,
+                    // ✅ INCLUIR CAMPOS DE SOLUCIONABILIDAD
+                    peso_severidad: pesoSeveridad,
+                    peso_solucionabilidad: pesoSolucionabilidad,
+                    umbral_solucionabilidad_facil: umbralFacil,
+                    umbral_solucionabilidad_media: umbralMedia,
+                    priori_vectores_red: prioriVectoresRed,
+                    priori_sin_parches: prioriSinParches,
+                    priori_exploit_publico: prioriExploitPublico,
+                    incluir_temporal_fixes: incluirTemporalFixes,
+                    excluir_privilegios_altos: excluirPrivilegiosAltos
                 })
             });
 
@@ -50,7 +72,7 @@ export async function editarProyecto(proyectoId) {
         return;
     }
 
-    // ✅ GENERAR EL FORMULARIO UNIFICADO CON LAS MISMAS GUÍAS
+    // ✅ GENERAR EL FORMULARIO UNIFICADO CON CAMPOS DE SOLUCIONABILIDAD
     const formContainer = document.createElement("div");
     formContainer.classList.add("card-body");
     formContainer.innerHTML = `
@@ -64,7 +86,7 @@ export async function editarProyecto(proyectoId) {
                 <textarea id="descripcion" name="descripcion" class="form-control" rows="4" placeholder="Describe brevemente el proyecto">${proyecto.descripcion || ''}</textarea>
             </div>
             
-            <!-- ✅ SECCIÓN DE CONFIGURACIÓN DE SEGURIDAD UNIFICADA -->
+            <!-- ✅ SECCIÓN DE CONFIGURACIÓN DE SEGURIDAD -->
             <div class="mb-4">
                 <h6 class="border-bottom pb-2 mb-3">
                     <i class="fas fa-shield-alt me-2 text-warning"></i>
@@ -81,12 +103,6 @@ export async function editarProyecto(proyectoId) {
                         <span class="input-group-text">
                             <i class="fas fa-bug"></i>
                         </span>
-                    </div>
-                    <div class="form-text">
-                        <i class="fas fa-info-circle me-1"></i>
-                        Define cuántas vulnerabilidades como máximo puede tener un archivo SBOM 
-                        para ser considerado aceptable en este proyecto. 
-                        <strong>Valor actual: ${proyecto.max_vulnerabilidades || 10}</strong>
                     </div>
                 </div>
 
@@ -105,41 +121,9 @@ export async function editarProyecto(proyectoId) {
                             <i class="fas fa-exclamation-triangle"></i>
                         </span>
                     </div>
-                    <div class="form-text">
-                        <i class="fas fa-info-circle me-1"></i>
-                        Define la severidad máxima de vulnerabilidades que se considerarán aceptables.
-                        Las vulnerabilidades por encima de este nivel se marcarán como críticas.
-                        <strong>Valor actual: ${proyecto.max_severidad || 'MEDIUM'}</strong>
-                    </div>
                 </div>
 
-                <!-- ✅ GUÍAS UNIFICADAS - IGUAL QUE EN PROYECTO_NUEVO -->
-                <div class="alert alert-info mb-3">
-                    <h6 class="alert-heading">
-                        <i class="fas fa-lightbulb me-2"></i>Guía de configuración:
-                    </h6>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <strong>📊 Vulnerabilidades:</strong>
-                            <ul class="mb-2">
-                                <li><strong>0-5:</strong> Proyecto de alta seguridad</li>
-                                <li><strong>6-15:</strong> Proyecto de seguridad estándar</li>
-                                <li><strong>16+:</strong> Proyecto en desarrollo/testing</li>
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <strong>🔺 Severidad:</strong>
-                            <ul class="mb-0">
-                                <li><strong>CRITICAL:</strong> Solo vulnerabilidades críticas son inaceptables (más permisivo)</li>
-                                <li><strong>HIGH:</strong> Vulnerabilidades altas y críticas son inaceptables</li>
-                                <li><strong>MEDIUM:</strong> Vulnerabilidades medias, altas y críticas son inaceptables (recomendado)</li>
-                                <li><strong>LOW:</strong> Cualquier vulnerabilidad es inaceptable (más restrictivo)</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ✅ PREVIEW DEL NIVEL DE SEGURIDAD - IGUAL QUE EN PROYECTO_NUEVO -->
+                <!-- ✅ PREVIEW DEL NIVEL DE SEGURIDAD -->
                 <div class="security-level-preview">
                     <label class="form-label">
                         <strong>Configuración de seguridad:</strong>
@@ -155,6 +139,139 @@ export async function editarProyecto(proyectoId) {
                             <strong>Máximo:</strong> <span id="severity-display">🟡 MEDIUM</span> •
                             <strong>Cantidad:</strong> <span id="quantity-display">10</span> vulnerabilidades
                         </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ✅ NUEVA SECCIÓN: CRITERIOS DE SOLUCIONABILIDAD -->
+            <div class="mb-4">
+                <h6 class="border-bottom pb-2 mb-3">
+                    <i class="fas fa-tools me-2 text-info"></i>
+                    Criterios de Solucionabilidad
+                </h6>
+                
+                <!-- Pesos para priorización -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="peso_severidad" class="form-label">
+                            <strong>Peso de Severidad (%):</strong>
+                        </label>
+                        <div class="input-group">
+                            <input type="range" id="peso_severidad" name="peso_severidad" 
+                                   class="form-range" min="0" max="100" value="${proyecto.peso_severidad || 70}" 
+                                   oninput="updatePesoDisplay()">
+                            <span class="input-group-text" style="min-width: 60px;">
+                                <span id="peso-severidad-display">${proyecto.peso_severidad || 70}</span>%
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="peso_solucionabilidad" class="form-label">
+                            <strong>Peso de Solucionabilidad (%):</strong>
+                        </label>
+                        <div class="input-group">
+                            <input type="range" id="peso_solucionabilidad" name="peso_solucionabilidad" 
+                                   class="form-range" min="0" max="100" value="${proyecto.peso_solucionabilidad || 30}" 
+                                   oninput="updatePesoDisplay()">
+                            <span class="input-group-text" style="min-width: 60px;">
+                                <span id="peso-solucionabilidad-display">${proyecto.peso_solucionabilidad || 30}</span>%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Umbrales -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="umbral_facil" class="form-label">
+                            <strong>Umbral "Fácil de resolver" (puntos):</strong>
+                        </label>
+                        <input type="number" id="umbral_facil" name="umbral_solucionabilidad_facil" 
+                               class="form-control" value="${proyecto.umbral_solucionabilidad_facil || 75}" min="50" max="100">
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="umbral_media" class="form-label">
+                            <strong>Umbral "Dificultad media" (puntos):</strong>
+                        </label>
+                        <input type="number" id="umbral_media" name="umbral_solucionabilidad_media" 
+                               class="form-control" value="${proyecto.umbral_solucionabilidad_media || 50}" min="25" max="75">
+                    </div>
+                </div>
+                
+                <!-- Criterios de priorización -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Criterios de alta prioridad:</strong></label>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="priori_vectores_red" 
+                               name="priori_vectores_red" ${proyecto.priori_vectores_red !== false ? 'checked' : ''}>
+                        <label class="form-check-label" for="priori_vectores_red">
+                            <i class="fas fa-network-wired text-danger me-1"></i>
+                            Priorizar vulnerabilidades de vector de red
+                        </label>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="priori_sin_parches" 
+                               name="priori_sin_parches" ${proyecto.priori_sin_parches !== false ? 'checked' : ''}>
+                        <label class="form-check-label" for="priori_sin_parches">
+                            <i class="fas fa-exclamation-triangle text-warning me-1"></i>
+                            Priorizar vulnerabilidades sin parches oficiales
+                        </label>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="priori_exploit_publico" 
+                               name="priori_exploit_publico" ${proyecto.priori_exploit_publico !== false ? 'checked' : ''}>
+                        <label class="form-check-label" for="priori_exploit_publico">
+                            <i class="fas fa-bug text-danger me-1"></i>
+                            Priorizar vulnerabilidades con exploits públicos
+                        </label>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="incluir_temporal_fixes" 
+                               name="incluir_temporal_fixes" ${proyecto.incluir_temporal_fixes !== false ? 'checked' : ''}>
+                        <label class="form-check-label" for="incluir_temporal_fixes">
+                            <i class="fas fa-band-aid text-info me-1"></i>
+                            Incluir vulnerabilidades con soluciones temporales
+                        </label>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="excluir_privilegios_altos" 
+                               name="excluir_privilegios_altos" ${proyecto.excluir_privilegios_altos === true ? 'checked' : ''}>
+                        <label class="form-check-label" for="excluir_privilegios_altos">
+                            <i class="fas fa-shield-alt text-success me-1"></i>
+                            Excluir vulnerabilidades que requieren privilegios administrativos
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Preview de la configuración -->
+                <div class="alert alert-light border mb-3">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-eye me-2"></i>Vista previa de la configuración:
+                    </h6>
+                    <div id="config-preview">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small class="text-muted">
+                                    <strong>Fórmula de priorización:</strong><br>
+                                    Prioridad = (<span id="preview-peso-sev">${proyecto.peso_severidad || 70}</span>% × Severidad) + (<span id="preview-peso-sol">${proyecto.peso_solucionabilidad || 30}</span>% × Solucionabilidad)
+                                </small>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted">
+                                    <strong>Clasificación de solucionabilidad:</strong><br>
+                                    • ≥<span id="preview-umbral-facil">${proyecto.umbral_solucionabilidad_facil || 75}</span> pts: 🟢 Fácil<br>
+                                    • <span id="preview-umbral-medio">${proyecto.umbral_solucionabilidad_media || 50}</span>-<span id="preview-umbral-facil-2">${(proyecto.umbral_solucionabilidad_facil || 75) - 1}</span> pts: 🟡 Media<br>
+                                    • <<span id="preview-umbral-medio-2">${proyecto.umbral_solucionabilidad_media || 50}</span> pts: 🔴 Difícil
+                                </small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -175,13 +292,35 @@ export async function editarProyecto(proyectoId) {
         const descripcion = document.getElementById("descripcion").value;
         const maxVulnerabilidades = document.getElementById("max_vulnerabilidades").value;
         const maxSeveridad = document.getElementById("max_severidad").value;
+        
+        // ✅ EXTRAER CAMPOS DE SOLUCIONABILIDAD
+        const pesoSeveridad = parseInt(document.getElementById("peso_severidad").value) || 70;
+        const pesoSolucionabilidad = parseInt(document.getElementById("peso_solucionabilidad").value) || 30;
+        const umbralFacil = parseInt(document.getElementById("umbral_facil").value) || 75;
+        const umbralMedia = parseInt(document.getElementById("umbral_media").value) || 50;
+        
+        const prioriVectoresRed = document.getElementById("priori_vectores_red").checked;
+        const prioriSinParches = document.getElementById("priori_sin_parches").checked;
+        const prioriExploitPublico = document.getElementById("priori_exploit_publico").checked;
+        const incluirTemporalFixes = document.getElementById("incluir_temporal_fixes").checked;
+        const excluirPrivilegiosAltos = document.getElementById("excluir_privilegios_altos").checked;
 
         try {
             const body = { 
                 nombre, 
                 descripcion,
                 max_vulnerabilidades: maxVulnerabilidades ? parseInt(maxVulnerabilidades) : proyecto.max_vulnerabilidades,
-                max_severidad: maxSeveridad || proyecto.max_severidad
+                max_severidad: maxSeveridad || proyecto.max_severidad,
+                // ✅ INCLUIR CAMPOS DE SOLUCIONABILIDAD
+                peso_severidad: pesoSeveridad,
+                peso_solucionabilidad: pesoSolucionabilidad,
+                umbral_solucionabilidad_facil: umbralFacil,
+                umbral_solucionabilidad_media: umbralMedia,
+                priori_vectores_red: prioriVectoresRed,
+                priori_sin_parches: prioriSinParches,
+                priori_exploit_publico: prioriExploitPublico,
+                incluir_temporal_fixes: incluirTemporalFixes,
+                excluir_privilegios_altos: excluirPrivilegiosAltos
             };
 
             const response = await fetchWithCredentials(`${API_BASE_URL}/proyectos/${proyecto.id}`, {

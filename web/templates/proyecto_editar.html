@@ -62,6 +62,110 @@ function updateSecurityLevel() {
     }
 }
 
+// ✅ FUNCIÓN GLOBAL PARA PESOS (EDICIÓN)
+window.updatePesoDisplay = function() {
+    const pesoSevInput = document.getElementById('peso_severidad');
+    const pesoSolInput = document.getElementById('peso_solucionabilidad');
+    
+    if (!pesoSevInput || !pesoSolInput) return;
+    
+    const pesoSev = pesoSevInput.value;
+    const pesoSol = pesoSolInput.value;
+    
+    // Actualizar displays
+    const pesoSevDisplay = document.getElementById('peso-severidad-display');
+    const pesoSolDisplay = document.getElementById('peso-solucionabilidad-display');
+    
+    if (pesoSevDisplay) pesoSevDisplay.textContent = pesoSev;
+    if (pesoSolDisplay) pesoSolDisplay.textContent = pesoSol;
+    
+    // Actualizar preview
+    const previewSev = document.getElementById('preview-peso-sev');
+    const previewSol = document.getElementById('preview-peso-sol');
+    
+    if (previewSev) previewSev.textContent = pesoSev;
+    if (previewSol) previewSol.textContent = pesoSol;
+    
+    // Auto-ajustar para que sumen 100%
+    const total = parseInt(pesoSev) + parseInt(pesoSol);
+    if (total !== 100 && event && event.target) {
+        const diff = 100 - total;
+        const currentTarget = event.target.id;
+        const otherSlider = currentTarget === 'peso_severidad' ? 
+                        document.getElementById('peso_solucionabilidad') : 
+                        document.getElementById('peso_severidad');
+        
+        if (otherSlider) {
+            const newValue = Math.max(0, Math.min(100, parseInt(otherSlider.value) + diff));
+            otherSlider.value = newValue;
+            
+            // Actualizar displays después del ajuste
+            setTimeout(window.updatePesoDisplay, 10);
+        }
+    }
+}
+
+// ✅ FUNCIÓN PARA UMBRALES (EDICIÓN)
+function updateUmbralDisplay() {
+    const umbralFacilInput = document.getElementById('umbral_facil');
+    const umbralMedioInput = document.getElementById('umbral_media');
+    
+    if (!umbralFacilInput || !umbralMedioInput) return;
+    
+    const umbralFacil = umbralFacilInput.value;
+    const umbralMedio = umbralMedioInput.value;
+    
+    // Actualizar preview
+    const previewFacil = document.getElementById('preview-umbral-facil');
+    const previewFacil2 = document.getElementById('preview-umbral-facil-2');
+    const previewMedio = document.getElementById('preview-umbral-medio');
+    const previewMedio2 = document.getElementById('preview-umbral-medio-2');
+    
+    if (previewFacil) previewFacil.textContent = umbralFacil;
+    if (previewFacil2) previewFacil2.textContent = umbralFacil - 1;
+    if (previewMedio) previewMedio.textContent = umbralMedio;
+    if (previewMedio2) previewMedio2.textContent = umbralMedio;
+}
+
+// ✅ FUNCIÓN PARA CONFIGURAR EVENT LISTENERS DINÁMICOS
+function setupDynamicEventListeners() {
+    const maxVulnInput = document.getElementById('max_vulnerabilidades');
+    const maxSevInput = document.getElementById('max_severidad');
+    const pesoSevInput = document.getElementById('peso_severidad');
+    const pesoSolInput = document.getElementById('peso_solucionabilidad');
+    const umbralFacilInput = document.getElementById('umbral_facil');
+    const umbralMedioInput = document.getElementById('umbral_media');
+    
+    // Event listeners para seguridad
+    if (maxVulnInput) {
+        maxVulnInput.addEventListener('input', updateSecurityLevel);
+    }
+    if (maxSevInput) {
+        maxSevInput.addEventListener('change', updateSecurityLevel);
+    }
+    
+    // Event listeners para pesos
+    if (pesoSevInput) {
+        pesoSevInput.addEventListener('input', window.updatePesoDisplay);
+    }
+    if (pesoSolInput) {
+        pesoSolInput.addEventListener('input', window.updatePesoDisplay);
+    }
+    
+    // Event listeners para umbrales
+    if (umbralFacilInput) {
+        umbralFacilInput.addEventListener('input', updateUmbralDisplay);
+    }
+    if (umbralMedioInput) {
+        umbralMedioInput.addEventListener('input', updateUmbralDisplay);
+    }
+    
+    // Actualizar displays iniciales
+    updateSecurityLevel();
+    window.updatePesoDisplay();
+    updateUmbralDisplay();
+}
+
 // Aplicar cuando se cargue dinámicamente el formulario
 document.addEventListener('DOMContentLoaded', function() {
     // Observer para detectar cuando se añade el formulario
@@ -69,14 +173,13 @@ document.addEventListener('DOMContentLoaded', function() {
         mutations.forEach(function(mutation) {
             if (mutation.type === 'childList') {
                 const maxVulnInput = document.getElementById('max_vulnerabilidades');
-                const maxSevInput = document.getElementById('max_severidad');
                 
                 if (maxVulnInput) {
-                    maxVulnInput.addEventListener('input', updateSecurityLevel);
-                    if (maxSevInput) {
-                        maxSevInput.addEventListener('change', updateSecurityLevel);
-                    }
-                    updateSecurityLevel(); // Actualizar al cargar
+                    console.log("🔄 Formulario de edición cargado dinámicamente");
+                    
+                    // ✅ CONFIGURAR TODOS LOS EVENT LISTENERS
+                    setupDynamicEventListeners();
+                    
                     observer.disconnect(); // Dejar de observar
                 }
             }
