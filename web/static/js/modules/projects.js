@@ -12,6 +12,7 @@ export async function cargarFormularioCrearProyecto() {
         const descripcion = document.getElementById("descripcion").value;
         const maxVulnerabilidades = parseInt(document.getElementById("max_vulnerabilidades").value) || 10;
         const maxSeveridad = document.getElementById("max_severidad").value || 'MEDIUM';
+        const maxGradoCombinado = parseInt(document.getElementById("max_grado_combinado").value) || 50; // ✅ NUEVO
         
         // ✅ EXTRAER CAMPOS DE SOLUCIONABILIDAD
         const pesoSeveridad = parseInt(document.getElementById("peso_severidad").value) || 70;
@@ -33,6 +34,7 @@ export async function cargarFormularioCrearProyecto() {
                     descripcion, 
                     max_vulnerabilidades: maxVulnerabilidades,
                     max_severidad: maxSeveridad,
+                    max_grado_severidad_combinado: maxGradoCombinado, // ✅ NUEVO
                     // ✅ INCLUIR CAMPOS DE SOLUCIONABILIDAD
                     peso_severidad: pesoSeveridad,
                     peso_solucionabilidad: pesoSolucionabilidad,
@@ -72,20 +74,21 @@ export async function editarProyecto(proyectoId) {
         return;
     }
 
-    // ✅ GENERAR EL FORMULARIO UNIFICADO CON CAMPOS DE SOLUCIONABILIDAD
     const formContainer = document.createElement("div");
     formContainer.classList.add("card-body");
     formContainer.innerHTML = `
         <form action="/perfil/proyecto_editar/${proyecto.id}" method="post">
+            <!-- ✅ CAMPOS BÁSICOS -->
             <div class="mb-3">
                 <label for="nombre" class="form-label"><strong>Nombre del proyecto:</strong></label>
                 <input type="text" id="nombre" name="nombre" class="form-control" required value="${proyecto.nombre}">
             </div>
+            
             <div class="mb-3">
                 <label for="descripcion" class="form-label"><strong>Descripción:</strong></label>
-                <textarea id="descripcion" name="descripcion" class="form-control" rows="4" placeholder="Describe brevemente el proyecto">${proyecto.descripcion || ''}</textarea>
+                <textarea id="descripcion" name="descripcion" class="form-control" rows="4">${proyecto.descripcion || ''}</textarea>
             </div>
-            
+
             <!-- ✅ SECCIÓN DE CONFIGURACIÓN DE SEGURIDAD -->
             <div class="mb-4">
                 <h6 class="border-bottom pb-2 mb-3">
@@ -95,7 +98,7 @@ export async function editarProyecto(proyectoId) {
                 
                 <div class="mb-3">
                     <label for="max_vulnerabilidades" class="form-label">
-                        <strong>Máximo de vulnerabilidades aceptadas en SBOM:</strong>
+                        <strong>Máximo de vulnerabilidades aceptadas:</strong>
                     </label>
                     <div class="input-group">
                         <input type="number" id="max_vulnerabilidades" name="max_vulnerabilidades" 
@@ -123,7 +126,26 @@ export async function editarProyecto(proyectoId) {
                     </div>
                 </div>
 
-                <!-- ✅ PREVIEW DEL NIVEL DE SEGURIDAD -->
+                <!-- ✅ AÑADIR CAMPO DE GRADO COMBINADO (ESTE ERA EL QUE FALTABA) -->
+                <div class="mb-3">
+                    <label for="max_grado_combinado" class="form-label">
+                        <strong>Grado máximo de severidad combinado:</strong>
+                    </label>
+                    <div class="input-group">
+                        <input type="number" id="max_grado_combinado" name="max_grado_severidad_combinado" 
+                                class="form-control" value="${proyecto.max_grado_severidad_combinado || 50}" min="10" max="1000" required>
+                        <span class="input-group-text">
+                            <i class="fas fa-calculator"></i>
+                        </span>
+                    </div>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Define la suma máxima de grados de severidad permitida. Cada vulnerabilidad tiene un grado del 1 al 10 basado en su score CVSS.
+                        <strong>Valor recomendado: 50</strong>
+                    </div>
+                </div>
+
+                <!-- ✅ PREVIEW DE SEGURIDAD -->
                 <div class="security-level-preview">
                     <label class="form-label">
                         <strong>Configuración de seguridad:</strong>
@@ -137,13 +159,14 @@ export async function editarProyecto(proyectoId) {
                     <div class="severity-level-preview mt-2">
                         <small class="text-muted">
                             <strong>Máximo:</strong> <span id="severity-display">🟡 MEDIUM</span> •
-                            <strong>Cantidad:</strong> <span id="quantity-display">10</span> vulnerabilidades
+                            <strong>Cantidad:</strong> <span id="quantity-display">10</span> vulnerabilidades •
+                            <strong>Grado combinado:</strong> <span id="grade-display">50</span> puntos
                         </small>
                     </div>
                 </div>
             </div>
 
-            <!-- ✅ NUEVA SECCIÓN: CRITERIOS DE SOLUCIONABILIDAD -->
+            <!-- ✅ SECCIÓN DE CRITERIOS DE SOLUCIONABILIDAD -->
             <div class="mb-4">
                 <h6 class="border-bottom pb-2 mb-3">
                     <i class="fas fa-tools me-2 text-info"></i>
@@ -292,6 +315,7 @@ export async function editarProyecto(proyectoId) {
         const descripcion = document.getElementById("descripcion").value;
         const maxVulnerabilidades = document.getElementById("max_vulnerabilidades").value;
         const maxSeveridad = document.getElementById("max_severidad").value;
+        const maxGradoCombinado = document.getElementById("max_grado_combinado").value; // ✅ AHORA SÍ EXISTE
         
         // ✅ EXTRAER CAMPOS DE SOLUCIONABILIDAD
         const pesoSeveridad = parseInt(document.getElementById("peso_severidad").value) || 70;
@@ -311,7 +335,7 @@ export async function editarProyecto(proyectoId) {
                 descripcion,
                 max_vulnerabilidades: maxVulnerabilidades ? parseInt(maxVulnerabilidades) : proyecto.max_vulnerabilidades,
                 max_severidad: maxSeveridad || proyecto.max_severidad,
-                // ✅ INCLUIR CAMPOS DE SOLUCIONABILIDAD
+                max_grado_severidad_combinado: maxGradoCombinado ? parseInt(maxGradoCombinado) : proyecto.max_grado_severidad_combinado, // ✅ AHORA SÍ FUNCIONA
                 peso_severidad: pesoSeveridad,
                 peso_solucionabilidad: pesoSolucionabilidad,
                 umbral_solucionabilidad_facil: umbralFacil,
@@ -329,7 +353,7 @@ export async function editarProyecto(proyectoId) {
             });
 
             if (!response.ok) {
-                throw new Error("Error al actualizar el proyecto");
+                throw new Error(`Error al actualizar proyecto: ${response.statusText}`);
             }
 
             guardarAlertaParaSiguientePagina("Proyecto actualizado con éxito", "success");

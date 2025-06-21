@@ -769,7 +769,63 @@ def procesar_sbom_generico(data):
         'tipo_datos': type(data).__name__
     }
 
-async def enriquecer_sbom_con_nvd(sbom_data, limite_vulnerabilidades=10, max_severidad_permitida='MEDIUM'):
+def calcular_grado_severidad(vuln_data):
+    """
+    Calcula el grado de severidad de 1 a 10 basado en CVSS y severidad categórica
+    """
+    try:
+        # Obtener score CVSS (0.0 - 10.0)
+        score_cvss = vuln_data.get('score_cvss', 0.0)
+        severidad_categorica = vuln_data.get('severidad', 'UNKNOWN')
+        
+        # Si tenemos score CVSS, usarlo directamente (ya está en escala 0-10)
+        if score_cvss > 0:
+            # Redondear a entero del 1 al 10
+            grado = max(1, min(10, round(score_cvss)))
+            return grado
+        
+        # Si no hay score CVSS, usar mapeo de severidad categórica
+        mapeo_severidad = {
+            'LOW': 3,
+            'MEDIUM': 5,
+            'HIGH': 7,
+            'CRITICAL': 9,
+            'UNKNOWN': 5  # Valor por defecto
+        }
+        
+        return mapeo_severidad.get(severidad_categorica, 5)
+        
+    except Exception as e:
+        print(f"❌ Error calculando grado de severidad: {e}")
+        return 5  # Valor por defecto moderado
+
+def calcular_grado_severidad_combinado(vulnerabilidades_nvd):
+    """
+    Calcula la suma total de grados de severidad del proyecto
+    """
+    total_grado = 0
+    detalles_grados = []
+    
+    for vuln in vulnerabilidades_nvd:
+        grado = calcular_grado_severidad(vuln)
+        total_grado += grado
+        
+        detalles_grados.append({
+            'cve_id': vuln.get('cve_id', 'N/A'),
+            'severidad': vuln.get('severidad', 'UNKNOWN'),
+            'score_cvss': vuln.get('score_cvss', 0.0),
+            'grado_severidad': grado,
+            'componente': vuln.get('componente_afectado', {}).get('nombre', 'Unknown')
+        })
+    
+    return {
+        'total_grado_combinado': total_grado,
+        'cantidad_vulnerabilidades': len(vulnerabilidades_nvd),
+        'promedio_grado': round(total_grado / len(vulnerabilidades_nvd), 2) if vulnerabilidades_nvd else 0,
+        'detalles_grados': detalles_grados
+    }
+
+async def enriquecer_sbom_con_nvd(sbom_data, limite_vulnerabilidades=10, max_severidad_permitida='MEDIUM', max_grado_combinado=50):
     """Enriquece el SBOM con vulnerabilidades de NVD aplicando filtros del proyecto"""
     if not isinstance(sbom_data, dict) or 'componentes' not in sbom_data:
         print("⚠️ SBOM data no válido para enriquecimiento NVD")
@@ -782,7 +838,8 @@ async def enriquecer_sbom_con_nvd(sbom_data, limite_vulnerabilidades=10, max_sev
     vulnerabilidades_excluidas = []
     componentes_analizados = 0
     componentes_con_vulns = 0
-    
+    total_vulnerabilidades_brutas = 0
+
     # ✅ CONTADORES CORRECTOS
     total_vulnerabilidades_brutas = 0  # ✅ CONTADOR GLOBAL
     
@@ -844,8 +901,24 @@ async def enriquecer_sbom_con_nvd(sbom_data, limite_vulnerabilidades=10, max_sev
             print(f"   ❌ Error consultando NVD: {e}")
             continue
     
-    # ✅ NO APLICAR LÍMITE DE CANTIDAD - MOSTRAR TODAS LAS VULNERABILIDADES QUE PASAN EL FILTRO DE SEVERIDAD
-    # El "límite" solo se usa para evaluar si el proyecto es seguro o no
+    # ✅ NUEVO: CALCULAR GRADO DE SEVERIDAD COMBINADO
+    analisis_grado_combinado = None
+    if vulnerabilidades_nvd:
+        analisis_grado_combinado = calcular_grado_severidad_combinado(vulnerabilidades_nvd)
+        
+        # Evaluar si excede el límite
+        total_grado = analisis_grado_combinado['total_grado_combinado']
+        excede_grado_combinado = total_grado > max_grado_combinado
+        
+        analisis_grado_combinado.update({
+            'max_grado_permitido': max_grado_combinado,
+            'excede_limite_grado': excede_grado_combinado,
+            'diferencia_grado': max(0, total_grado - max_grado_combinado),
+            'porcentaje_usado_grado': round((total_grado / max_grado_combinado) * 100, 1) if max_grado_combinado > 0 else 100
+        })
+        
+        print(f"📊 Grado de severidad combinado: {total_grado}/{max_grado_combinado} ({'✅ OK' if not excede_grado_combinado else '⚠️ EXCEDE'})")
+    
     
     # Añadir vulnerabilidades de NVD al resultado
     sbom_data['vulnerabilidades_nvd'] = vulnerabilidades_nvd
@@ -870,23 +943,26 @@ async def enriquecer_sbom_con_nvd(sbom_data, limite_vulnerabilidades=10, max_sev
         sev = vuln.get('severidad', 'UNKNOWN')
         severidades_excluidas_count[sev] = severidades_excluidas_count.get(sev, 0) + 1
     
-    # ✅ RESUMEN CON CÁLCULOS CORRECTOS
+    # ✅ ACTUALIZAR RESUMEN CON GRADO COMBINADO
     sbom_data['resumen']['nvd_analysis'] = {
         'componentes_analizados': componentes_analizados,
         'componentes_vulnerables': componentes_con_vulns,
-        'vulnerabilidades_encontradas': len(vulnerabilidades_nvd),  # ✅ TODAS LAS QUE PASAN FILTRO DE SEVERIDAD
-        'total_vulnerabilidades_nvd': len(vulnerabilidades_nvd),    # ✅ MANTENER COMPATIBILIDAD
+        'vulnerabilidades_encontradas': len(vulnerabilidades_nvd),
+        'total_vulnerabilidades_nvd': len(vulnerabilidades_nvd),
         'severidades_encontradas': list(set(severidades_encontradas)),
         'severidades_count': severidades_count,
-        
-        # ✅ CÁLCULOS CORREGIDOS
-        'total_vulnerabilidades_brutas': total_vulnerabilidades_brutas,  # ✅ TOTAL REAL
-        'vulnerabilidades_excluidas': len(vulnerabilidades_excluidas),   # ✅ SOLO EXCLUIDAS POR SEVERIDAD
+        'total_vulnerabilidades_brutas': total_vulnerabilidades_brutas,
+        'vulnerabilidades_excluidas': len(vulnerabilidades_excluidas),
         'severidades_excluidas_count': severidades_excluidas_count,
+        
+        # ✅ NUEVO: Análisis de grado combinado
+        'analisis_grado_combinado': analisis_grado_combinado,
+        
         'filtros_aplicados': {
-            'umbral_seguridad': limite_vulnerabilidades,  # ✅ CAMBIAR NOMBRE PARA CLARIDAD
+            'umbral_seguridad': limite_vulnerabilidades,
             'max_severidad_permitida': max_severidad_permitida,
-            'max_nivel_permitido': max_nivel_permitido
+            'max_nivel_permitido': max_nivel_permitido,
+            'max_grado_combinado': max_grado_combinado  # ✅ NUEVO
         }
     }
     
@@ -1204,6 +1280,27 @@ def generar_prompt_sbom_con_criterios(sbom_data, mensaje_usuario, criterios_proy
                     prompt_parts.append(f"     - Severidad: **{severidad}** | Solucionabilidad: **{puntos_sol} puntos** (MEDIA)")
                     prompt_parts.append(f"     - Factores: {', '.join(razones[:2]) if razones else 'Complejidad moderada'}")
         
+        # ✅ AÑADIR INFORMACIÓN DE GRADO COMBINADO
+        nvd_analysis = sbom_data.get('resumen', {}).get('nvd_analysis', {})
+        analisis_grado = nvd_analysis.get('analisis_grado_combinado')
+        
+        if analisis_grado:
+            prompt_parts.append(f"\n**📊 ANÁLISIS DE GRADO DE SEVERIDAD COMBINADO:**")
+            prompt_parts.append(f"- Grado total acumulado: **{analisis_grado['total_grado_combinado']}** puntos")
+            prompt_parts.append(f"- Límite máximo permitido: **{analisis_grado['max_grado_permitido']}** puntos")
+            prompt_parts.append(f"- Promedio por vulnerabilidad: **{analisis_grado['promedio_grado']}** puntos")
+            
+            if analisis_grado.get('excede_limite_grado'):
+                prompt_parts.append(f"- ⚠️ **EXCEDE EL LÍMITE** por {analisis_grado['diferencia_grado']} puntos ({analisis_grado['porcentaje_usado_grado']}%)")
+            else:
+                prompt_parts.append(f"- ✅ **DENTRO DEL LÍMITE** ({analisis_grado['porcentaje_usado_grado']}% del máximo usado)")
+            
+            # Mostrar distribución de grados
+            if analisis_grado.get('detalles_grados'):
+                prompt_parts.append(f"\n**Distribución de grados individuales (primeros 5):**")
+                for i, detalle in enumerate(analisis_grado['detalles_grados'][:5], 1):
+                    prompt_parts.append(f"  {i}. **{detalle['cve_id']}** en *{detalle['componente']}*: {detalle['grado_severidad']}/10 ({detalle['severidad']})")
+
         # ✅ AÑADIR INFORMACIÓN SOBRE VULNERABILIDADES ADICIONALES
         total_vulns = len(vulnerabilidades_nvd)
         vulns_mostradas = len(vulns_priorizadas) if 'vulns_priorizadas' in locals() else 0
@@ -1229,12 +1326,12 @@ def generar_prompt_sbom_con_criterios(sbom_data, mensaje_usuario, criterios_proy
     prompt_parts.append(f"CONSULTA DEL USUARIO: {mensaje_usuario}")
     prompt_parts.append("")
     
-    # ✅ INSTRUCCIONES FINALES MEJORADAS
+    # ✅ ACTUALIZAR INSTRUCCIONES FINALES
     prompt_parts.append("INSTRUCCIONES FINALES PARA EL ANÁLISIS:")
     prompt_parts.append("1. **RESPETA LOS CRITERIOS DE SOLUCIONABILIDAD** configurados para este proyecto específico")
-    prompt_parts.append("2. **ORDENA LAS VULNERABILIDADES** según la prioridad calculada con la fórmula del proyecto")
-    prompt_parts.append("3. **ENFÓCATE EN EL ENFOQUE DEL PROYECTO:** severidad vs. solucionabilidad según los pesos configurados")
-    prompt_parts.append("4. **MENCIONA LOS CRITERIOS** específicos que has aplicado en tu análisis")
+    prompt_parts.append("2. **EVALÚA EL GRADO DE SEVERIDAD COMBINADO** y menciona si excede los límites del proyecto")
+    prompt_parts.append("3. **ORDENA LAS VULNERABILIDADES** según la prioridad calculada con la fórmula del proyecto")
+    prompt_parts.append("4. **MENCIONA CLARAMENTE** si el proyecto cumple con los 3 criterios: cantidad, severidad máxima y grado combinado")
     prompt_parts.append("5. **DA RECOMENDACIONES ESPECÍFICAS** basadas en los umbrales y prioridades del proyecto")
     prompt_parts.append("6. **PROPORCIONA EJEMPLOS ESPECÍFICOS** de las vulnerabilidades mencionadas arriba cuando sea relevante")
     prompt_parts.append("7. **SI HAY MUCHAS VULNERABILIDADES**, proporciona un resumen con las más críticas y menciona el total")
@@ -1548,11 +1645,16 @@ def upload_sbom():
         # ✅ OBTENER USUARIO ID
         user_id = obtener_usuario_id(request)
         
-        # ✅ OBTENER PARÁMETROS ADICIONALES
+        # ✅ OBTENER PARÁMETROS ADICIONALES (incluir el nuevo)
         proyecto_id = request.form.get('proyecto_id')
         limite_vulnerabilidades = request.form.get('limite_vulnerabilidades', 10)
         max_severidad = request.form.get('max_severidad', 'MEDIUM')
+        max_grado_combinado = request.form.get('max_grado_combinado', 50)  # ✅ NUEVO
         mensaje_usuario = request.form.get('mensaje', 'Analiza este archivo SBOM')
+        
+        # ✅ OBTENER CRITERIOS DE SOLUCIONABILIDAD DEL PROYECTO
+        criterios_solucionabilidad = {}
+        proyecto_nombre = "Proyecto no especificado"
         
         print(f"📁 Archivo recibido: {file.filename}")
         print(f"🎯 Proyecto ID: {proyecto_id}")
@@ -1603,7 +1705,8 @@ def upload_sbom():
                         'umbral_solucionabilidad_facil': proyecto_data.get('umbral_solucionabilidad_facil', 75),
                         'umbral_solucionabilidad_media': proyecto_data.get('umbral_solucionabilidad_media', 50),
                         'incluir_temporal_fixes': proyecto_data.get('incluir_temporal_fixes', True),
-                        'excluir_privilegios_altos': proyecto_data.get('excluir_privilegios_altos', False)
+                        'excluir_privilegios_altos': proyecto_data.get('excluir_privilegios_altos', False),
+                        'max_grado_combinado': proyecto_data.get('max_grado_severidad_combinado', 50)
                     }
                     print(f"🎯 Criterios de solucionabilidad obtenidos: {criterios_solucionabilidad}")
                 else:
@@ -1652,10 +1755,15 @@ def upload_sbom():
                 "error": f"Error procesando SBOM: {str(e)}"
             }), 500
         
-        # ✅ ENRIQUECER CON DATOS DE NVD
+        # ✅ ENRIQUECER CON DATOS DE NVD (incluir nuevo parámetro)
         try:
             print("🔍 Consultando National Vulnerability Database...")
-            sbom_data = asyncio.run(enriquecer_sbom_con_nvd(sbom_data))
+            sbom_data = asyncio.run(enriquecer_sbom_con_nvd(
+                sbom_data, 
+                int(limite_vulnerabilidades), 
+                max_severidad,
+                int(criterios_solucionabilidad.get('max_grado_combinado', max_grado_combinado))
+            ))
             
         except Exception as e:
             print(f"⚠️ Error consultando NVD (continuando sin datos NVD): {e}")
@@ -1833,7 +1941,8 @@ def upload_sbom():
             "error": f"Error interno del servidor: {str(e)}"
         }), 500
 
-def verificar_limites_proyecto_avanzado(proyecto_id, vulnerabilidades_encontradas, vulnerabilidades_nvd, limite_configurado, max_severidad_configurada):
+def verificar_limites_proyecto_avanzado(proyecto_id, vulnerabilidades_encontradas, vulnerabilidades_nvd, limite_configurado, 
+                                        max_severidad_configurada, max_grado_combinado=50):
     """
     Verifica límites del proyecto con análisis avanzado de severidad
     """
@@ -1876,6 +1985,26 @@ def verificar_limites_proyecto_avanzado(proyecto_id, vulnerabilidades_encontrada
         diferencia_cantidad = max(0, vulnerabilidades_encontradas - limite_configurado)
         porcentaje_usado = min(100, (vulnerabilidades_encontradas / limite_configurado) * 100) if limite_configurado > 0 else 100
         
+        # ✅ NUEVO: Verificar grado de severidad combinado
+        grado_combinado_actual = 0
+        detalles_grados = []
+        
+        if vulnerabilidades_nvd:
+            analisis_grado = calcular_grado_severidad_combinado(vulnerabilidades_nvd)
+            grado_combinado_actual = analisis_grado['total_grado_combinado']
+            detalles_grados = analisis_grado['detalles_grados']
+        
+        excede_limite_grado_combinado = grado_combinado_actual > max_grado_combinado
+        
+        # Determinar qué límites se exceden (actualizado)
+        excede_limite_cantidad = vulnerabilidades_encontradas > limite_configurado
+        excede_limite_severidad = vulnerabilidades_exceden_severidad > 0
+        excede_limite = excede_limite_cantidad or excede_limite_severidad or excede_limite_grado_combinado  # ✅ ACTUALIZADO
+        
+        # ✅ CÁLCULOS ADICIONALES PARA GRADO COMBINADO
+        diferencia_grado = max(0, grado_combinado_actual - max_grado_combinado)
+        porcentaje_grado_usado = min(100, (grado_combinado_actual / max_grado_combinado) * 100) if max_grado_combinado > 0 else 100
+
         return {
             'excede_limite': excede_limite,
             'excede_limite_cantidad': excede_limite_cantidad,
@@ -1886,7 +2015,14 @@ def verificar_limites_proyecto_avanzado(proyecto_id, vulnerabilidades_encontrada
             'vulnerabilidades_exceden_severidad': vulnerabilidades_exceden_severidad,
             'diferencia_cantidad': diferencia_cantidad,
             'porcentaje_usado': round(porcentaje_usado, 1),
-            'proyecto_encontrado': True
+            'proyecto_encontrado': True,
+            # ✅ NUEVOS CAMPOS: Grado combinado
+            'excede_limite_grado_combinado': excede_limite_grado_combinado,
+            'max_grado_combinado': max_grado_combinado,
+            'grado_combinado_actual': grado_combinado_actual,
+            'diferencia_grado': diferencia_grado,
+            'porcentaje_grado_usado': round(porcentaje_grado_usado, 1),
+            'detalles_grados': detalles_grados,
         }
         
     except Exception as e:
@@ -1895,8 +2031,11 @@ def verificar_limites_proyecto_avanzado(proyecto_id, vulnerabilidades_encontrada
             'excede_limite': False,
             'limite_configurado': None,
             'max_severidad_configurada': None,
+            'max_grado_combinado': None,
             'vulnerabilidades_encontradas': vulnerabilidades_encontradas,
+            'grado_combinado_actual': 0,
             'diferencia_cantidad': 0,
+            'diferencia_grado': 0,
             'proyecto_encontrado': False,
             'error': f'Error inesperado: {str(e)}'
         }

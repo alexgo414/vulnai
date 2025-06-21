@@ -96,6 +96,8 @@ class Proyecto(db.Model):
     max_vulnerabilidades = db.Column(db.Integer, default=10, nullable=False)
     max_severidad = db.Column(db.String(20), default="MEDIUM", nullable=True)
 
+    max_grado_severidad_combinado = db.Column(db.Integer, default=50, nullable=False)
+
     priori_vectores_red = db.Column(db.Boolean, default=True, nullable=False)  # Priorizar vulns de red
     priori_sin_parches = db.Column(db.Boolean, default=True, nullable=False)   # Priorizar sin parches oficiales
     priori_exploit_publico = db.Column(db.Boolean, default=True, nullable=False)  # Priorizar con exploits públicos
@@ -443,6 +445,8 @@ class ProyectoResource(Resource):
                     "max_vulnerabilidades": proyecto.max_vulnerabilidades,
                     "max_severidad": proyecto.max_severidad,
 
+                    "max_grado_severidad_combinado": proyecto.max_grado_severidad_combinado,
+
                     "priori_vectores_red": proyecto.priori_vectores_red,
                     "priori_sin_parches": proyecto.priori_sin_parches,
                     "priori_exploit_publico": proyecto.priori_exploit_publico,
@@ -472,6 +476,8 @@ class ProyectoResource(Resource):
                     "max_vulnerabilidades": proyecto.max_vulnerabilidades,
                     "max_severidad": proyecto.max_severidad,
 
+                    "max_grado_severidad_combinado": proyecto.max_grado_severidad_combinado,
+
                     "priori_vectores_red": proyecto.priori_vectores_red,
                     "priori_sin_parches": proyecto.priori_sin_parches,
                     "priori_exploit_publico": proyecto.priori_exploit_publico,
@@ -498,6 +504,8 @@ class ProyectoResource(Resource):
                 usuario_id=flask_praetorian.current_user().id,
                 max_vulnerabilidades=data.get("max_vulnerabilidades", 10),
                 max_severidad=data.get("max_severidad", "MEDIUM"),
+
+                max_grado_severidad_combinado=data.get("max_grado_severidad_combinado", 50),
 
                 priori_vectores_red=data.get("priori_vectores_red", True),
                 priori_sin_parches=data.get("priori_sin_parches", True),
@@ -560,6 +568,8 @@ class ProyectoResource(Resource):
                 proyecto.incluir_temporal_fixes = bool(data["incluir_temporal_fixes"])
             if "excluir_privilegios_altos" in data:
                 proyecto.excluir_privilegios_altos = bool(data["excluir_privilegios_altos"])
+            if "max_grado_severidad_combinado" in data:
+                proyecto.max_grado_severidad_combinado = max(10, min(1000, int(data["max_grado_severidad_combinado"])))
             
             proyecto.fecha_modificacion = date.today()
             db.session.commit()

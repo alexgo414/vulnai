@@ -17,19 +17,27 @@
 function updateSecurityLevel() {
     const maxVulnInput = document.getElementById('max_vulnerabilidades');
     const maxSevInput = document.getElementById('max_severidad');
+    const maxGradoInput = document.getElementById('max_grado_combinado'); // ✅ NUEVO
     const securityIndicator = document.getElementById('security-level-indicator');
     const securityText = document.getElementById('security-level-text');
     const severityDisplay = document.getElementById('severity-display');
     const quantityDisplay = document.getElementById('quantity-display');
+    const gradeDisplay = document.getElementById('grade-display'); // ✅ NUEVO
 
     if (!maxVulnInput || !securityIndicator || !securityText) return;
 
     const vulnValue = parseInt(maxVulnInput.value) || 0;
     const sevValue = maxSevInput ? maxSevInput.value : 'MEDIUM';
+    const gradeValue = parseInt(maxGradoInput?.value) || 50; // ✅ NUEVO (con ?. para evitar errores)
     
     // Actualizar displays si existen
     if (quantityDisplay) {
         quantityDisplay.textContent = vulnValue;
+    }
+    
+    // ✅ ACTUALIZAR DISPLAY DEL GRADO COMBINADO
+    if (gradeDisplay) {
+        gradeDisplay.textContent = gradeValue;
     }
     
     if (severityDisplay) {
@@ -45,15 +53,18 @@ function updateSecurityLevel() {
     // Remover clases anteriores
     securityIndicator.className = 'security-level';
     
-    // Determinar nivel de seguridad combinado
+    // ✅ DETERMINAR NIVEL DE SEGURIDAD COMBINADO (incluyendo grado)
     const isRestrictiveSeverity = ['LOW', 'MEDIUM'].includes(sevValue);
     const isLowQuantity = vulnValue <= 5;
     const isMediumQuantity = vulnValue <= 15;
+    const isLowGrade = gradeValue <= 30; // ✅ NUEVO
+    const isMediumGrade = gradeValue <= 70; // ✅ NUEVO
     
-    if (isLowQuantity && isRestrictiveSeverity) {
+    // ✅ NUEVA LÓGICA: Considerar los 3 factores
+    if (isLowQuantity && isRestrictiveSeverity && isLowGrade) {
         securityIndicator.classList.add('high');
         securityText.innerHTML = '<i class="fas fa-shield-alt me-1"></i>Alta Seguridad';
-    } else if (isMediumQuantity && (isRestrictiveSeverity || sevValue === 'HIGH')) {
+    } else if (isMediumQuantity && (isRestrictiveSeverity || sevValue === 'HIGH') && isMediumGrade) {
         securityIndicator.classList.add('medium');
         securityText.innerHTML = '<i class="fas fa-shield-halved me-1"></i>Seguridad Estándar';
     } else {
@@ -131,6 +142,7 @@ function updateUmbralDisplay() {
 function setupDynamicEventListeners() {
     const maxVulnInput = document.getElementById('max_vulnerabilidades');
     const maxSevInput = document.getElementById('max_severidad');
+    const maxGradoInput = document.getElementById('max_grado_combinado'); // ✅ NUEVO
     const pesoSevInput = document.getElementById('peso_severidad');
     const pesoSolInput = document.getElementById('peso_solucionabilidad');
     const umbralFacilInput = document.getElementById('umbral_facil');
@@ -142,6 +154,12 @@ function setupDynamicEventListeners() {
     }
     if (maxSevInput) {
         maxSevInput.addEventListener('change', updateSecurityLevel);
+    }
+    
+    // ✅ EVENT LISTENER PARA GRADO COMBINADO
+    if (maxGradoInput) {
+        maxGradoInput.addEventListener('input', updateSecurityLevel);
+        console.log("✅ Event listener para grado combinado configurado");
     }
     
     // Event listeners para pesos
@@ -164,6 +182,8 @@ function setupDynamicEventListeners() {
     updateSecurityLevel();
     window.updatePesoDisplay();
     updateUmbralDisplay();
+    
+    console.log("✅ Todos los event listeners configurados correctamente");
 }
 
 // Aplicar cuando se cargue dinámicamente el formulario

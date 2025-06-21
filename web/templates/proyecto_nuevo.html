@@ -94,6 +94,25 @@
                         </div>
                     </div>
 
+                    <div class="mb-3">
+                        <label for="max_grado_combinado" class="form-label">
+                            <strong>Grado máximo de severidad combinado:</strong>
+                        </label>
+                        <div class="input-group">
+                            <input type="number" id="max_grado_combinado" name="max_grado_severidad_combinado" 
+                                    class="form-control" value="50" min="10" max="1000" required>
+                            <span class="input-group-text">
+                                <i class="fas fa-calculator"></i>
+                            </span>
+                        </div>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Define la suma máxima de grados de severidad permitida. Cada vulnerabilidad tiene un grado del 1 al 10 basado en su score CVSS.
+                            <strong>Valor recomendado: 50</strong>
+                        </div>
+                    </div>
+
+                    <!-- ✅ ACTUALIZAR PREVIEW DE SEGURIDAD -->
                     <div class="security-level-preview">
                         <label class="form-label">
                             <strong>Configuración de seguridad:</strong>
@@ -107,7 +126,8 @@
                         <div class="severity-level-preview mt-2">
                             <small class="text-muted">
                                 <strong>Máximo:</strong> <span id="severity-display">🟡 MEDIUM</span> •
-                                <strong>Cantidad:</strong> <span id="quantity-display">10</span> vulnerabilidades
+                                <strong>Cantidad:</strong> <span id="quantity-display">10</span> vulnerabilidades •
+                                <strong>Grado combinado:</strong> <span id="grade-display">50</span> puntos
                             </small>
                         </div>
                     </div>
@@ -268,17 +288,21 @@
 document.addEventListener('DOMContentLoaded', function() {
     const maxVulnInput = document.getElementById('max_vulnerabilidades');
     const maxSevInput = document.getElementById('max_severidad');
+    const maxGradoInput = document.getElementById('max_grado_combinado');  // ✅ NUEVO
     const securityIndicator = document.getElementById('security-level-indicator');
     const securityText = document.getElementById('security-level-text');
     const severityDisplay = document.getElementById('severity-display');
     const quantityDisplay = document.getElementById('quantity-display');
+    const gradeDisplay = document.getElementById('grade-display');  // ✅ NUEVO
 
     function updateSecurityLevel() {
         const vulnValue = parseInt(maxVulnInput.value) || 0;
         const sevValue = maxSevInput.value;
+        const gradeValue = parseInt(maxGradoInput.value) || 50;  // ✅ NUEVO
         
         // Actualizar displays
         quantityDisplay.textContent = vulnValue;
+        gradeDisplay.textContent = gradeValue;  // ✅ NUEVO
         
         const severityMap = {
             'LOW': '🟢 LOW',
@@ -288,17 +312,20 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         severityDisplay.textContent = severityMap[sevValue] || '🟡 MEDIUM';
         
-        // Determinar nivel de seguridad combinado
+        // ✅ DETERMINAR NIVEL DE SEGURIDAD COMBINADO (incluyendo grado)
         securityIndicator.className = 'security-level';
         
         const isRestrictiveSeverity = ['LOW', 'MEDIUM'].includes(sevValue);
         const isLowQuantity = vulnValue <= 5;
         const isMediumQuantity = vulnValue <= 15;
+        const isLowGrade = gradeValue <= 30;  // ✅ NUEVO
+        const isMediumGrade = gradeValue <= 70;  // ✅ NUEVO
         
-        if (isLowQuantity && isRestrictiveSeverity) {
+        // ✅ NUEVA LÓGICA: Considerar los 3 factores
+        if (isLowQuantity && isRestrictiveSeverity && isLowGrade) {
             securityIndicator.classList.add('high');
             securityText.innerHTML = '<i class="fas fa-shield-alt me-1"></i>Alta Seguridad';
-        } else if (isMediumQuantity && (isRestrictiveSeverity || sevValue === 'HIGH')) {
+        } else if (isMediumQuantity && (isRestrictiveSeverity || sevValue === 'HIGH') && isMediumGrade) {
             securityIndicator.classList.add('medium');
             securityText.innerHTML = '<i class="fas fa-shield-halved me-1"></i>Seguridad Estándar';
         } else {
@@ -347,9 +374,10 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('preview-umbral-medio-2').textContent = umbralMedio;
     }
 
-    // Event listeners
+    // ✅ AGREGAR EVENT LISTENER PARA EL NUEVO CAMPO
     maxVulnInput.addEventListener('input', updateSecurityLevel);
     maxSevInput.addEventListener('change', updateSecurityLevel);
+    maxGradoInput.addEventListener('input', updateSecurityLevel);
     document.getElementById('umbral_facil').addEventListener('input', updateUmbralDisplay);
     document.getElementById('umbral_media').addEventListener('input', updateUmbralDisplay);
     
